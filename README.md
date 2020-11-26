@@ -1,0 +1,1 @@
+# Sentiment Analysis of News Articles Towards Different German Parties
