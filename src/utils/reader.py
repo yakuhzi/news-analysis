@@ -15,9 +15,9 @@ class Reader:
     """
 
     def __init__(self):
-        self.df_bild_articles: Optional[List[dict]] = None
-        self.df_tagesschau_articles: Optional[List[dict]] = None
-        self.df_taz_articles: Optional[List[dict]] = None
+        self.df_bild_articles: Optional[pd.DataFrame] = None
+        self.df_tagesschau_articles: Optional[pd.DataFrame] = None
+        self.df_taz_articles: Optional[pd.DataFrame] = None
 
     def read_articles(self) -> None:
         """
