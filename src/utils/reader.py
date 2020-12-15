@@ -24,9 +24,9 @@ class Reader:
         Reads the news article for every news agency and stores it in the corresponding instance variables.
         """
 
-        self.df_bild_articles = self.__read("src/data/bild.json")
-        self.df_tagesschau_articles = self.__read("src/data/tagesschau.json")
-        self.df_taz_articles = self.__read("src/data/taz.json")
+        self.df_bild_articles = self.__read("data/bild.json")
+        self.df_tagesschau_articles = self.__read("data/tagesschau.json")
+        self.df_taz_articles = self.__read("data/taz.json")
 
     @staticmethod
     def __read(path: str) -> pd.DataFrame:
