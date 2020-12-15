@@ -46,3 +46,116 @@ from the university which is provided for this project. Details about the data a
 [Data Sources](#data-sources).
 
 ### Data Sources 
+
+### NER Tagging 
+As one of the first parts of the project, NER tagging was performed in order to find political parties and members of
+the parties to identify relevant articles in the data set. For NER tagging, spacy is used with the 
+[de_core_news_lg language model](https://spacy.io/models/de#de_core_news_lg), which has the best score for NER tagging
+compared to the other German language models provided by spacy.
+
+The results of the NER tagging are stored in JSON files and Pandas dataframes, for each news agencies one 
+(naming JSON e.g. "src/data/bild_ner.json, naming Pandas datframe variable e.g. df_bild_ner). 
+
+Structure of JSON NER files:
+
+```json
+[
+  {
+    "persons": [
+      "Person 1 in text",
+      "Person 2 in text"
+    ],
+    "organizations": [
+      "Organization 1 in text",
+      "Organization 2 in text"
+    ]
+  }  
+]
+```
+
+Structure of data frames:
+
+| index of article | persons       | organizations  |
+| ---------------- |:-------------:| :-----:         |
+| 0                | ["Person 1 in text", "Person 2 in text"] | ["Organization 1 in text",  "Organization 2 in text"] |
+| 1                | ...  |   ...  |
+
+Results of the NER tagging:
+
+To get a first insight how good the NER tagging performs, the first 100 articles of each agency were tagged.
+Overall, the NER tagging performs quite okay, especially it is good in recognizing different parties.
+
+Here is one example of the Tagesschau data set (article at index 4):
+
+![Screenshot](figures/NER_tagging.PNG)
+
+* Organizations
+    * Many correctly recognized → especially things like Union, Liberale very good (not “actual” name of party/ 
+    different naming as usual)
+    * Only one missed
+    * Some differences in classification with/ without article for the party, not directly false
+    * False classified: “Partei” occurs often, might be related to the German party 
+    “Die Partei” → difficult case, 
+    “Corona” might occur because it was most likely not in the training set of the German language model
+* Persons
+    * Almost everything correct → in “von Lucke” only “Lucke was recognized 
+    (hard case, because “von” is a regular German word, in most cases not associated with names)
+    * Again “Corona-Krise” was most likely not in training set of language model
+
+
+
+Other general findings after a first insight into the tagged data were:
+* In general, (most likely) not known words are often recognized as organizations → problems with longer 
+expressions and expressions with hyphens
+    * Examples Bild
+        * 90-Liter-Kompressorkühlschrank
+        * Drei Leasing-Schnäppchen
+        * Hybrid-PKW
+        * CO2-Grenzen
+        * 310-PS-Antrieb
+    * Examples Tagsschau
+        * Antarktis-Durchquerung
+        * Ex-Präsident
+        * Corona-Pandemie
+        * CSU-euphorische Bierzeltstimmung
+    * Examples TAZ
+        * Corona
+        * Schlusslicht
+        * Bund und Ländern
+        * Sechs-Monats-Frist
+        * +++ Corona News
+        * Sars-CoV-2
+* Seems like persons are more often recognized correctly, but also some outliers where not clear pattern is 
+recognizable why they are tagged as persons (assumption: most likely also words that are not known from 
+training the model)
+    * Examples Bild
+        * Luxus-Limo
+        * Preisschock
+        * Dranhalten
+        * Blitzmarathons
+    * Examples Tagesschau
+        * Verheerende Buschfeuer
+        * Gestrichene
+    * Examples TAZ
+        * Zopfstränge
+        * Backwettbewerbe
+        * Coronatests
+        * Selbstisolation
+* For persons, sometimes “role” is also tagged, sometimes not
+    * “FDP-Chef Lindner” → tagged “Lindner”
+    * „Bundeswirtschaftsminister Altmaier“ → tagged „Bundeswirtschaftsminister Altmaier“
+    * „Verkehrsminister Scheuer“ → „Verkehrsminister Scheuer“
+    * „FDP-Ausschussmitglied Luksic“ → tagged „FDP-Ausschussmitglied Luksic“
+* In very few cases, persons are tagged as organizations (when their name is associated with an organization, 
+e.g. as role: WikiLeaks-Gründer Assange) 
+* In general, tagesschau and tagging seems to work better than BILD tagging → might be topic related 
+(the first 100 articles of taz& tagesschau were mainly about politics, for BILD mainly cars)
+
+
+
+
+
+
+
+
+
