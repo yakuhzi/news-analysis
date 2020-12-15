@@ -31,3 +31,18 @@ cq270@stud.uni-heidelberg.de
 
 A script to automatically execute tests is already defined in the project's `Pipfile`. Therefore you can simply run: `pipenv run test`
 To generate a report on code coverage alongside run: `pipenv run test && pipenv run report`
+
+## Results for the milestone
+
+### Feedback from the first meeting with mentor
+The key points from the first meeting with our mentor were that overall the project idea is good. However,
+in our initial report we did not consider the fact that also different topics of the articles might affect the sentiment,
+e.g. if a news paper writes a lot about renewable energies, car lobby, etc.
+
+This is why we also want to consider the topics for the sentiment analysis.
+
+Also, through the discussion we gained some information about which data to use. There is already an existing data set
+from the university which is provided for this project. Details about the data are described in the section 
+[Data Sources](#data-sources).
+
+### Data Sources 
