@@ -11,6 +11,12 @@ coverage = "*"
 [packages]
 pre-commit = "*"
 pandas = "*"
+spacy = "*"
+nltk = "*"
+gensim = "*"
+pyldavis = "*"
+matplotlib = "*"
+tabulate = "*"
 
 [scripts]
 test = "coverage run -m unittest discover -s ./tests -p *_test.py"
