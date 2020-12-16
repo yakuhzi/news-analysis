@@ -18,7 +18,7 @@ class Preprocess_Articles:
 
         """stop word removal (after POS? -> filter unwanted POS)"""
         # evtl verbessern (opel fährt auf transporter auf --> opel fährt transporter)
-        nlp = spacy.load("de_core_news_lg", disable=["parser", "tagger", "ner"])
+        nlp = spacy.load("de_core_news_lg", disable=["parser", "ner"])
         stopwords = spacy.lang.de.stop_words.STOP_WORDS
         df_preprocessed_articles["text"] = df_preprocessed_articles["text"].apply(
             lambda words: " ".join(
@@ -27,13 +27,14 @@ class Preprocess_Articles:
         )
 
         """ tokenization """
-        tokenizer = spacy.tokenizer.Tokenizer(nlp.vocab)
+        # tokenizer = spacy.tokenizer.Tokenizer(nlp.vocab)
         df_preprocessed_articles["text"] = df_preprocessed_articles["text"].apply(
-            lambda x: tokenizer(x)
+            lambda x: nlp(x)
         )
 
-        print(df_preprocessed_articles["text"])
         """ POS tagging (before stemming? Could be used to count positive or negative adjectives etc. """
 
         """ stemming or lemmatization"""
         """ BoW or TF-IDF? """
+
+        print(df_preprocessed_articles["text"])
