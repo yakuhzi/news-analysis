@@ -54,7 +54,7 @@ the parties to identify relevant articles in the data set. For NER tagging, spac
 compared to the other German language models provided by spacy.
 
 The results of the NER tagging are stored in JSON files and Pandas dataframes, for each news agencies one 
-(naming JSON e.g. "src/data/bild_ner.json, naming Pandas datframe variable e.g. df_bild_ner). 
+(naming JSON e.g. "src/data/bild_ner.json", naming Pandas datframe variable e.g. df_bild_ner). 
 
 Structure of JSON NER files:
 
@@ -150,6 +150,9 @@ training the model)
 e.g. as role: WikiLeaks-Gründer Assange) 
 * In general, tagesschau and tagging seems to work better than BILD tagging → might be topic related 
 (the first 100 articles of taz& tagesschau were mainly about politics, for BILD mainly cars)
+
+**SUMMARY:** NER tagging with spacy and german language model does not work perfectly, but quite good and good enough 
+for a first filtering of the text to recognize in which text political parties/ actors are mentioned at all
 
 
 
