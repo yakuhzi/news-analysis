@@ -11,6 +11,7 @@ class Preprocess_Articles:
         """ lowercase everything"""
         df_preprocessed_articles["text"] = df_preprocessed_articles["text"].str.lower()
         print(df_preprocessed_articles["text"])
+
         """remove special characters (regex)"""
         df_preprocessed_articles["text"] = df_preprocessed_articles["text"].str.replace(
             r"[^a-z0-9äöü ]", ""
@@ -27,14 +28,17 @@ class Preprocess_Articles:
         )
 
         """ tokenization """
-        # tokenizer = spacy.tokenizer.Tokenizer(nlp.vocab)
         df_preprocessed_articles["text"] = df_preprocessed_articles["text"].apply(
             lambda x: nlp(x)
         )
 
         """ POS tagging (before stemming? Could be used to count positive or negative adjectives etc. """
-
+        pos_tags = []
+        for item in df_preprocessed_articles["text"]:
+            pos_tag = [(i, i.tag_) for i in item]
+            pos_tags.append(pos_tag)
+        df_preprocessed_articles["pos_tags"] = pos_tags
         """ stemming or lemmatization"""
         """ BoW or TF-IDF? """
 
-        print(df_preprocessed_articles["text"])
+        print(df_preprocessed_articles["pos_tags"])
