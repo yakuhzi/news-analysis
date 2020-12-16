@@ -73,4 +73,4 @@ class Preprocess_Articles:
         """ stemming or lemmatization"""
         df_preprocessed_articles = lemmatizing(df_preprocessed_articles)
 
-        """ BoW or TF-IDF? """
+        return df_preprocessed_articles

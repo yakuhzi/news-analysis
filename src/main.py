@@ -1,5 +1,6 @@
 from src.preprocessing_Articles import Preprocess_Articles
 from src.utils.reader import Reader
+from src.utils.writer import Writer
 
 if __name__ == "__main__":
     reader = Reader()
@@ -17,4 +18,6 @@ if __name__ == "__main__":
     print(reader.df_tagesschau_articles.head())
 
     preprocess = Preprocess_Articles()
-    preprocess.preprocessing(reader.df_bild_articles)
+    bild = preprocess.preprocessing(reader.df_bild_articles)
+    writer = Writer()
+    writer.write_articles(bild, "bild_preprocessed")
