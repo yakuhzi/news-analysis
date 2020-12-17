@@ -17,5 +17,8 @@ class Writer:
         """
         writes the dataframes of the preprocessed articles to a json file
         """
-        path = "data/" + filename + ".json"
-        article.to_json(path, orient="records", default_handler=str)
+        path = "src/data/" + filename + ".json"
+        with open(path, "w", encoding="utf-8") as file:
+            article.to_json(
+                file, force_ascii=False, orient="records", default_handler=str
+            )
