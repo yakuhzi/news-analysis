@@ -47,6 +47,28 @@ from the university which is provided for this project. Details about the data a
 
 ### Data Sources 
 
+### Preprocessing
+Before the data can be processed any further, it needs to be preprocessed. The challenge hereby was to choose preprocessing methods that keep enough information to determine the objectivity (sentiment analysis) later on.
+For this reason the pipeline, which is described in the following, was created.
+* lowercasing the text
+    The first step is to lowercase the text. This ensures that the text is more uniform, which might be beneficial following processing steps. As of now there is a hunch that the later described NER Tagging potentially performs better without lowercasing. This has to be evaluated further and is decided to a later point in time.
+* removing special characters
+    Secondly some characters that are unimportant for further processing need to be removed. 
+    The original JSON files containing the articles have the characters "\n" to indicate a linebreak. This is unneccessary for processing the data and needs to be removed. 
+    Additionally with the help of regex, letters from "a-z", numbers from "0-9", the hyphen as well as the - in German commonly used - umlauts ("ä", "ö", "ü") are kept. Everything else is removed from the text. In further steps of the projects this might need to be reconsidered, maybe the use of punctuation marks (e.g.: exclamation marks) provide information about the objectivity.
+* remove stopwords
+    For the time beeing the stop words are removed from the text. Nontheless it has to be evaluated in the future, whether the these frequently used words are helping on determining the objectivity of the text. For example the phrase "opel fährt auf transporter auf" is transformed into "opel fährt transporter", which has a totally different meaning. The impact of this still needs to be figured out.
+
+The following steps are done by using the library spaCy. It provides a preprocessing pipeline wich is run when npl is called on a defined text.
+* tokenization
+    This is the first step of the processing pipeline. It segments the specified text into tokens 
+* POS tagging
+    This is the second part of the processing pipeline of spaCy. It assigns part-of-speech tags to the aforementioned tokens.
+* NET Tagging
+    Since parts of the processing pipeline are deactivated, this is the next step. It is explained in more detail later on.
+* lemmatization
+    Lastly lemmatization is done. The words (tokens) of the text are saved in their respective base form. This was preferred before stemming, since the sentiment analysis could be done by using a sentiment lexicon that weights words by their positive or negative indication. 
+
 ### NER Tagging 
 As one of the first parts of the project, NER tagging was performed in order to find political parties and members of
 the parties to identify relevant articles in the data set. For NER tagging, spacy is used with the 
