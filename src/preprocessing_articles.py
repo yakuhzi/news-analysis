@@ -71,6 +71,8 @@ class PreprocessArticles:
         - person_list: List of recognized persons in the text.
         - organization_list: List of organizations in the text.
         """
+        if self.nlp is None:
+            self.nlp = spacy.load("de_core_news_lg", disable=["parser"])
         doc = self.nlp(content)
         #  search for persons and apply filter that only persons remain in list
         filtered_persons = filter(lambda entity: entity.label_ == "PER", doc.ents)
