@@ -56,8 +56,8 @@ class PreprocessArticles:
         - row: Pandas series with the tagged text in colums 'persons' and 'rows'
         """
         persons, organizations = self.tag(row.text)
-        row["persons"] = persons
-        row["organizations"] = organizations
+        row["persons_ner"] = persons
+        row["organizations_ner"] = organizations
         return row
 
     def tag(self, content: str) -> Tuple[List[str], List[str]]:
