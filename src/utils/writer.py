@@ -18,4 +18,4 @@ class Writer:
         writes the dataframes of the preprocessed articles to a json file
         """
         path = "data/" + filename + ".json"
-        article.to_json(path, orient="columns", default_handler=str)
+        article.to_json(path, orient="records", default_handler=str)
