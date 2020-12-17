@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 import pandas as pd
 import spacy
 from spacy.lang.de.stop_words import STOP_WORDS
@@ -36,6 +38,46 @@ def lemmatizing(df_preprocessed_articles):
     df_preprocessed_articles["lemma"] = df_preprocessed_articles["text"].apply(
         lambda row: [word.lemma_ for word in row]
     )
+
+
+def tag_dataframe(row: pd.Series) -> pd.Series:
+    """
+    Function to apply on Pandas data frame that it is tagged
+
+    Arguments:
+    - row: the current row of the data frame to be tagged
+
+    Return:
+    - row: Pandas series with the tagged text in colums 'persons' and 'rows'
+    """
+    persons, organizations = tag(row.text)
+    row["persons"] = persons
+    row["organizations"] = organizations
+    return row
+
+
+def tag(content: str) -> Tuple[List[str], List[str]]:
+    """
+    Searches for Names and Organizations in texts in order to identify relevant articles with political parties
+
+    Arguments:
+    - content: The text to search for the Named Entities
+
+    Return:
+    - person_list: List of recognized persons in the text.
+    - organization_list: List of organizations in the text.
+    """
+    #  de_core_news_lg had the best score for entity recognition in german according to spacy.
+    #  for more information, see https://spacy.io/models/de#de_core_news_lg
+    nlp = spacy.load("de_core_news_lg", disable=["tagger", "parser"])
+    doc = nlp(content)
+    #  search for persons and apply filter that only persons remain in list
+    filtered_persons = filter(lambda entity: entity.label_ == "PER", doc.ents)
+    person_list = list(map(lambda entity: entity.text, filtered_persons))
+    #  search for organizations and apply filter that only persons remain in list
+    filtered_organizations = filter(lambda entity: entity.label_ == "ORG", doc.ents)
+    organization_list = list(map(lambda entity: entity.text, filtered_organizations))
+    return person_list, organization_list
 
 
 class PreprocessArticles:

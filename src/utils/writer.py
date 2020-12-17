@@ -13,12 +13,15 @@ class Writer:
     - df_taz_articles: A pandas dataframe of all TAZ news articles.
     """
 
-    def write_articles(self, article: pd.DataFrame, filename: str):
+    @staticmethod
+    def write_articles(df: pd.DataFrame, filename: str):
         """
-        writes the dataframes of the preprocessed articles to a json file
+        Helper function to store Pandas dataframe into json file
+
+        Arguments:
+        - df: the Pandas data frame which should be stored in json
+        - filename: the path where the dataframe should be stored
         """
         path = "src/data/" + filename + ".json"
         with open(path, "w", encoding="utf-8") as file:
-            article.to_json(
-                file, force_ascii=False, orient="records", default_handler=str
-            )
+            df.to_json(file, force_ascii=False, orient="records", default_handler=str)

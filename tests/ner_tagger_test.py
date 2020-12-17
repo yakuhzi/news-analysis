@@ -1,13 +1,12 @@
 import unittest
 
-from src.ner_tagger import NERTagger
+import src.preprocessing_articles
 
 
 class NERTaggerTest(unittest.TestCase):
     def test_tagging(self):
-        ner_tagger = NERTagger()
         text_to_tag = "Angela Merkel ist die deutsche Bundeskanzlerin und sie ist Mitglied der CDU."
-        person_list, organization_list = ner_tagger.tag(text_to_tag)
+        person_list, organization_list = src.preprocessing_articles.tag(text_to_tag)
         self.assertEqual(
             person_list,
             ["Angela Merkel"],
