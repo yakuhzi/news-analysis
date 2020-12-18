@@ -228,6 +228,12 @@ e.g. as role: WikiLeaks-Gründer Assange)
 **SUMMARY:** NER tagging with spacy and german language model does not work perfectly, but quite good and good enough 
 for a first filtering of the text to recognize in which text political parties/ actors are mentioned at all
 
+**UPDATE:** First, NER tagging was treated as a seperate task and not as part of the preprocessing pipeline. After
+integrating it into the preprocessing pipeline, it turned out that it performed best when doing it right after removing
+all special characters and before lowercasing. From a first insight into the data, it seems like through integrating it
+into the preprocessing pipeline directly, some false positives were filtered out (has to be relatet to removal of special
+characters) but also more false negatives occured. But overall, the results still look decent.
+
 
 
 
