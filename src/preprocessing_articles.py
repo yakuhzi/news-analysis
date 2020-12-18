@@ -19,7 +19,7 @@ class PreprocessArticles:
 
     def remove_special_characters(self, df_preprocessed_articles):
         df_preprocessed_articles["text"] = df_preprocessed_articles["text"].str.replace(
-            r"[^A-Za-z0-9äöüÄÖÜ\- ]", ""
+            r"[^A-Za-z0-9äöüÄÖÜß\- ]", " "
         )
 
     def remove_stopwords(self, df_preprocessed_articles):
@@ -88,8 +88,6 @@ class PreprocessArticles:
         df_preprocessed_articles = articles.copy()
         df_preprocessed_articles = df_preprocessed_articles[:10]
 
-        # lowercase everything
-        self.lowercase_article(df_preprocessed_articles)
         self.replace_new_line(df_preprocessed_articles)
 
         # remove special characters (regex)
@@ -103,6 +101,9 @@ class PreprocessArticles:
         df_preprocessed_articles = df_preprocessed_articles.apply(
             self.tag_dataframe, axis=1
         )
+
+        # lowercase everything
+        self.lowercase_article(df_preprocessed_articles)
 
         # stop word removal (after POS? -> filter unwanted POS)
         # evtl verbessern (opel fährt auf transporter auf --> opel fährt transporter)
