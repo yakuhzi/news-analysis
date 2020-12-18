@@ -16,7 +16,7 @@ nltk = "*"
 gensim = "*"
 pyldavis = "*"
 matplotlib = "*"
-tabulate = "*"
+scikit-learn = "*"
 
 [scripts]
 test = "coverage run -m unittest discover -s ./tests -p *_test.py"
