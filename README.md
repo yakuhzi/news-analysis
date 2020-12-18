@@ -71,6 +71,32 @@ from the university which is provided for this project. Details about the data a
 | Project Video                                    | Presentation       | 25.02.2021 | -        | -        |
 
 ### Data Sources 
+As data sources, around 100.000 german news articles from three different news agencies are used. those are namely:
+* Bild: 75826 articles
+* Tagesschau: 12284 articles 
+* TAZ: 13401 articles
+
+With [NER tagging](#ner-tagging), the data was filtered such that only articles which deal with a German political party remain. 
+After this filtering, the ratio between all articles and articles of interest looks the following:
+
+![OverallStat](figures/articles_overall_stat.png)
+
+To visualize the ratio between the individual agencies a bit better, the following charts show the ration for each agency
+
+![BildStat](figures/articles_bild_stat.png) Ratio between all articles and articles of interest: 8514/75826 = 11.23%
+
+![TagesschauStat](figures/articles_tagesschau_stat.png)Ratio between all articles and articles of interest: 2373/12284 = 19.32%
+
+![TazStat](figures/articles_taz_stat.png)Ratio between all articles and articles of interest: 3468/13401 = 25.88%
+
+Overall the ratio of articles of interest (those which deal with parties) looks the following
+
+![RelevantArticles](figures/articles_relevant_articles_stat.png)
+
+Overall, we found 14355 articles of interest.
+
+Although "Bild" hs the lowest ratio of articles of interest / articles, the Bild articles make up nearly 60% when only looking only at the 
+articles of interest. This is of cause caused by the significantly higher amount of "Bild" articles overall. 
 
 ### Preprocessing
 Before the data can be processed any further, it needs to be preprocessed. The challenge hereby was to choose preprocessing methods that keep enough information to determine the objectivity (sentiment analysis) later on.
