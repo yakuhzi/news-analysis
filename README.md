@@ -71,6 +71,8 @@ The following steps are done by using the library spaCy. It provides a preproces
 
 For each data source the end result of the preprocessing is then stored in a seperate JSON-file called "source_preprocessed.json". Additionally to the original columns it now also has a column for the NER tagging (see following chapter), POS tagging and lemmatization.
 
+![Screenshot](figures/PreprocessingPipeline.PNG)
+
 ### NER Tagging 
 As one of the first parts of the project, NER tagging was performed in order to find political parties and members of
 the parties to identify relevant articles in the data set. For NER tagging, spacy is used with the 
