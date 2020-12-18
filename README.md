@@ -94,7 +94,7 @@ The following steps are done by using the library spaCy. It provides a preproces
 * lemmatization
     Lastly lemmatization is done. The words (tokens) of the text are saved in their respective base form. This was preferred before stemming, since the sentiment analysis could be done by using a sentiment lexicon that weights words by their positive or negative indication. 
 
-![Pipeline](figures/PreprocessingPipeline.PNG)
+![Pipeline](figures/PreprocessingPipeline.png)
 
 For each data source the end result of the preprocessing is then stored in a seperate JSON-file called "source_preprocessed.json". Additionally to the original columns it now also has a column for the NER tagging (see following chapter), POS tagging and lemmatization.
 The JSON object is then structured as follows:
