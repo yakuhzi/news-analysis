@@ -71,6 +71,32 @@ from the university which is provided for this project. Details about the data a
 | Project Video                                    | Presentation       | 25.02.2021 | -        | -        |
 
 ### Data Sources 
+As data sources, around 100.000 german news articles from three different news agencies are used. those are namely:
+* Bild: 75826 articles
+* Tagesschau: 12284 articles 
+* TAZ: 13401 articles
+
+With [NER tagging](#ner-tagging), the data was filtered such that only articles which deal with a German political party remain. 
+After this filtering, the ratio between all articles and articles of interest looks the following:
+
+![OverallStat](figures/articles_overall_stat.png)
+
+To visualize the ratio between the individual agencies a bit better, the following charts show the ration for each agency
+
+![BildStat](figures/articles_bild_stat.png) Ratio between all articles and articles of interest: 8514/75826 = 11.23%
+
+![TagesschauStat](figures/articles_tagesschau_stat.png)Ratio between all articles and articles of interest: 2373/12284 = 19.32%
+
+![TazStat](figures/articles_taz_stat.png)Ratio between all articles and articles of interest: 3468/13401 = 25.88%
+
+Overall the ratio of articles of interest (those which deal with parties) looks the following
+
+![RelevantArticles](figures/articles_relevant_articles_stat.png)
+
+Overall, we found 14355 articles of interest.
+
+Although "Bild" hs the lowest ratio of articles of interest / articles, the Bild articles make up nearly 60% when only looking only at the 
+articles of interest. This is of cause caused by the significantly higher amount of "Bild" articles overall. 
 
 ### Preprocessing
 Before the data can be processed any further, it needs to be preprocessed. The challenge hereby was to choose preprocessing methods that keep enough information to determine the objectivity (sentiment analysis) later on.
@@ -94,7 +120,7 @@ The following steps are done by using the library spaCy. It provides a preproces
 * lemmatization
     Lastly lemmatization is done. The words (tokens) of the text are saved in their respective base form. This was preferred before stemming, since the sentiment analysis could be done by using a sentiment lexicon that weights words by their positive or negative indication. 
 
-![Pipeline](figures/PreprocessingPipeline.PNG)
+![Pipeline](figures/PreprocessingPipeline.png)
 
 For each data source the end result of the preprocessing is then stored in a seperate JSON-file called "source_preprocessed.json". Additionally to the original columns it now also has a column for the NER tagging (see following chapter), POS tagging and lemmatization.
 The JSON object is then structured as follows:
@@ -102,12 +128,12 @@ The JSON object is then structured as follows:
 ```json
 [
   {
-	"title": "text",
-	"text": "text",
-	"summary": "text",
-	"date": "date as text",
-	"authors": null,
-	"references": [],
+    "title": "text",
+    "text": "text",
+    "summary": "text",
+    "date": "date as text",
+    "authors": null,
+    "references": [],
     "persons_ner": [
       "Person 1 in text",
       "Person 2 in text"
@@ -116,8 +142,8 @@ The JSON object is then structured as follows:
       "Organization 1 in text",
       "Organization 2 in text"
     ],
-	"pos_tags": ["token", "POS-Tag"], 
-	"lemma":["text"]
+    "pos_tags": ["token", "POS-Tag"], 
+    "lemma":["text"]
   }  
 ]
 ```
@@ -127,33 +153,6 @@ As one of the first parts of the project, NER tagging was performed in order to 
 the parties to identify relevant articles in the data set. For NER tagging, spacy is used with the 
 [de_core_news_lg language model](https://spacy.io/models/de#de_core_news_lg), which has the best score for NER tagging
 compared to the other German language models provided by spacy.
-
-The results of the NER tagging are stored in JSON files and Pandas dataframes, for each news agencies one 
-(naming JSON e.g. "src/data/bild_ner.json", naming Pandas datframe variable e.g. df_bild_ner). 
-
-Structure of JSON NER files:
-
-```json
-[
-  {
-    "persons": [
-      "Person 1 in text",
-      "Person 2 in text"
-    ],
-    "organizations": [
-      "Organization 1 in text",
-      "Organization 2 in text"
-    ]
-  }  
-]
-```
-
-Structure of data frames:
-
-| index of article | persons       | organizations  |
-| ---------------- |:-------------:| :-----:         |
-| 0                | ["Person 1 in text", "Person 2 in text"] | ["Organization 1 in text",  "Organization 2 in text"] |
-| 1                | ...  |   ...  |
 
 Results of the NER tagging:
 
@@ -228,6 +227,12 @@ e.g. as role: WikiLeaks-Gründer Assange)
 
 **SUMMARY:** NER tagging with spacy and german language model does not work perfectly, but quite good and good enough 
 for a first filtering of the text to recognize in which text political parties/ actors are mentioned at all
+
+**UPDATE:** First, NER tagging was treated as a seperate task and not as part of the preprocessing pipeline. After
+integrating it into the preprocessing pipeline, it turned out that it performed best when doing it right after removing
+all special characters and before lowercasing. From a first insight into the data, it seems like through integrating it
+into the preprocessing pipeline directly, some false positives were filtered out (has to be relatet to removal of special
+characters) but also more false negatives occured. But overall, the results still look decent.
 
 
 
