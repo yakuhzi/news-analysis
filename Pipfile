@@ -10,8 +10,8 @@ coverage = "*"
 
 [packages]
 pre-commit = "*"
-pandas = "*"
 spacy = "*"
+pandas = "*"
 nltk = "*"
 gensim = "*"
 pyldavis = "*"
@@ -19,7 +19,7 @@ matplotlib = "*"
 scikit-learn = "*"
 
 [scripts]
-test = "coverage run -m unittest discover -s ./tests -p *_test.py"
+test = "coverage run -m unittest discover -p *_test.py"
 report = "coverage html"
 main = "python ./src/main.py"
 
