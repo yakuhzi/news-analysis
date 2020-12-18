@@ -49,25 +49,25 @@ from the university which is provided for this project. Details about the data a
 
 | Description                                      | Milestone          | Deadline   | Started  | Achieved | 
 |--------------------------------------------------|--------------------|------------|----------|----------|
-| Project Idea                                     | Proposal 		| 27.11.2020 | X        | X        |
-| Initial Research                                 | Proposal 		| 27.11.2020 | X        | X        |
-| Proposal Report	                           | Proposal 		| 27.11.2020 | X        | X        |
-| 			                           |   			|            |          |	   |
+| Project Idea                                     | Proposal           | 27.11.2020 | X        | X        |
+| Initial Research                                 | Proposal           | 27.11.2020 | X        | X        |
+| Proposal Report                                  | Proposal           | 27.11.2020 | X        | X        |
+|                                                  |                    |            |          |          |
 | Repository Setup                                 | December Milestone	| 18.02.2020 | X        | X        |
 | Alignment Meeting with Mentor                    | December Milestone	| 18.02.2020 | X        | X        |
-| Dataset Analysis                                 | December Milestone | 18.02.2020 | X        | -        |
-| Dataset Statistics                               | December Milestone | 18.02.2020 | X        | -        |
-| Preprocessing Pipeline                           | December Milestone | 18.02.2020 | X        | X      |
+| Dataset Analysis                                 | December Milestone | 18.02.2020 | X        | X        |
+| Dataset Statistics                               | December Milestone | 18.02.2020 | X        | X        |
+| Preprocessing Pipeline                           | December Milestone | 18.02.2020 | X        | X        |
 | Topic Detection                                  | December Milestone | 18.02.2020 | X        | -        |
 | Milestone README                                 | December Milestone | 18.02.2020 | X        | X        |
-| 			                           |   			|            |          |	   |
+|                                                  |                    |            |          |          |
 | Sentiment Analysis                               | Final Report       | February   | -        | -        |
 | Incorporate SentiWS (Sentiment Lexicon)          | Final Report       | February   | -        | -        |
 | Finding Features for corpus-based approach       | Final Report       | February   | -        | -        |
 | Final Codebase                                   | Final Report       | February   | -        | -        |
 | Final README                                     | Final Report       | February   | -        | -        |
 | Final Report                                     | Final Report       | 15.03.2021 | -        | -        |
-| 			                           |   			|            |          |	   |
+|                                                  |                    |            |          |          |
 | Project Video                                    | Presentation       | 25.02.2021 | -        | -        |
 
 ### Data Sources 
@@ -244,11 +244,19 @@ As a measure of quality for the topics, we calculated the coherence score. As `L
 Another method of analysing the quality of the topics is using a visual representation of the topics with `pyLDAvis`. Therefore the method `visualize_topics()` of the TopicDetection class can be used.
 
 ### Results
-![Coherence Score](figures/coherence_score.png)
+![Coherence Score](figures/coherence_score.png)  
+The figure above shows that the coherence score of LDA is increasing almost linearly with the number of topics. This is not ideal, as we want to cluster the topics of multiple articles and not create a topic per article. To improve the performance, we may need to improve the preprocessing and also make further analysis on how to adjust the parameters of the models.  
 
-![Coherence Score](figures/topic_visualization.png)
+![Topic Visualization](figures/topic_visualization.png)  
+Also the visual representation of the LDA topics shows that the topics are not chosen perfectly. There is no real clustering as multiple unrelated topics are merged together (e.g. sonneborn and mordkommision).
 
+Although the figures above only show results from LDA, the results of the other methods are fairly similar. We have chosen `HDP` as another option for topic modeling, because it determines the number of topics automatically and no parameter for this has to be provided. But using this model, far too much topics are generated and almost no generalization of similar topics are made.
 
+We also tried to cluster the topics using Hierarchical Agglomerative Clustering, but without much success. The following figure shows how the Dendrogram, that should help to find the optimal numbers of clusters. Normally the best choice of number of clusters should be where the largest vertical distance doesn't intersect any of the clusters. Here this is the case before any clusters are merged. Therefore, the number of optimal clusters should be equal to the number of articles. Obviously this is not what we want.
+
+![HAC](figures/hac.png)  
+
+To overcome this issues, we need to further investigate why our documents can't be grouped that easy by topic. As already mentioned, we need to further finetune the preprocessed data and the parameters of some models or maybe look at a completely different approach.
 
 
 
