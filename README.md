@@ -128,12 +128,12 @@ The JSON object is then structured as follows:
 ```json
 [
   {
-	"title": "text",
-	"text": "text",
-	"summary": "text",
-	"date": "date as text",
-	"authors": null,
-	"references": [],
+    "title": "text",
+    "text": "text",
+    "summary": "text",
+    "date": "date as text",
+    "authors": null,
+    "references": [],
     "persons_ner": [
       "Person 1 in text",
       "Person 2 in text"
@@ -142,8 +142,8 @@ The JSON object is then structured as follows:
       "Organization 1 in text",
       "Organization 2 in text"
     ],
-	"pos_tags": ["token", "POS-Tag"], 
-	"lemma":["text"]
+    "pos_tags": ["token", "POS-Tag"], 
+    "lemma":["text"]
   }  
 ]
 ```
@@ -153,33 +153,6 @@ As one of the first parts of the project, NER tagging was performed in order to 
 the parties to identify relevant articles in the data set. For NER tagging, spacy is used with the 
 [de_core_news_lg language model](https://spacy.io/models/de#de_core_news_lg), which has the best score for NER tagging
 compared to the other German language models provided by spacy.
-
-The results of the NER tagging are stored in JSON files and Pandas dataframes, for each news agencies one 
-(naming JSON e.g. "src/data/bild_ner.json", naming Pandas datframe variable e.g. df_bild_ner). 
-
-Structure of JSON NER files:
-
-```json
-[
-  {
-    "persons": [
-      "Person 1 in text",
-      "Person 2 in text"
-    ],
-    "organizations": [
-      "Organization 1 in text",
-      "Organization 2 in text"
-    ]
-  }  
-]
-```
-
-Structure of data frames:
-
-| index of article | persons       | organizations  |
-| ---------------- |:-------------:| :-----:         |
-| 0                | ["Person 1 in text", "Person 2 in text"] | ["Organization 1 in text",  "Organization 2 in text"] |
-| 1                | ...  |   ...  |
 
 Results of the NER tagging:
 
