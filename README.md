@@ -32,7 +32,7 @@ cq270@stud.uni-heidelberg.de
 A script to automatically execute tests is already defined in the project's `Pipfile`. Therefore you can simply run: `pipenv run test`
 To generate a report on code coverage alongside run: `pipenv run test && pipenv run report`
 
-## Results for the milestone
+## Milestone
 
 ### Feedback from the first meeting with mentor
 The key points from the first meeting with our mentor were that overall the project idea is good. However,
@@ -44,6 +44,29 @@ This is why we also want to consider the topics for the sentiment analysis.
 Also, through the discussion we gained some information about which data to use. There is already an existing data set
 from the university which is provided for this project. Details about the data are described in the section 
 [Data Sources](#data-sources).
+
+### Planning State
+
+| Description                                      | Milestone          | Deadline   | Started  | Achieved | 
+|--------------------------------------------------|--------------------|------------|----------|----------|
+| Project Idea                                     | Proposal 		| 27.11.2020 | X        | X        |
+| Initial Research                                 | Proposal 		| 27.11.2020 | X        | X        |
+| Proposal Report	                           | Proposal 		| 27.11.2020 | X        | X        |
+| 			                           |   			|            |          |	   |
+| Repository Setup                                 | December Milestone	| 18.02.2020 | X        | X        |
+| Alignment Meeting with Mentor                    | December Milestone	| 18.02.2020 | X        | X        |
+| Dataset Analysis                                 | December Milestone | 18.02.2020 | X        | -        |
+| Dataset Statistics                               | December Milestone | 18.02.2020 | X        | -        |
+| Preprocessing Pipeline                           | December Milestone | 18.02.2020 | X        | -        |
+| Topic Detection                                  | December Milestone | 18.02.2020 | X        | -        |
+| Milestone README                                 | December Milestone | 18.02.2020 | X        | -        |
+| 			                           |   			|            |          |	   |
+| Sentiment Analysis                               | Final Report       | February   | -        | -        |
+| Final Codebase                                   | Final Report       | February   | -        | -        |
+| Final README                                     | December Milestone | February   | -        | -        |
+| Final Report                                     | Final Report       | 15.03.2021 | -        | -        |
+| 			                           |   			|            |          |	   |
+| Project Video                                    | Presentation       | 25.02.2021 | -        | -        |
 
 ### Data Sources 
 
