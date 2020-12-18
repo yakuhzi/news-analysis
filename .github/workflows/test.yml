@@ -17,6 +17,8 @@ jobs:
       - name: Install pipenv
         run: pip install pipenv
       - name: Install development dependencies
-        run: pipenv install --dev
+        run: pipenv install --system --dev
+      - name: Download german spacy model
+        run: python -m spacy download de_core_news_lg
       - name: Run tests
         run: pipenv run test
