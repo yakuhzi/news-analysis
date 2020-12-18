@@ -73,17 +73,26 @@ The following steps are done by using the library spaCy. It provides a preproces
 
 For each data source the end result of the preprocessing is then stored in a seperate JSON-file called "source_preprocessed.json". Additionally to the original columns it now also has a column for the NER tagging (see following chapter), POS tagging and lemmatization.
 The JSON object is then structured as follows:
+
 ```json
 [
   {
-    "persons": [
+	"title": "text",
+	"text": "text",
+	"summary": "text",
+	"date": "date as text",
+	"authors": null,
+	"references": [],
+    "persons_ner": [
       "Person 1 in text",
       "Person 2 in text"
     ],
-    "organizations": [
+    "organizations_ner": [
       "Organization 1 in text",
       "Organization 2 in text"
-    ]
+    ],
+	"pos_tags": ["token", "POS-Tag"], 
+	"lemma":["text"]
   }  
 ]
 ```
