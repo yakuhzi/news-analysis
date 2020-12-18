@@ -38,27 +38,19 @@ class PreprocessArticles:
         articles["text"] = articles["text"].str.lower()
 
     def replace_new_line(self, df_preprocessed_articles):
-        df_preprocessed_articles["text"] = df_preprocessed_articles["text"].str.replace(
-            "\\n", " "
-        )
+        df_preprocessed_articles["text"] = df_preprocessed_articles["text"].str.replace("\\n", " ")
 
     def remove_special_characters(self, df_preprocessed_articles):
-        df_preprocessed_articles["text"] = df_preprocessed_articles["text"].str.replace(
-            r"[^A-Za-z0-9äöüÄÖÜß\- ]", " "
-        )
+        df_preprocessed_articles["text"] = df_preprocessed_articles["text"].str.replace(r"[^A-Za-z0-9äöüÄÖÜß\- ]", " ")
 
     def remove_stopwords(self, df_preprocessed_articles):
         stopwords = spacy.lang.de.stop_words.STOP_WORDS
         df_preprocessed_articles["text"] = df_preprocessed_articles["text"].apply(
-            lambda words: " ".join(
-                word for word in words.split() if word not in stopwords
-            )
+            lambda words: " ".join(word for word in words.split() if word not in stopwords)
         )
 
     def tokenization(self, df_preprocessed_articles):
-        df_preprocessed_articles["text"] = df_preprocessed_articles["text"].apply(
-            lambda x: self.nlp(x)
-        )
+        df_preprocessed_articles["text"] = df_preprocessed_articles["text"].apply(lambda x: self.nlp(x))
 
     def pos_tagging(self, df_preprocessed_articles):
         df_preprocessed_articles["pos_tags"] = df_preprocessed_articles["text"].apply(
@@ -85,9 +77,7 @@ class PreprocessArticles:
         return row
 
     def concat_lemma(self, df_preprocessed_articles):
-        df_preprocessed_articles["lemma"] = df_preprocessed_articles["lemma"].apply(
-            lambda row: [" ".join(row)]
-        )
+        df_preprocessed_articles["lemma"] = df_preprocessed_articles["lemma"].apply(lambda row: [" ".join(row)])
 
     def tag_dataframe(self, row: pd.Series) -> pd.Series:
         """
@@ -123,17 +113,13 @@ class PreprocessArticles:
         person_list = list(map(lambda entity: entity.text, filtered_persons))
         #  search for organizations and apply filter that only persons remain in list
         filtered_organizations = filter(lambda entity: entity.label_ == "ORG", doc.ents)
-        organization_list = list(
-            map(lambda entity: entity.text, filtered_organizations)
-        )
+        organization_list = list(map(lambda entity: entity.text, filtered_organizations))
         person_list = PreprocessArticles.filter_out_synonyms(person_list, 3)
         organization_list = PreprocessArticles.filter_out_synonyms(organization_list, 1)
         return person_list, organization_list
 
     @staticmethod
-    def filter_out_synonyms(
-        ner_list: List[str], biggest_allowed_distance: int
-    ) -> List[str]:
+    def filter_out_synonyms(ner_list: List[str], biggest_allowed_distance: int) -> List[str]:
         new_ner_list = list(dict.fromkeys(ner_list))
         # print(ner_list)
         # print(new_ner_list)
@@ -154,13 +140,9 @@ class PreprocessArticles:
         self.nlp = spacy.load("de_core_news_lg", disable=["parser"])
         print("Number of articles: {}".format(len(df_preprocessed_articles)))
         # NER Tagging for persons and organizations
-        df_preprocessed_articles = df_preprocessed_articles.apply(
-            self.tag_dataframe, axis=1
-        )
+        df_preprocessed_articles = df_preprocessed_articles.apply(self.tag_dataframe, axis=1)
 
-        df_preprocessed_articles = df_preprocessed_articles.apply(
-            self.find_parties, axis=1
-        )
+        df_preprocessed_articles = df_preprocessed_articles.apply(self.find_parties, axis=1)
         df_preprocessed_articles = df_preprocessed_articles.loc[
             np.array(list(map(len, df_preprocessed_articles.parties.values))) > 0
         ]

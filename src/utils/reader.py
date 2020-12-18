@@ -19,7 +19,7 @@ class Reader:
         self.df_tagesschau_articles: Optional[pd.DataFrame] = None
         self.df_taz_articles: Optional[pd.DataFrame] = None
 
-    def read_articles(self) -> None:
+    def read_articles(self, number: int = None) -> None:
         """
         Reads the news article for every news agency and stores it in the corresponding instance variables.
         """
@@ -28,9 +28,10 @@ class Reader:
         self.df_tagesschau_articles = self.__read("src/data/tagesschau.json")
         self.df_taz_articles = self.__read("src/data/taz.json")
 
-        self.df_bild_articles = self.df_bild_articles.truncate(after=299)
-        self.df_tagesschau_articles = self.df_tagesschau_articles.truncate(after=299)
-        self.df_taz_articles = self.df_taz_articles.truncate(after=299)
+        if number is not None:
+            self.df_bild_articles = self.df_bild_articles.head(number)
+            self.df_tagesschau_articles = self.df_tagesschau_articles.head(number)
+            self.df_taz_articles = self.df_taz_articles.head(number)
 
     @staticmethod
     def read_json_to_df_default(path: str) -> pd.DataFrame:
