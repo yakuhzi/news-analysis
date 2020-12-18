@@ -12,6 +12,7 @@ coverage = "*"
 pre-commit = "*"
 spacy = "*"
 pandas = "*"
+nltk = "*"
 
 [scripts]
 test = "coverage run -m unittest discover -p *_test.py"
