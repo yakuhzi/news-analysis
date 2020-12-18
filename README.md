@@ -63,7 +63,7 @@ from the university which is provided for this project. Details about the data a
 | 			                           |   			|            |          |	   |
 | Sentiment Analysis                               | Final Report       | February   | -        | -        |
 | Final Codebase                                   | Final Report       | February   | -        | -        |
-| Final README                                     | December Milestone | February   | -        | -        |
+| Final README                                     | Final Report       | February   | -        | -        |
 | Final Report                                     | Final Report       | 15.03.2021 | -        | -        |
 | 			                           |   			|            |          |	   |
 | Project Video                                    | Presentation       | 25.02.2021 | -        | -        |
