@@ -1,5 +1,8 @@
-from typing import List, Tuple
+import itertools
+from collections import defaultdict
+from typing import Dict, List, Tuple
 
+import nltk
 import pandas as pd
 import spacy
 from spacy.lang.de.stop_words import STOP_WORDS
@@ -56,8 +59,13 @@ class PreprocessArticles:
         - row: Pandas series with the tagged text in colums 'persons' and 'rows'
         """
         persons, organizations = self.tag(row.text)
-        row["persons_ner"] = persons
-        row["organizations_ner"] = organizations
+        # distance for persons can be bigger than parties, TODO: check if 3 is a good choice
+        row["persons_ner"] = PreprocessArticles.filter_out_synonyms(persons, 3)
+        # distance for parties can only be one because of acronyms (FDP, SPD,...)
+        # TODO: what todo with CDU/CSU? treat as one party or two different
+        row["organizations_ner"] = PreprocessArticles.filter_out_synonyms(
+            organizations, 1
+        )
         return row
 
     def tag(self, content: str) -> Tuple[List[str], List[str]]:
@@ -83,6 +91,96 @@ class PreprocessArticles:
             map(lambda entity: entity.text, filtered_organizations)
         )
         return person_list, organization_list
+
+    @staticmethod
+    def calculate_word_distance(list_to_filter: List[str]) -> Dict[str, List]:
+        """
+        Calculates the distance between two words with the Levenshtein distance
+
+        Arguments:
+        - list_to_filter: the list with the words to calculate the distance
+
+        Return:
+        - similar_dict: dictionary with information about the distance
+                structure key: word in list_to_filter
+                          value: list [distance_to_other_word, other_word]
+        """
+        similar_dict = defaultdict(list)
+        # go over all possible combinations between two words
+        for a, b in itertools.combinations(list_to_filter, 2):
+            dist = nltk.edit_distance(a, b)
+            similar_dict[a].append((dist, b))
+        return similar_dict
+
+    @staticmethod
+    def build_list_without_synonyms(
+        list_to_filter: List[str],
+        similar_dict: Dict[str, List],
+        biggest_allowed_distance: int,
+    ) -> List[str]:
+        """
+        Filters out the words of the list that have a smaller distance than biggest_allowed_distance
+
+        Arguments:
+        - list_to_filter: the list where duplicates should be removed
+        - similar_dict: dictionary with information about distances between words in list
+        - biggest_allowed_distance: maximum distance between two words
+
+        Return:
+        - new_ner_list: list without synonyms
+        """
+        # empty list where to store all words that are no synonyms
+        new_ner_list = []
+        # list of lists with all synonyms to a word in the dict (key)
+        overall_similar_list = []
+        for key, value in similar_dict.items():
+            similar_list = []
+            # indicate if already a synonym for a key has been found
+            found = False
+            for val in value:
+                if int(val[0]) <= biggest_allowed_distance:
+                    # if no synonym has been found yet, also the key itself needs to be put in similarity list
+                    # otherwise the key is already in similarity list and only the word that is similar to the key
+                    # needs to be stored
+                    if not found:
+                        similar_list.append(key)
+                        found = True
+                    similar_list.append(val[1])
+            overall_similar_list.append(similar_list)
+            print(overall_similar_list)
+            # check if the key has synonyms in text at all
+            key_in_similar_list = any(
+                key in sublist for sublist in overall_similar_list
+            )
+            # if key has no similarities, append the key itself
+            if not found and not key_in_similar_list:
+                new_ner_list.append(key)
+            # otherwise, append an element from the similar words to the key
+            elif found and key_in_similar_list:
+                new_ner_list.append(similar_list[0])
+        # last word is not in dict, so it needs to be appended separately if it is not already in the filtered list
+        # it is already in the filtered list if there was a word before that is detected as synonym
+        if len(list_to_filter) > 0:
+            last_word_in_similar_list = any(
+                list_to_filter[-1] in sublist for sublist in overall_similar_list
+            )
+            if not last_word_in_similar_list:
+                new_ner_list.append(list_to_filter[-1])
+        return new_ner_list
+
+    @staticmethod
+    def filter_out_synonyms(
+        ner_list: List[str], biggest_allowed_distance: int
+    ) -> List[str]:
+        similar_dict = PreprocessArticles.calculate_word_distance(ner_list)
+        new_ner_list = PreprocessArticles.build_list_without_synonyms(
+            ner_list, similar_dict, biggest_allowed_distance
+        )
+        print(ner_list)
+        print(new_ner_list)
+        print(len(ner_list))
+        print(len(new_ner_list))
+        return new_ner_list
 
     def preprocessing(self, articles: pd.DataFrame):
         df_preprocessed_articles = articles.copy()
