@@ -63,6 +63,7 @@ from the university which is provided for this project. Details about the data a
 | 			                           |   			|            |          |	   |
 | Sentiment Analysis                               | Final Report       | February   | -        | -        |
 | Incorporate SentiWS (Sentiment Lexicon)          | Final Report       | February   | -        | -        |
+| Finding Features for corpus-based approach       | Final Report       | February   | -        | -        |
 | Final Codebase                                   | Final Report       | February   | -        | -        |
 | Final README                                     | Final Report       | February   | -        | -        |
 | Final Report                                     | Final Report       | 15.03.2021 | -        | -        |
