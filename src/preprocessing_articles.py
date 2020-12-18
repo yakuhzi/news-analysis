@@ -45,6 +45,11 @@ class PreprocessArticles:
             lambda row: [word.lemma_ for word in row]
         )
 
+    def concat_lemma(self, df_preprocessed_articles):
+        df_preprocessed_articles["lemma"] = df_preprocessed_articles["lemma"].apply(
+            lambda row: [" ".join(row)]
+        )
+
     def tag_dataframe(self, row: pd.Series) -> pd.Series:
         """
         Function to apply on Pandas data frame that it is tagged
@@ -118,5 +123,6 @@ class PreprocessArticles:
 
         # stemming or lemmatization
         self.lemmatizing(df_preprocessed_articles)
+        self.concat_lemma(df_preprocessed_articles)
 
         return df_preprocessed_articles
