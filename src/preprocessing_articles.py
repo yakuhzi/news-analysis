@@ -3,6 +3,7 @@ from collections import defaultdict
 from typing import Dict, List, Tuple
 
 import nltk
+import numpy as np
 import pandas as pd
 import spacy
 from spacy.lang.de.stop_words import STOP_WORDS
@@ -11,6 +12,27 @@ from spacy.lang.de.stop_words import STOP_WORDS
 class PreprocessArticles:
     def __init__(self):
         self.nlp = None
+        self.parties = {
+            "CDU": ["cdu", "union"],
+            "CSU": ["csu"],
+            "SPD": ["spd", "sozialdemokraten"],
+            "Grüne": [
+                "grüne",
+                "grünen",
+                "die grüne",
+                "die grünen",
+                "den grünen",
+                "bündnis90 die grünen",
+            ],
+            "FDP": [
+                "fdp",
+                "liberalen",
+                "freien demokrate",
+                "freie demokratische partei",
+            ],
+            "AfD": ["afd", "alternative für deutschland"],
+            "Linke": ["linke", "die linke", "den linken"],
+        }
 
     def lowercase_article(self, articles):
         articles["text"] = articles["text"].str.lower()
@@ -47,6 +69,20 @@ class PreprocessArticles:
         df_preprocessed_articles["lemma"] = df_preprocessed_articles["text"].apply(
             lambda row: [word.lemma_ for word in row]
         )
+
+    def find_parties(self, row: pd.Series) -> pd.Series:
+        organizations = [x.lower() for x in row["organizations_ner"]]
+        # print("-------------------")
+        # print(row)
+        # print("-------------------")
+
+        party_list = []
+        for organization in organizations:
+            for key, value in self.parties.items():
+                if organization in value and key not in party_list:
+                    party_list.append(key)
+        row["parties"] = party_list
+        return row
 
     def tag_dataframe(self, row: pd.Series) -> pd.Series:
         """
@@ -94,15 +130,14 @@ class PreprocessArticles:
         ner_list: List[str], biggest_allowed_distance: int
     ) -> List[str]:
         new_ner_list = list(dict.fromkeys(ner_list))
-        print(ner_list)
-        print(new_ner_list)
-        print(len(ner_list))
-        print(len(new_ner_list))
+        # print(ner_list)
+        # print(new_ner_list)
+        # print(len(ner_list))
+        # print(len(new_ner_list))
         return new_ner_list
 
     def preprocessing(self, articles: pd.DataFrame):
         df_preprocessed_articles = articles.copy()
-        df_preprocessed_articles = df_preprocessed_articles[:10]
 
         self.replace_new_line(df_preprocessed_articles)
 
@@ -112,12 +147,19 @@ class PreprocessArticles:
         # de_core_news_lg had the best score for entity recognition and syntax accuracy in german according to spacy.
         # for more information, see https://spacy.io/models/de#de_core_news_lg
         self.nlp = spacy.load("de_core_news_lg", disable=["parser"])
-
+        print("Number of articles: {}".format(len(df_preprocessed_articles)))
         # NER Tagging for persons and organizations
         df_preprocessed_articles = df_preprocessed_articles.apply(
             self.tag_dataframe, axis=1
         )
 
+        df_preprocessed_articles = df_preprocessed_articles.apply(
+            self.find_parties, axis=1
+        )
+        df_preprocessed_articles = df_preprocessed_articles.loc[
+            np.array(list(map(len, df_preprocessed_articles.parties.values))) > 0
+        ]
+        print("Number of articles 2: {}".format(len(df_preprocessed_articles)))
         # lowercase everything
         self.lowercase_article(df_preprocessed_articles)
 

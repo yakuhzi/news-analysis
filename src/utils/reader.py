@@ -28,9 +28,9 @@ class Reader:
         self.df_tagesschau_articles = self.__read("src/data/tagesschau.json")
         self.df_taz_articles = self.__read("src/data/taz.json")
 
-        self.df_bild_articles = self.df_bild_articles.truncate(after=99)
-        self.df_tagesschau_articles = self.df_tagesschau_articles.truncate(after=99)
-        self.df_taz_articles = self.df_taz_articles.truncate(after=99)
+        self.df_bild_articles = self.df_bild_articles.truncate(after=299)
+        self.df_tagesschau_articles = self.df_tagesschau_articles.truncate(after=299)
+        self.df_taz_articles = self.df_taz_articles.truncate(after=299)
 
     @staticmethod
     def read_json_to_df_default(path: str) -> pd.DataFrame:
