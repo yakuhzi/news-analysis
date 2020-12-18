@@ -59,13 +59,8 @@ class PreprocessArticles:
         - row: Pandas series with the tagged text in colums 'persons' and 'rows'
         """
         persons, organizations = self.tag(row.text)
-        # distance for persons can be bigger than parties, TODO: check if 3 is a good choice
-        row["persons_ner"] = PreprocessArticles.filter_out_synonyms(persons, 3)
-        # distance for parties can only be one because of acronyms (FDP, SPD,...)
-        # TODO: what todo with CDU/CSU? treat as one party or two different
-        row["organizations_ner"] = PreprocessArticles.filter_out_synonyms(
-            organizations, 1
-        )
+        row["persons_ner"] = persons
+        row["organizations_ner"] = organizations
         return row
 
     def tag(self, content: str) -> Tuple[List[str], List[str]]:
@@ -90,6 +85,12 @@ class PreprocessArticles:
         organization_list = list(
             map(lambda entity: entity.text, filtered_organizations)
         )
+        # filter out synonyms
+        # distance for persons can be bigger than parties, TODO: check if 3 is a good choice
+        person_list = PreprocessArticles.filter_out_synonyms(person_list, 3)
+        # distance for parties can only be one because of acronyms (FDP, SPD,...)
+        # TODO: what todo with CDU/CSU? treat as one party or two different
+        organization_list = PreprocessArticles.filter_out_synonyms(organization_list, 1)
         return person_list, organization_list
 
     @staticmethod
