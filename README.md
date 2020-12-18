@@ -57,11 +57,12 @@ from the university which is provided for this project. Details about the data a
 | Alignment Meeting with Mentor                    | December Milestone	| 18.02.2020 | X        | X        |
 | Dataset Analysis                                 | December Milestone | 18.02.2020 | X        | -        |
 | Dataset Statistics                               | December Milestone | 18.02.2020 | X        | -        |
-| Preprocessing Pipeline                           | December Milestone | 18.02.2020 | X        | -        |
+| Preprocessing Pipeline                           | December Milestone | 18.02.2020 | X        | X      |
 | Topic Detection                                  | December Milestone | 18.02.2020 | X        | -        |
-| Milestone README                                 | December Milestone | 18.02.2020 | X        | -        |
+| Milestone README                                 | December Milestone | 18.02.2020 | X        | X        |
 | 			                           |   			|            |          |	   |
 | Sentiment Analysis                               | Final Report       | February   | -        | -        |
+| Incorporate SentiWS (Sentiment Lexicon)          | Final Report       | February   | -        | -        |
 | Final Codebase                                   | Final Report       | February   | -        | -        |
 | Final README                                     | Final Report       | February   | -        | -        |
 | Final Report                                     | Final Report       | 15.03.2021 | -        | -        |
