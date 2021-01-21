@@ -24,4 +24,4 @@ class Writer:
         """
         path = "src/data/" + filename + ".json"
         with open(path, "w", encoding="utf-8") as file:
-            df.to_json(file, force_ascii=False, orient="records", default_handler=str)
+            df.to_json(file, force_ascii=False, orient="records", default_handler=str, index=True)

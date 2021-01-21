@@ -34,19 +34,23 @@ class Reader:
             self.df_taz_articles = self.df_taz_articles.head(number)
 
     @staticmethod
-    def read_json_to_df_default(path: str) -> pd.DataFrame:
+    def read_json_to_df_default(path: str, set_article_index=False) -> pd.DataFrame:
         """
         Read a json into a Pandas dataframe without any modifications on types.
 
         Arguments:
         - path: the path of the json file
+        - set_article_index: if True, the original article index is set as index in the data frame
 
         Return:
         - Pandas data frame build from the json file
         """
         with open(path, encoding="utf8") as json_file:
             json_dict = json.load(json_file)
-            return pd.DataFrame(json_dict)
+            df = pd.DataFrame(json_dict)
+            if set_article_index:
+                df.set_index("article_index", inplace=True, drop=True)
+            return df
 
     @staticmethod
     def __read(path: str) -> pd.DataFrame:
