@@ -1,4 +1,5 @@
 import itertools
+import re
 from collections import defaultdict
 from typing import Dict, List, Tuple
 
@@ -37,17 +38,30 @@ class PreprocessArticles:
     def lowercase_article(self, articles):
         articles["text"] = articles["text"].str.lower()
 
-    def replace_new_line(self, df_preprocessed_articles):
-        df_preprocessed_articles["text"] = df_preprocessed_articles["text"].str.replace("\\n", " ")
+    def extract_paragraphs(self, articles, df_preprocessed_articles):
+        print(articles.head())
+        texts = articles["text"]
+        paragraph_list = list(map(lambda text: text.replace("\n\n", "\n").split("\n"), texts))
+        flat_list = [(index, item) for index, sublist in enumerate(paragraph_list) for item in sublist]
+        list_indices, list_paragraph_texts = zip(*flat_list)
+        df_preprocessed_articles["article_index"] = list_indices
+        df_preprocessed_articles["text"] = list_paragraph_texts
+        print(df_preprocessed_articles.head(100))
 
     def remove_special_characters(self, df_preprocessed_articles):
         df_preprocessed_articles["text"] = df_preprocessed_articles["text"].str.replace(r"[^A-Za-z0-9äöüÄÖÜß\- ]", " ")
+        # df_preprocessed_articles["paragraphs"] = df_preprocessed_articles["paragraphs"].apply(
+        #     lambda row: [re.sub(r"[^A-Za-z0-9äöüÄÖÜß\- ]", "", paragraph) for paragraph in row]
+        # )
 
     def remove_stopwords(self, df_preprocessed_articles):
         stopwords = spacy.lang.de.stop_words.STOP_WORDS
         df_preprocessed_articles["text"] = df_preprocessed_articles["text"].apply(
             lambda words: " ".join(word for word in words.split() if word not in stopwords)
         )
+        # df_preprocessed_articles["paragraphs"] = df_preprocessed_articles["paragraphs"].apply(
+        #     lambda row: [" ".join(word for word in paragraph.split(" ") if word not in stopwords) for paragraph in row]
+        # )
 
     def tokenization(self, df_preprocessed_articles):
         df_preprocessed_articles["text"] = df_preprocessed_articles["text"].apply(lambda x: self.nlp(x))
@@ -127,10 +141,13 @@ class PreprocessArticles:
         # print(len(new_ner_list))
         return new_ner_list
 
-    def preprocessing(self, articles: pd.DataFrame):
-        df_preprocessed_articles = articles.copy()
-
-        self.replace_new_line(df_preprocessed_articles)
+    def preprocessing(self, articles: pd.DataFrame, split_paragraphs=True):
+        if split_paragraphs:
+            df_preprocessed_articles = pd.DataFrame({"text": []})
+            self.extract_paragraphs(articles, df_preprocessed_articles)
+        else:
+            df_preprocessed_articles = articles.copy()
+            df_preprocessed_articles["article_index"] = df_preprocessed_articles.index
 
         # remove special characters (regex)
         self.remove_special_characters(df_preprocessed_articles)
