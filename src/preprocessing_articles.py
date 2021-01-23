@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import spacy
 from spacy.lang.de.stop_words import STOP_WORDS
+from spacy_sentiws import spaCySentiWS
 
 
 class PreprocessArticles:
@@ -69,6 +70,11 @@ class PreprocessArticles:
     def pos_tagging(self, df_preprocessed_articles):
         df_preprocessed_articles["pos_tags"] = df_preprocessed_articles["text"].apply(
             lambda row: [(word, word.tag_) for word in row]
+        )
+
+    def sentiws(self, df_preprocessed_articles):
+        df_preprocessed_articles["sentiws"] = df_preprocessed_articles["text"].apply(
+            lambda row: [(word, word._.sentiws) for word in row]
         )
 
     def lemmatizing(self, df_preprocessed_articles):
@@ -155,6 +161,7 @@ class PreprocessArticles:
         # de_core_news_lg had the best score for entity recognition and syntax accuracy in german according to spacy.
         # for more information, see https://spacy.io/models/de#de_core_news_lg
         self.nlp = spacy.load("de_core_news_lg", disable=["parser"])
+        sentiws = spaCySentiWS(sentiws_path="src/data/sentiws/")
         print("Number of articles: {}".format(len(df_preprocessed_articles)))
         # NER Tagging for persons and organizations
         df_preprocessed_articles = df_preprocessed_articles.apply(self.tag_dataframe, axis=1)
@@ -175,6 +182,8 @@ class PreprocessArticles:
         # tokenization
         self.tokenization(df_preprocessed_articles)
 
+        self.nlp.add_pipe(sentiws)
+        self.sentiws(df_preprocessed_articles)
         # POS tagging (before stemming? Could be used to count positive or negative adjectives etc.
         self.pos_tagging(df_preprocessed_articles)
 
