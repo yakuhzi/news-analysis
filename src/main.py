@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import List
 
-import regex as re
 from pandas import DataFrame
-from topic_detection import TopicDetection
+from topic_clustering import TopicClustering
+from topic_zero_shot import TopicZeroShot
 
 from src.preprocessing_articles import PreprocessArticles
 from src.utils.reader import Reader
@@ -36,14 +36,13 @@ def get_preprocessed_df(
     return df_preprocessed
 
 
-if __name__ == "__main__":
-    reader = Reader()
-    reader.read_articles(100)
+def filter_nouns(row: List[List[str]]) -> List[str]:
+    noun_pairs = filter(lambda word_pair: word_pair[1] == "NN", row)
+    nouns = map(lambda word_pair: word_pair[0], noun_pairs)
+    return list(nouns)
 
-    print("Number of Bild articles: {}".format(len(reader.df_bild_articles.index)))
-    print("Number of Tagesschau articles: {}".format(len(reader.df_tagesschau_articles.index)))
-    print("Number of TAZ articles: {}".format(len(reader.df_taz_articles.index)))
 
+def preprocess_articles(reader: Reader):
     # Preprocess articles
     bild_preprocessed_file = "bild_preprocessed"
     df_bild_preprocessed = get_preprocessed_df(
@@ -69,6 +68,10 @@ if __name__ == "__main__":
     print(df_taz_preprocessed.dtypes)
     print(df_taz_preprocessed.head())
 
+    return df_tagesschau_preprocessed.append(df_taz_preprocessed).append(df_bild_preprocessed)
+
+
+def preprocess_paragraphs(reader: Reader):
     # Preprocess paragraphs of articles
     bild_preprocessed_paragraphs_file = "bild_preprocessed_paragraphs"
     df_bild_preprocessed_paragraphs = get_preprocessed_df(bild_preprocessed_paragraphs_file, reader.df_bild_articles)
@@ -90,25 +93,81 @@ if __name__ == "__main__":
     print(df_taz_preprocessed_paragraphs.dtypes)
     print(df_taz_preprocessed_paragraphs.head())
 
-    # df_articles = df_bild_preprocessed.append(df_tagesschau_preprocessed).append(df_taz_preprocessed)
-    # print(len(df_articles))
-    #
-    # text_data: List[List[str]] = []
-    #
-    # for index, row in df_articles.sample(n=1000).iterrows():
+    return df_tagesschau_preprocessed_paragraphs.append(df_taz_preprocessed_paragraphs).append(
+        df_bild_preprocessed_paragraphs
+    )
+
+
+if __name__ == "__main__":
+    reader = Reader()
+    reader.read_articles(1000)
+
+    print("Number of Bild articles: {}".format(len(reader.df_bild_articles.index)))
+    print("Number of Tagesschau articles: {}".format(len(reader.df_tagesschau_articles.index)))
+    print("Number of TAZ articles: {}".format(len(reader.df_taz_articles.index)))
+
+    df_paragraphs = preprocess_paragraphs(reader)
+    print(len(df_paragraphs))
+
+    df_paragraphs["nouns"] = df_paragraphs["pos_tags"].apply(lambda row: filter_nouns(row))
+    text_data: List[List[str]] = df_paragraphs["nouns"].tolist()
+
+    print(text_data)
+
+    topics = [
+        "Innenpolitik",
+        "Außenpolitik",
+        "Wirtschaft",
+        "Finanzen",
+        "Umwelt",
+        "Wissenschaft",
+        "Justiz",
+        "Corona",
+        "Arbeit & Soziales",
+        "Landwirtschaft",
+        "Sicherheit",
+    ]
+
+    topic_zero_shot = TopicZeroShot(text_data[:-1])
+    topic_zero_shot.predict(text_data[:1], topics)
+
+    # topic_clustering = TopicClustering(text_data[:-1])
+    # model, vectorizer = topic_clustering.train()
+    # topic_clustering.predict(model, vectorizer, text_data[-1])
+
+    # for index, row in df_articles.sample(n=5).iterrows():
     #     text = re.sub(" \\d+", "", row["text"])
     #     text_data.append(text.split(" "))
+
+    # topic_classification = TopicClassification(text_data[:-1])
+    # llda_model = topic_classification.train_llda()
     #
+    # document = " ".join(text_data[-1])
+    # document = "example llda model example example good perfect good perfect good perfect" * 100
+    # print(document)
+    # topics = topic_classification.predict_llda(llda_model, document)
+    # print(topics)
+    #
+    # llda_model.save_model_to_dir("./")
+    # print(llda_model.top_terms_of_topic("Social Affairs and Labour Market", 15, True))
+    # print(llda_model.top_terms_of_topic("Culture and Education", 15, True))
+    # print(llda_model.top_terms_of_topic("Agriculture", 15, True))
+    # print(llda_model.top_terms_of_topic("Finance", 15, True))
+    # print(llda_model.top_terms_of_topic("Justice", 15, True))
+    # print(llda_model.top_terms_of_topic("Internal Affairs", 15, True))
+    # print(llda_model.top_terms_of_topic("Environment and Regional Planning", 15, True))
+    # print(llda_model.top_terms_of_topic("Security and Foreign Affairs", 15, True))
+
     # topic_detection = TopicDetection(text_data)
     #
     # lsa_model = topic_detection.get_lsa_model(num_topics=20)
     # lda_model = topic_detection.get_lda_model(num_topics=20)
     # hdp_model = topic_detection.get_hdp_model()
-    #
+
     # topic_detection.calculate_coherence_score(lsa_model)
     # topic_detection.calculate_coherence_score(lda_model)
     # topic_detection.calculate_coherence_score(hdp_model)
-    #
+
     # topic_detection.save_topics_per_document(lsa_model, "src/data/lsa_topics")
     # topic_detection.save_topics_per_document(lda_model, "src/data/lda_topics")
     # topic_detection.save_topics_per_document(hdp_model, "src/data/hdp_topics")
