@@ -1,9 +1,10 @@
 from pathlib import Path
 from typing import List
 
+import numpy as np
+from matplotlib import pyplot as plt
 from pandas import DataFrame
-from topic_clustering import TopicClustering
-from topic_zero_shot import TopicZeroShot
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 from src.preprocessing_articles import PreprocessArticles
 from src.utils.reader import Reader
@@ -42,7 +43,7 @@ def filter_nouns(row: List[List[str]]) -> List[str]:
     return list(nouns)
 
 
-def preprocess_articles(reader: Reader):
+def preprocess_articles():
     # Preprocess articles
     bild_preprocessed_file = "bild_preprocessed"
     df_bild_preprocessed = get_preprocessed_df(
@@ -71,7 +72,7 @@ def preprocess_articles(reader: Reader):
     return df_tagesschau_preprocessed.append(df_taz_preprocessed).append(df_bild_preprocessed)
 
 
-def preprocess_paragraphs(reader: Reader):
+def preprocess_paragraphs():
     # Preprocess paragraphs of articles
     bild_preprocessed_paragraphs_file = "bild_preprocessed_paragraphs"
     df_bild_preprocessed_paragraphs = get_preprocessed_df(bild_preprocessed_paragraphs_file, reader.df_bild_articles)
@@ -98,81 +99,48 @@ def preprocess_paragraphs(reader: Reader):
     )
 
 
+def get_party_paragraphs(party: str):
+    return df_paragraphs[df_paragraphs.apply(lambda row: len(row["parties"]) == 1 and party in row["parties"], axis=1)]
+
+
 if __name__ == "__main__":
     reader = Reader()
-    reader.read_articles(1000)
+    reader.read_articles(13000)
 
     print("Number of Bild articles: {}".format(len(reader.df_bild_articles.index)))
     print("Number of Tagesschau articles: {}".format(len(reader.df_tagesschau_articles.index)))
     print("Number of TAZ articles: {}".format(len(reader.df_taz_articles.index)))
 
-    df_paragraphs = preprocess_paragraphs(reader)
+    df_paragraphs = preprocess_paragraphs()
     print(len(df_paragraphs))
 
     df_paragraphs["nouns"] = df_paragraphs["pos_tags"].apply(lambda row: filter_nouns(row))
     text_data: List[List[str]] = df_paragraphs["nouns"].tolist()
 
-    print(text_data)
+    # text_data: List[List[str]] = df_paragraphs["text"].apply(lambda row: row.split()).tolist()
+    text_data = list(filter(lambda text: len(text) > 10, text_data))
 
-    topics = [
-        "Innenpolitik",
-        "Außenpolitik",
-        "Wirtschaft",
-        "Finanzen",
-        "Umwelt",
-        "Wissenschaft",
-        "Justiz",
-        "Corona",
-        "Arbeit & Soziales",
-        "Landwirtschaft",
-        "Sicherheit",
-    ]
+    text_data_cdu = get_party_paragraphs("CDU")
+    text_data_csu = get_party_paragraphs("CSU")
+    text_data_spd = get_party_paragraphs("SPD")
+    text_data_fdp = get_party_paragraphs("FDP")
+    text_data_afd = get_party_paragraphs("AfD")
+    text_data_gruene = get_party_paragraphs("Grüne")
+    text_data_linke = get_party_paragraphs("Linke")
 
-    topic_zero_shot = TopicZeroShot(text_data[:-1])
-    topic_zero_shot.predict(text_data[:1], topics)
+    print(text_data_cdu)
 
-    # topic_clustering = TopicClustering(text_data[:-1])
-    # model, vectorizer = topic_clustering.train()
-    # topic_clustering.predict(model, vectorizer, text_data[-1])
+    # Vectorize character_words
+    vectorizer = CountVectorizer(min_df=5)
+    count_vectorized = vectorizer.fit_transform(text_data_cdu["text"])
 
-    # for index, row in df_articles.sample(n=5).iterrows():
-    #     text = re.sub(" \\d+", "", row["text"])
-    #     text_data.append(text.split(" "))
+    # Apply Tfidf to count_vectorized
+    transformer = TfidfTransformer(smooth_idf=True, use_idf=True)
+    transformed_words = transformer.fit_transform(count_vectorized)
+    weights = np.asarray(transformed_words.mean(axis=0)).ravel().tolist()
+    weights_df = DataFrame({"term": vectorizer.get_feature_names(), "TF_IDF": weights})
+    weights_df = weights_df.sort_values("TF_IDF", ascending=False).reset_index(drop=False)[:10]
+    weights_df.plot.bar(x="term", y="TF_IDF", rot=15, width=0.7, figsize=(10, 5))
 
-    # topic_classification = TopicClassification(text_data[:-1])
-    # llda_model = topic_classification.train_llda()
-    #
-    # document = " ".join(text_data[-1])
-    # document = "example llda model example example good perfect good perfect good perfect" * 100
-    # print(document)
-    # topics = topic_classification.predict_llda(llda_model, document)
-    # print(topics)
-    #
-    # llda_model.save_model_to_dir("./")
-    # print(llda_model.top_terms_of_topic("Social Affairs and Labour Market", 15, True))
-    # print(llda_model.top_terms_of_topic("Culture and Education", 15, True))
-    # print(llda_model.top_terms_of_topic("Agriculture", 15, True))
-    # print(llda_model.top_terms_of_topic("Finance", 15, True))
-    # print(llda_model.top_terms_of_topic("Justice", 15, True))
-    # print(llda_model.top_terms_of_topic("Internal Affairs", 15, True))
-    # print(llda_model.top_terms_of_topic("Environment and Regional Planning", 15, True))
-    # print(llda_model.top_terms_of_topic("Security and Foreign Affairs", 15, True))
-
-    # topic_detection = TopicDetection(text_data)
-    #
-    # lsa_model = topic_detection.get_lsa_model(num_topics=20)
-    # lda_model = topic_detection.get_lda_model(num_topics=20)
-    # hdp_model = topic_detection.get_hdp_model()
-
-    # topic_detection.calculate_coherence_score(lsa_model)
-    # topic_detection.calculate_coherence_score(lda_model)
-    # topic_detection.calculate_coherence_score(hdp_model)
-
-    # topic_detection.save_topics_per_document(lsa_model, "src/data/lsa_topics")
-    # topic_detection.save_topics_per_document(lda_model, "src/data/lda_topics")
-    # topic_detection.save_topics_per_document(hdp_model, "src/data/hdp_topics")
-    #
-    # # topic_detection.plot_coherence_scores("LSA", start=5, limit=50, step=5)
-    # # topic_detection.plot_coherence_scores("LDA", start=5, limit=50, step=5)
-    #
-    # topic_detection.visualize_topics(lda_model)
+    plt.title("TF_IDF", size=15)
+    plt.show()

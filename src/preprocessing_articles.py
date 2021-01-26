@@ -1,9 +1,5 @@
-import itertools
-import re
-from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
-import nltk
 import numpy as np
 import pandas as pd
 import spacy
@@ -103,12 +99,13 @@ class PreprocessArticles:
         Return:
         - row: Pandas series with the tagged text in colums 'persons' and 'rows'
         """
-        persons, organizations = self.tag(row.text)
+        persons, organizations, text = self.tag(row.text)
         row["persons_ner"] = persons
         row["organizations_ner"] = organizations
+        row["text"] = text
         return row
 
-    def tag(self, content: str) -> Tuple[List[str], List[str]]:
+    def tag(self, content: str) -> Tuple[List[str], List[str], str]:
         """
         Searches for Names and Organizations in texts in order to identify relevant articles with political parties
 
@@ -130,7 +127,9 @@ class PreprocessArticles:
         organization_list = list(map(lambda entity: entity.text, filtered_organizations))
         person_list = PreprocessArticles.filter_out_synonyms(person_list, 3)
         organization_list = PreprocessArticles.filter_out_synonyms(organization_list, 1)
-        return person_list, organization_list
+
+        text = " ".join([t.text if not t.ent_type_ else "" for t in doc])
+        return person_list, organization_list, text
 
     @staticmethod
     def filter_out_synonyms(ner_list: List[str], biggest_allowed_distance: int) -> List[str]:
