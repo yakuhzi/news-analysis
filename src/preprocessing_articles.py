@@ -177,7 +177,7 @@ class PreprocessArticles:
         # stop word removal (after POS? -> filter unwanted POS)
         # evtl verbessern (opel fährt auf transporter auf --> opel fährt transporter)
 
-        self.remove_stopwords(df_preprocessed_articles)
+        # self.remove_stopwords(df_preprocessed_articles)
 
         # tokenization
         self.tokenization(df_preprocessed_articles)
