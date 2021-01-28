@@ -1,17 +1,15 @@
 from pathlib import Path
-from typing import List
 
-import regex as re
 from pandas import DataFrame
-from topic_detection import TopicDetection
 
-from src.preprocessing_articles import PreprocessArticles
+from src.preprocessing import Preprocessing
+from src.utils.document_type import DocumentType
 from src.utils.reader import Reader
 from src.utils.writer import Writer
 
 
 def get_preprocessed_df(
-    preprocessed_json_file: str, df_to_preprocess: DataFrame, split_paragraphs=True, set_article_index=False
+    preprocessed_json_file: str, df_to_preprocess: DataFrame, document_type: DocumentType, set_article_index=False
 ) -> DataFrame:
     """
     Helper function to get the preprocessed pandas dataframe. If the preprocessing already was done ones (JSON files
@@ -28,8 +26,8 @@ def get_preprocessed_df(
     preprocessed_json_path = "src/data/" + preprocessed_json_file + ".json"
 
     if not Path(preprocessed_json_path).exists():
-        preprocess = PreprocessArticles()
-        df_preprocessed = preprocess.preprocessing(df_to_preprocess, split_paragraphs)
+        preprocess = Preprocessing()
+        df_preprocessed = preprocess.preprocessing(df_to_preprocess, document_type)
         Writer.write_articles(df_preprocessed, preprocessed_json_file)
     else:
         df_preprocessed = reader.read_json_to_df_default(preprocessed_json_path, set_article_index)
@@ -47,7 +45,7 @@ if __name__ == "__main__":
     # Preprocess articles
     bild_preprocessed_file = "bild_preprocessed"
     df_bild_preprocessed = get_preprocessed_df(
-        bild_preprocessed_file, reader.df_bild_articles, split_paragraphs=False, set_article_index=True
+        bild_preprocessed_file, reader.df_bild_articles, DocumentType.ARTICLE, set_article_index=True
     )
 
     print(df_bild_preprocessed.dtypes)
@@ -55,7 +53,7 @@ if __name__ == "__main__":
 
     tagesschau_preprocessed_file = "tagesschau_preprocessed"
     df_tagesschau_preprocessed = get_preprocessed_df(
-        tagesschau_preprocessed_file, reader.df_tagesschau_articles, split_paragraphs=False, set_article_index=True
+        tagesschau_preprocessed_file, reader.df_tagesschau_articles, DocumentType.ARTICLE, set_article_index=True
     )
 
     print(df_tagesschau_preprocessed.dtypes)
@@ -63,7 +61,7 @@ if __name__ == "__main__":
 
     taz_preprocessed_file = "taz_preprocessed"
     df_taz_preprocessed = get_preprocessed_df(
-        taz_preprocessed_file, reader.df_taz_articles, split_paragraphs=False, set_article_index=True
+        taz_preprocessed_file, reader.df_taz_articles, DocumentType.ARTICLE, set_article_index=True
     )
 
     print(df_taz_preprocessed.dtypes)
@@ -71,24 +69,38 @@ if __name__ == "__main__":
 
     # Preprocess paragraphs of articles
     bild_preprocessed_paragraphs_file = "bild_preprocessed_paragraphs"
-    df_bild_preprocessed_paragraphs = get_preprocessed_df(bild_preprocessed_paragraphs_file, reader.df_bild_articles)
+    df_bild_preprocessed_paragraphs = get_preprocessed_df(
+        bild_preprocessed_paragraphs_file,
+        reader.df_bild_articles,
+        DocumentType.PARAGRAPH,
+    )
 
     print(df_bild_preprocessed_paragraphs.dtypes)
     print(df_bild_preprocessed_paragraphs.head())
 
     tagesschau_preprocessed_paragraphs_file = "tagesschau_preprocessed_paragraphs"
     df_tagesschau_preprocessed_paragraphs = get_preprocessed_df(
-        tagesschau_preprocessed_paragraphs_file, reader.df_tagesschau_articles
+        tagesschau_preprocessed_paragraphs_file, reader.df_tagesschau_articles, DocumentType.PARAGRAPH
     )
 
     print(df_tagesschau_preprocessed_paragraphs.dtypes)
     print(df_tagesschau_preprocessed_paragraphs.head())
 
     taz_preprocessed_paragraphs_file = "taz_preprocessed_paragraphs"
-    df_taz_preprocessed_paragraphs = get_preprocessed_df(taz_preprocessed_paragraphs_file, reader.df_taz_articles)
+    df_taz_preprocessed_paragraphs = get_preprocessed_df(
+        taz_preprocessed_paragraphs_file, reader.df_taz_articles, DocumentType.PARAGRAPH
+    )
 
     print(df_taz_preprocessed_paragraphs.dtypes)
     print(df_taz_preprocessed_paragraphs.head())
+
+    taz_preprocessed_titles_file = "taz_preprocessed_titles"
+    df_taz_preprocessed_titles = get_preprocessed_df(
+        taz_preprocessed_titles_file, reader.df_taz_articles, DocumentType.TITLE
+    )
+
+    print(df_taz_preprocessed_titles.dtypes)
+    print(df_taz_preprocessed_titles.head())
 
     # df_articles = df_bild_preprocessed.append(df_tagesschau_preprocessed).append(df_taz_preprocessed)
     # print(len(df_articles))
