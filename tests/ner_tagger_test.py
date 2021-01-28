@@ -1,11 +1,11 @@
 import unittest
 
-from src.preprocessing_articles import PreprocessArticles
+from src.preprocessing import Preprocessing
 
 
 class NERTaggerTest(unittest.TestCase):
     def test_tagging(self):
-        preprocess = PreprocessArticles()
+        preprocess = Preprocessing()
         text_to_tag = "Angela Merkel ist die deutsche Bundeskanzlerin und sie ist Mitglied der CDU."
         person_list, organization_list = preprocess.tag(text_to_tag)
         self.assertEqual(
@@ -13,15 +13,12 @@ class NERTaggerTest(unittest.TestCase):
             ["Angela Merkel"],
             "The person list should contain Angela Merkel",
         )
-        self.assertEqual(
-            organization_list, ["CDU"], "The organization list should contain CDU"
-        )
+        self.assertEqual(organization_list, ["CDU"], "The organization list should contain CDU")
 
     def test_filter_duplicates(self):
-        preprocess = PreprocessArticles()
+        preprocess = Preprocessing()
         text_to_tag = (
-            "Die FDP ist eine Partei. "
-            "Der Vorsitzende der FDP ist Christian Lindner. Die SPD ist eine andere Partei"
+            "Die FDP ist eine Partei. " "Der Vorsitzende der FDP ist Christian Lindner. Die SPD ist eine andere Partei"
         )
         person_list, organization_list = preprocess.tag(text_to_tag)
         self.assertEqual(
