@@ -101,7 +101,12 @@ class PreprocessArticles:
                         elif polarity_array[entry][i] > 0:
                             polarity_array[entry][i] = -polarity_array[entry][i]
         df_preprocessed_articles.drop("polarity", inplace=True, axis=1)
-        df_preprocessed_articles["polarity"] = pd.Series(polarity_array)
+        polarity_data_series = pd.DataFrame(data=polarity_array, columns=["polarity"])
+        df_preprocessed_articles.reset_index(drop=True, inplace=True)
+        polarity_data_series.reset_index(drop=True, inplace=True)
+        result = pd.concat([df_preprocessed_articles, polarity_data_series], axis=1)
+        print(result.head())
+        return result
 
     def lemmatizing(self, df_preprocessed_articles):
         df_preprocessed_articles["lemma"] = df_preprocessed_articles["text"].apply(
@@ -212,8 +217,8 @@ class PreprocessArticles:
         self.determine_sentiment_polarity(df_preprocessed_articles)
         self.pos_tagging(df_preprocessed_articles)
 
-        self.negation_handling(df_preprocessed_articles)
-
+        df_preprocessed_articles = self.negation_handling(df_preprocessed_articles)
+        print("nothing")
         # stemming or lemmatization
 
         self.lemmatizing(df_preprocessed_articles)
