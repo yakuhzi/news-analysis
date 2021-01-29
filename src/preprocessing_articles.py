@@ -36,6 +36,9 @@ class PreprocessArticles:
             "Linke": ["linke", "die linke", "den linken"],
         }
 
+        self.negation_words = ["nicht", "kein", "nein"]
+        self.negation_pattern = re.compile("nicht|kein|nein")
+
     def lowercase_article(self, articles):
         articles["text"] = articles["text"].str.lower()
 
@@ -72,10 +75,33 @@ class PreprocessArticles:
             lambda row: [(word, word.tag_) for word in row]
         )
 
-    def sentiws(self, df_preprocessed_articles):
-        df_preprocessed_articles["sentiws"] = df_preprocessed_articles["text"].apply(
-            lambda row: [(word, word._.sentiws) for word in row]
+    def determine_sentiment_polarity(self, df_preprocessed_articles):
+        df_preprocessed_articles["word"] = df_preprocessed_articles["text"].apply(lambda row: [word for word in row])
+        df_preprocessed_articles["polarity"] = df_preprocessed_articles["text"].apply(
+            lambda row: [word._.sentiws for word in row]
         )
+
+    def negation_handling(self, df_preprocessed_articles):
+        polarity_array = df_preprocessed_articles["polarity"].to_numpy()
+        word_array = df_preprocessed_articles["word"].to_numpy()
+        for entry in range(len(polarity_array)):
+            for i in range(len(polarity_array[entry])):
+                if polarity_array[entry][i] is not None:
+                    backward_window = i - 4
+                    forward_window = i + 4
+                    if backward_window < 0:
+                        backward_window = 0
+                    if forward_window >= len(polarity_array[entry]):
+                        forward_window = len(polarity_array[entry])
+                    words_in_window = word_array[entry][backward_window:forward_window]
+                    words_in_window = " ".join(map(str, words_in_window))
+                    if self.negation_pattern.search(words_in_window):
+                        if polarity_array[entry][i] < 0:
+                            polarity_array[entry][i] = abs(polarity_array[entry][i])
+                        elif polarity_array[entry][i] > 0:
+                            polarity_array[entry][i] = -polarity_array[entry][i]
+        df_preprocessed_articles.drop("polarity", inplace=True, axis=1)
+        df_preprocessed_articles["polarity"] = pd.Series(polarity_array)
 
     def lemmatizing(self, df_preprocessed_articles):
         df_preprocessed_articles["lemma"] = df_preprocessed_articles["text"].apply(
@@ -183,12 +209,13 @@ class PreprocessArticles:
         self.tokenization(df_preprocessed_articles)
 
         self.nlp.add_pipe(sentiws)
-        self.sentiws(df_preprocessed_articles)
-        # POS tagging (before stemming? Could be used to count positive or negative adjectives etc.
+        self.determine_sentiment_polarity(df_preprocessed_articles)
         self.pos_tagging(df_preprocessed_articles)
 
+        self.negation_handling(df_preprocessed_articles)
+
         # stemming or lemmatization
+
         self.lemmatizing(df_preprocessed_articles)
         self.concat_lemma(df_preprocessed_articles)
-
         return df_preprocessed_articles
