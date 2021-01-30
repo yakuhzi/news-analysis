@@ -1,5 +1,5 @@
 import json
-from typing import List, Optional
+from typing import Optional
 
 import pandas as pd
 
@@ -24,17 +24,21 @@ class Reader:
         Reads the news article for every news agency and stores it in the corresponding instance variables.
         """
 
-        self.df_bild_articles = self.__read("src/data/bild.json")
-        self.df_tagesschau_articles = self.__read("src/data/tagesschau.json")
-        self.df_taz_articles = self.__read("src/data/taz.json")
+        self.df_bild_articles = self._read("src/data/bild.json")
+        self.df_tagesschau_articles = self._read("src/data/tagesschau.json")
+        self.df_taz_articles = self._read("src/data/taz.json")
 
         if number is not None:
             self.df_bild_articles = self.df_bild_articles.head(number)
             self.df_tagesschau_articles = self.df_tagesschau_articles.head(number)
             self.df_taz_articles = self.df_taz_articles.head(number)
 
+        print("Number of Bild articles: {}".format(len(self.df_bild_articles.index)))
+        print("Number of Tagesschau articles: {}".format(len(self.df_tagesschau_articles.index)))
+        print("Number of TAZ articles: {}".format(len(self.df_taz_articles.index)))
+
     @staticmethod
-    def read_json_to_df_default(path: str, set_article_index=False) -> pd.DataFrame:
+    def read_json_to_df_default(path: str) -> pd.DataFrame:
         """
         Read a json into a Pandas dataframe without any modifications on types.
 
@@ -48,12 +52,13 @@ class Reader:
         with open(path, encoding="utf8") as json_file:
             json_dict = json.load(json_file)
             df = pd.DataFrame(json_dict)
-            if set_article_index:
+
+            if "article_index" in json_dict:
                 df.set_index("article_index", inplace=True, drop=True)
+
             return df
 
-    @staticmethod
-    def __read(path: str) -> pd.DataFrame:
+    def _read(self, path: str) -> pd.DataFrame:
         """
         Helper function to read a json from a file and store it in pandas dataframe.
 

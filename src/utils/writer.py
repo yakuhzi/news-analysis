@@ -1,5 +1,3 @@
-import json
-
 import pandas as pd
 
 
@@ -22,6 +20,6 @@ class Writer:
         - df: the Pandas data frame which should be stored in json
         - filename: the path where the dataframe should be stored
         """
-        path = "src/data/" + filename + ".json"
+        path = "src/output/" + filename + ".json"
         with open(path, "w", encoding="utf-8") as file:
             df.to_json(file, force_ascii=False, orient="records", default_handler=str, index=True)

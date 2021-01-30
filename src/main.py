@@ -1,131 +1,40 @@
-from pathlib import Path
-
+from keyword_extraction import KeywordExtraction
 from pandas import DataFrame
 
 from src.preprocessing import Preprocessing
-from src.utils.document_type import DocumentType
 from src.utils.reader import Reader
-from src.utils.writer import Writer
 
 
-def get_preprocessed_df(
-    preprocessed_json_file: str, df_to_preprocess: DataFrame, document_type: DocumentType, set_article_index=False
-) -> DataFrame:
-    """
-    Helper function to get the preprocessed pandas dataframe. If the preprocessing already was done ones (JSON files
-    exist) the tagging is not done again but the json files with the perprocessing are read into a pandas data frame.
-    If preprocessing is proceeded, the result will be stored in a json file.
+def merge_paragrahps_with_titles() -> DataFrame:
+    df_paragraphs_bild["title_nouns"] = df_paragraphs_bild["article_index"].apply(
+        lambda index: df_titles_bild["nouns"][index]
+    )
 
-    Arguments:
-    - preprocessed_json_file: Name of json file to store/ read the results of preprocessing.
-    - df_to_preprocess: data frame with the text to preprocess, if the data still needs to be preprocessed
+    df_paragraphs_tagesschau["title_nouns"] = df_paragraphs_tagesschau["article_index"].apply(
+        lambda index: df_titles_tagesschau["nouns"][index]
+    )
 
-    Return:
-    - df_preprocessed: Pandas data frame of the preprocessed input
-    """
-    preprocessed_json_path = "src/data/" + preprocessed_json_file + ".json"
+    df_paragraphs_taz["title_nouns"] = df_paragraphs_taz["article_index"].apply(
+        lambda index: df_titles_taz["nouns"][index]
+    )
 
-    if not Path(preprocessed_json_path).exists():
-        preprocess = Preprocessing()
-        df_preprocessed = preprocess.preprocessing(df_to_preprocess, document_type)
-        Writer.write_articles(df_preprocessed, preprocessed_json_file)
-    else:
-        df_preprocessed = reader.read_json_to_df_default(preprocessed_json_path, set_article_index)
-    return df_preprocessed
+    df_paragraphs = df_paragraphs_tagesschau.append(df_paragraphs_taz).append(df_paragraphs_bild)
+    df_paragraphs["nouns"] = df_paragraphs["title_nouns"] + df_paragraphs["nouns"]
+    return df_paragraphs
 
 
 if __name__ == "__main__":
     reader = Reader()
-    reader.read_articles(100)
+    reader.read_articles()
 
-    print("Number of Bild articles: {}".format(len(reader.df_bild_articles.index)))
-    print("Number of Tagesschau articles: {}".format(len(reader.df_tagesschau_articles.index)))
-    print("Number of TAZ articles: {}".format(len(reader.df_taz_articles.index)))
+    preprocessing = Preprocessing()
+    df_paragraphs_bild, df_paragraphs_tagesschau, df_paragraphs_taz = preprocessing.get_paragraphs(reader)
+    df_titles_bild, df_titles_tagesschau, df_titles_taz = preprocessing.get_titles(reader)
 
-    # Preprocess articles
-    bild_preprocessed_file = "bild_preprocessed"
-    df_bild_preprocessed = get_preprocessed_df(
-        bild_preprocessed_file, reader.df_bild_articles, DocumentType.ARTICLE, set_article_index=True
-    )
+    # Merge paragraphs with titles of articles to get more context
+    df_paragraphs_and_titles = merge_paragrahps_with_titles()
 
-    print(df_bild_preprocessed.dtypes)
-    print(df_bild_preprocessed.head())
-
-    tagesschau_preprocessed_file = "tagesschau_preprocessed"
-    df_tagesschau_preprocessed = get_preprocessed_df(
-        tagesschau_preprocessed_file, reader.df_tagesschau_articles, DocumentType.ARTICLE, set_article_index=True
-    )
-
-    print(df_tagesschau_preprocessed.dtypes)
-    print(df_tagesschau_preprocessed.head())
-
-    taz_preprocessed_file = "taz_preprocessed"
-    df_taz_preprocessed = get_preprocessed_df(
-        taz_preprocessed_file, reader.df_taz_articles, DocumentType.ARTICLE, set_article_index=True
-    )
-
-    print(df_taz_preprocessed.dtypes)
-    print(df_taz_preprocessed.head())
-
-    # Preprocess paragraphs of articles
-    bild_preprocessed_paragraphs_file = "bild_preprocessed_paragraphs"
-    df_bild_preprocessed_paragraphs = get_preprocessed_df(
-        bild_preprocessed_paragraphs_file,
-        reader.df_bild_articles,
-        DocumentType.PARAGRAPH,
-    )
-
-    print(df_bild_preprocessed_paragraphs.dtypes)
-    print(df_bild_preprocessed_paragraphs.head())
-
-    tagesschau_preprocessed_paragraphs_file = "tagesschau_preprocessed_paragraphs"
-    df_tagesschau_preprocessed_paragraphs = get_preprocessed_df(
-        tagesschau_preprocessed_paragraphs_file, reader.df_tagesschau_articles, DocumentType.PARAGRAPH
-    )
-
-    print(df_tagesschau_preprocessed_paragraphs.dtypes)
-    print(df_tagesschau_preprocessed_paragraphs.head())
-
-    taz_preprocessed_paragraphs_file = "taz_preprocessed_paragraphs"
-    df_taz_preprocessed_paragraphs = get_preprocessed_df(
-        taz_preprocessed_paragraphs_file, reader.df_taz_articles, DocumentType.PARAGRAPH
-    )
-
-    print(df_taz_preprocessed_paragraphs.dtypes)
-    print(df_taz_preprocessed_paragraphs.head())
-
-    taz_preprocessed_titles_file = "taz_preprocessed_titles"
-    df_taz_preprocessed_titles = get_preprocessed_df(
-        taz_preprocessed_titles_file, reader.df_taz_articles, DocumentType.TITLE
-    )
-
-    print(df_taz_preprocessed_titles.dtypes)
-    print(df_taz_preprocessed_titles.head())
-
-    # df_articles = df_bild_preprocessed.append(df_tagesschau_preprocessed).append(df_taz_preprocessed)
-    # print(len(df_articles))
-    #
-    # text_data: List[List[str]] = []
-    #
-    # for index, row in df_articles.sample(n=1000).iterrows():
-    #     text = re.sub(" \\d+", "", row["text"])
-    #     text_data.append(text.split(" "))
-    #
-    # topic_detection = TopicDetection(text_data)
-    #
-    # lsa_model = topic_detection.get_lsa_model(num_topics=20)
-    # lda_model = topic_detection.get_lda_model(num_topics=20)
-    # hdp_model = topic_detection.get_hdp_model()
-    #
-    # topic_detection.calculate_coherence_score(lsa_model)
-    # topic_detection.calculate_coherence_score(lda_model)
-    # topic_detection.calculate_coherence_score(hdp_model)
-    #
-    # topic_detection.save_topics_per_document(lsa_model, "src/data/lsa_topics")
-    # topic_detection.save_topics_per_document(lda_model, "src/data/lda_topics")
-    # topic_detection.save_topics_per_document(hdp_model, "src/data/hdp_topics")
-    #
-    # # topic_detection.plot_coherence_scores("LSA", start=5, limit=50, step=5)
-    # # topic_detection.plot_coherence_scores("LDA", start=5, limit=50, step=5)
-    #
-    # topic_detection.visualize_topics(lda_model)
+    # Extract keywords with td-idf and shor bipartite graph
+    keyword_extraction = KeywordExtraction(df_paragraphs_and_titles)
+    df_term_weights = keyword_extraction.get_term_weight_tuples()
+    keyword_extraction.show_graph(df_term_weights)
