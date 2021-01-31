@@ -14,10 +14,10 @@ spacy = "*"
 pandas = "*"
 nltk = "*"
 gensim = "*"
-pyldavis = "*"
 matplotlib = "*"
 scikit-learn = "*"
 spacy-sentiws = "*"
+networkx = "*"
 
 [scripts]
 test = "coverage run -m unittest discover -p *_test.py"
