@@ -25,7 +25,7 @@ def merge_paragrahps_with_titles() -> DataFrame:
 
 if __name__ == "__main__":
     reader = Reader()
-    reader.read_articles()
+    reader.read_articles(100)
 
     preprocessing = Preprocessing()
     df_paragraphs_bild, df_paragraphs_tagesschau, df_paragraphs_taz = preprocessing.get_paragraphs(reader)

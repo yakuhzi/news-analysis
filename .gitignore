@@ -54,6 +54,7 @@ TODO.md
 # data
 src/data/*
 !src/data/.gitkeep
+!src/data/sentiws
 
 # output
 src/output/*

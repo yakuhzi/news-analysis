@@ -1,13 +1,16 @@
+import re
 import time
 import warnings
 from pathlib import Path
 from typing import Tuple
 
 import numpy as np
+import pandas as pd
 import spacy
 from pandas import DataFrame, Series
 from pandas.core.common import SettingWithCopyWarning
 from spacy.lang.de.stop_words import STOP_WORDS
+from spacy_sentiws import spaCySentiWS
 from utils.document_type import DocumentType
 from utils.reader import Reader
 from utils.writer import Writer
@@ -22,6 +25,8 @@ class Preprocessing:
         # de_core_news_lg had the best score for entity recognition and syntax accuracy in german according to spacy.
         # for more information, see https://spacy.io/models/de#de_core_news_lg
         self.nlp = spacy.load("de_core_news_lg", disable=["parser"])
+        self.sentiws = spaCySentiWS(sentiws_path="src/data/sentiws/")
+        self.nlp.add_pipe(self.sentiws)
 
         self.parties = {
             "CDU": ["cdu", "union"],
@@ -44,6 +49,9 @@ class Preprocessing:
             "AfD": ["afd", "alternative für deutschland"],
             "Linke": ["linke", "die linke", "den linken"],
         }
+
+        self.negation_words = ["nicht", "kein", "nein"]
+        self.negation_pattern = re.compile("nicht|kein|nein")
 
     def get_articles(self, reader: Reader) -> Tuple[DataFrame, DataFrame, DataFrame]:
         df_bild_preprocessed = self._get_preprocessed_df(
@@ -138,7 +146,7 @@ class Preprocessing:
         df_preprocessed["text"] = self._remove_special_characters(df_preprocessed["text"])
 
         # Stop word removal
-        df_preprocessed["text"] = self._remove_stopwords(df_preprocessed["text"])
+        # df_preprocessed["text"] = self._remove_stopwords(df_preprocessed["text"])
 
         # Tokenization
         df_preprocessed["text"] = self._tokenization(df_preprocessed["text"])
@@ -154,6 +162,9 @@ class Preprocessing:
             df_preprocessed = self._remove_rows_without_parties(df_preprocessed)
             print("Number of documents after filtering: {}".format(len(df_preprocessed)))
 
+        # Sentiment polarity
+        df_preprocessed["polarity"] = self.determine_sentiment_polarity(df_preprocessed["text"])
+
         # POS tagging
         df_preprocessed["pos_tags"] = self._pos_tagging(df_preprocessed["text"])
 
@@ -162,6 +173,9 @@ class Preprocessing:
 
         # Lemmatization
         df_preprocessed["text"] = self._lemmatizing(df_preprocessed["text"])
+
+        # Negation handling
+        df_preprocessed = self.negation_handling(df_preprocessed)
 
         end_time = time.time()
         print("End of preprocessing after {} seconds".format(end_time - start_time))
@@ -226,3 +240,37 @@ class Preprocessing:
 
         row["parties"] = parties
         return row
+
+    def determine_sentiment_polarity(self, token_series: Series) -> Series:
+        return token_series.apply(lambda doc: [token._.sentiws for token in doc])
+
+    def negation_handling(self, df_preprocessed: DataFrame) -> DataFrame:
+        polarity_array = df_preprocessed["polarity"].to_numpy()
+        word_array = df_preprocessed["text"].to_numpy()
+
+        for entry in range(len(polarity_array)):
+            for i in range(len(polarity_array[entry])):
+                if polarity_array[entry][i] is not None:
+                    backward_window = i - 4
+                    forward_window = i + 4
+
+                    if backward_window < 0:
+                        backward_window = 0
+                    if forward_window >= len(polarity_array[entry]):
+                        forward_window = len(polarity_array[entry])
+
+                    words_in_window = word_array[entry][backward_window:forward_window]
+                    words_in_window = " ".join(map(str, words_in_window))
+
+                    if self.negation_pattern.search(words_in_window):
+                        if polarity_array[entry][i] < 0:
+                            polarity_array[entry][i] = abs(polarity_array[entry][i])
+                        elif polarity_array[entry][i] > 0:
+                            polarity_array[entry][i] = -polarity_array[entry][i]
+
+        df_preprocessed.drop("polarity", inplace=True, axis=1)
+        polarity_data = DataFrame(data=polarity_array, columns=["polarity"])
+        df_preprocessed.reset_index(drop=True, inplace=True)
+        polarity_data.reset_index(drop=True, inplace=True)
+        result = pd.concat([df_preprocessed, polarity_data], axis=1)
+        return result

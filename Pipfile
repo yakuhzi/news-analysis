@@ -16,6 +16,7 @@ nltk = "*"
 gensim = "*"
 matplotlib = "*"
 scikit-learn = "*"
+spacy-sentiws = "*"
 networkx = "*"
 
 [scripts]
