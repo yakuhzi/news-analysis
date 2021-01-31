@@ -17,6 +17,7 @@ gensim = "*"
 pyldavis = "*"
 matplotlib = "*"
 scikit-learn = "*"
+spacy-sentiws = "*"
 
 [scripts]
 test = "coverage run -m unittest discover -p *_test.py"
