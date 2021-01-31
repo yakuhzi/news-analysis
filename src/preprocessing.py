@@ -197,8 +197,9 @@ class Preprocessing:
     def _remove_special_characters(self, text_series: Series) -> Series:
         return (
             text_series.str.replace(r"[^A-Za-z0-9äöüÄÖÜß\-]", " ", regex=True)
-            .str.replace(r" - ", "", regex=False)
+            .str.replace(r" - ", " ", regex=False)
             .str.replace(r" +", " ", regex=True)
+            .str.strip()
         )
 
     def _remove_stopwords(self, text_series: Series) -> Series:
