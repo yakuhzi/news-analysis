@@ -61,8 +61,8 @@ from the university which is provided for this project. Details about the data a
 | Topic Detection                                  | December Milestone | 18.02.2020 | X        | -        |
 | Milestone README                                 | December Milestone | 18.02.2020 | X        | X        |
 |                                                  |                    |            |          |          |
-| Sentiment Analysis                               | Final Report       | February   | -        | -        |
-| Incorporate SentiWS (Sentiment Lexicon)          | Final Report       | February   | -        | -        |
+| Sentiment Analysis                               | Final Report       | February   | X        | -        |
+| Incorporate SentiWS (Sentiment Lexicon)          | Final Report       | February   | X        | X        |
 | Finding Features for corpus-based approach       | Final Report       | February   | -        | -        |
 | Final Codebase                                   | Final Report       | February   | -        | -        |
 | Final README                                     | Final Report       | February   | -        | -        |
