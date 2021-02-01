@@ -1,5 +1,7 @@
 from keyword_extraction import KeywordExtraction
 from pandas import DataFrame
+from tfidf_sentiment import TfidfSentiment
+from utils.writer import Writer
 
 from src.preprocessing import Preprocessing
 from src.utils.reader import Reader
@@ -23,6 +25,16 @@ def merge_paragrahps_with_titles() -> DataFrame:
     return df_paragraphs
 
 
+def extract_keywords() -> None:
+    # Merge paragraphs with titles of articles to get more context
+    df_paragraphs_and_titles = merge_paragrahps_with_titles()
+
+    # Extract keywords with td-idf and shor bipartite graph
+    keyword_extraction = KeywordExtraction(df_paragraphs_and_titles)
+    df_term_weights = keyword_extraction.get_term_weight_tuples()
+    keyword_extraction.show_graph(df_term_weights)
+
+
 if __name__ == "__main__":
     reader = Reader()
     reader.read_articles(100)
@@ -31,10 +43,8 @@ if __name__ == "__main__":
     df_paragraphs_bild, df_paragraphs_tagesschau, df_paragraphs_taz = preprocessing.get_paragraphs(reader)
     df_titles_bild, df_titles_tagesschau, df_titles_taz = preprocessing.get_titles(reader)
 
-    # Merge paragraphs with titles of articles to get more context
-    df_paragraphs_and_titles = merge_paragrahps_with_titles()
+    df_paragraphs = df_paragraphs_tagesschau.append(df_paragraphs_taz).append(df_paragraphs_bild)
+    tfidf_sentiment = TfidfSentiment(df_paragraphs)
+    df_paragraphs = tfidf_sentiment.get_sentiment()
 
-    # Extract keywords with td-idf and shor bipartite graph
-    keyword_extraction = KeywordExtraction(df_paragraphs_and_titles)
-    df_term_weights = keyword_extraction.get_term_weight_tuples()
-    keyword_extraction.show_graph(df_term_weights)
+    Writer.write_articles(df_paragraphs, "paragraph_sentiments")
