@@ -1,41 +1,35 @@
 import json
-from typing import Optional
 
 import pandas as pd
+from pandas import DataFrame
 
 
 class Reader:
     """
     Class that reads the news articles from the json files.
-
-    Attributes:
-    - df_bild_articles: A pandas dataframe of all BILD news articles.
-    - df_tagesschau_articles: A pandas dataframe of all Tagesschau news articles.
-    - df_taz_articles: A pandas dataframe of all TAZ news articles.
     """
 
-    def __init__(self):
-        self.df_bild_articles: Optional[pd.DataFrame] = None
-        self.df_tagesschau_articles: Optional[pd.DataFrame] = None
-        self.df_taz_articles: Optional[pd.DataFrame] = None
-
-    def read_articles(self, number: int = None) -> None:
+    @staticmethod
+    def read_articles(number_of_samples: int = None) -> DataFrame:
         """
-        Reads the news article for every news agency and stores it in the corresponding instance variables.
+        Reads the news article for every news agency and returns them.
         """
+        df_tagesschau_articles = Reader.read("src/data/tagesschau.json")
+        df_tagesschau_articles["media"] = "Tagesschau"
 
-        self.df_bild_articles = self._read("src/data/bild.json")
-        self.df_tagesschau_articles = self._read("src/data/tagesschau.json")
-        self.df_taz_articles = self._read("src/data/taz.json")
+        df_taz_articles = Reader.read("src/data/taz.json")
+        df_taz_articles["media"] = "TAZ"
 
-        if number is not None:
-            self.df_bild_articles = self.df_bild_articles.head(number)
-            self.df_tagesschau_articles = self.df_tagesschau_articles.head(number)
-            self.df_taz_articles = self.df_taz_articles.head(number)
+        df_bild_articles = Reader.read("src/data/bild.json")
+        df_bild_articles["media"] = "Bild"
 
-        print("Number of Bild articles: {}".format(len(self.df_bild_articles.index)))
-        print("Number of Tagesschau articles: {}".format(len(self.df_tagesschau_articles.index)))
-        print("Number of TAZ articles: {}".format(len(self.df_taz_articles.index)))
+        df_articles = df_tagesschau_articles.append(df_taz_articles).append(df_bild_articles)
+
+        if number_of_samples is not None:
+            df_articles = df_articles.sample(number_of_samples).reset_index(drop=True)
+
+        print("Number of articles: {}".format(len(df_articles)))
+        return df_articles
 
     @staticmethod
     def read_json_to_df_default(path: str) -> pd.DataFrame:
@@ -58,7 +52,8 @@ class Reader:
 
             return df
 
-    def _read(self, path: str) -> pd.DataFrame:
+    @staticmethod
+    def read(path: str) -> pd.DataFrame:
         """
         Helper function to read a json from a file and store it in pandas dataframe.
 
@@ -68,7 +63,6 @@ class Reader:
         Return:
         - articles: Panda data frame of JSON articles parsed from the input file.
         """
-
         with open(path, encoding="utf8") as json_file:
             json_dict = json.load(json_file)["articles"]
             return pd.DataFrame(json_dict).astype(
