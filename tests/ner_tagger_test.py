@@ -1,5 +1,13 @@
+import os
+import sys
+
+testdir = os.path.dirname(__file__)
+srcdir = "../src"
+sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
+
 import unittest
 
+import spacy
 from pandas import Series
 
 from src.preprocessing import Preprocessing
@@ -8,49 +16,30 @@ from src.preprocessing import Preprocessing
 class NERTaggerTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        print("Hey")
-
-    @classmethod
-    def tearDownClass(cls):
-        print("ho")
+        cls.nlp = spacy.load("de_core_news_lg", disable=["parser"])
+        cls.preprocessing = Preprocessing()
 
     def test_tagging(self):
-        preprocessing = Preprocessing()
         text_to_tag = "Angela Merkel ist die deutsche Bundeskanzlerin und sie ist Mitglied der CDU."
+        series = Series([self.nlp(text_to_tag)])
 
-        series_persons = preprocessing._tag_persons(Series(text_to_tag))
-        series_organizations = preprocessing._tag_organizations(Series(text_to_tag))
+        persons = self.preprocessing._tag_persons(series).tolist()[0]
+        organizations = self.preprocessing._tag_organizations(series).tolist()[0]
 
-        self.assertEqual(
-            series_persons.tolist(),
-            ["Angela Merkel"],
-            "The person list should contain Angela Merkel",
-        )
-
-        self.assertEqual(series_organizations.tolist(), ["CDU"], "The organization list should contain CDU")
+        self.assertEqual(persons, ["Angela Merkel"], "The person list should contain Angela Merkel")
+        self.assertEqual(organizations, ["CDU"], "The organization list should contain CDU")
 
     def test_filter_duplicates(self):
-        preprocessing = Preprocessing()
-
         text_to_tag = (
-            "Die FDP ist eine Partei. ",
-            "Der Vorsitzende der FDP ist Christian Lindner. Die SPD ist eine andere Partei",
+            "Die FDP ist eine Partei. Der Vorsitzende der FDP ist Christian Lindner. Die SPD ist eine " "andere Partei!"
         )
+        series = Series([self.nlp(text_to_tag)])
 
-        series_persons = preprocessing._tag_persons(Series(text_to_tag))
-        series_organizations = preprocessing._tag_organizations(Series(text_to_tag))
+        persons = self.preprocessing._tag_persons(series).tolist()[0]
+        organizations = sorted(self.preprocessing._tag_organizations(series).tolist()[0])
 
-        self.assertEqual(
-            series_persons.tolist(),
-            ["Christian Lindner"],
-            "The person list should contain Christian Lindner",
-        )
-
-        self.assertEqual(
-            series_organizations.tolist(),
-            ["FDP", "SPD"],
-            "FDP should be filtered out of the organization list",
-        )
+        self.assertEqual(persons, ["Christian Lindner"], "The person list should contain Christian Lindner")
+        self.assertEqual(organizations, ["FDP", "SPD"], "FDP should be filtered out of the organization list")
 
 
 if __name__ == "__main__":
