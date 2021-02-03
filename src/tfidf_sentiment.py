@@ -2,12 +2,14 @@ import numpy as np
 from pandas import DataFrame
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
+from utils.writer import Writer
+
 
 class TfidfSentiment:
     def __init__(self, df_paragraphs):
         self.df_paragraphs = df_paragraphs
 
-    def get_sentiment(self) -> DataFrame:
+    def add_sentiment(self) -> DataFrame:
         # Get text from dataframe
         self.df_paragraphs["text"] = self.df_paragraphs["text"].apply(
             lambda row: [self._remove_umlaut(word) for word in row]
@@ -49,6 +51,8 @@ class TfidfSentiment:
         # Map sentiment values to "Positive", "Negative" or "Neutral"
         self.df_paragraphs["sentiment"] = self.df_paragraphs["sentiment"].apply(lambda row: self._map_sentiment(row))
 
+        # Save paragraphs to disk
+        Writer.write_articles(self.df_paragraphs, "paragraphs")
         return self.df_paragraphs
 
     def _map_sentiment(self, row):

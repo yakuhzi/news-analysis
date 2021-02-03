@@ -2,7 +2,6 @@ import re
 import time
 import warnings
 from pathlib import Path
-from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -11,7 +10,8 @@ from pandas import DataFrame, Series
 from pandas.core.common import SettingWithCopyWarning
 from spacy.lang.de.stop_words import STOP_WORDS
 from spacy_sentiws import spaCySentiWS
-from utils.document_type import DocumentType
+
+from model.document_type import DocumentType
 from utils.reader import Reader
 from utils.writer import Writer
 
@@ -53,56 +53,17 @@ class Preprocessing:
         self.negation_words = ["nicht", "kein", "nein"]
         self.negation_pattern = re.compile("nicht|kein|nein")
 
-    def get_articles(self, reader: Reader) -> Tuple[DataFrame, DataFrame, DataFrame]:
-        df_bild_preprocessed = self._get_preprocessed_df(
-            "bild_preprocessed", reader.df_bild_articles, DocumentType.ARTICLE
-        )
+    def get_articles(self, df_articles: DataFrame, overwrite: bool = False) -> DataFrame:
+        return self._get_preprocessed_df("articles", df_articles, DocumentType.ARTICLE, overwrite)
 
-        df_tagesschau_preprocessed = self._get_preprocessed_df(
-            "tagesschau_preprocessed", reader.df_tagesschau_articles, DocumentType.ARTICLE
-        )
+    def get_paragraphs(self, df_articles: DataFrame, overwrite: bool = False) -> DataFrame:
+        return self._get_preprocessed_df("paragraphs", df_articles, DocumentType.PARAGRAPH, overwrite)
 
-        df_taz_preprocessed = self._get_preprocessed_df(
-            "taz_preprocessed", reader.df_taz_articles, DocumentType.ARTICLE
-        )
-
-        return df_bild_preprocessed, df_tagesschau_preprocessed, df_taz_preprocessed
-
-    def get_titles(self, reader: Reader) -> Tuple[DataFrame, DataFrame, DataFrame]:
-        df_bild_preprocessed_titles = self._get_preprocessed_df(
-            "bild_titles", reader.df_bild_articles, DocumentType.TITLE
-        )
-
-        df_tagesschau_preprocessed_titles = self._get_preprocessed_df(
-            "tagesschau_titles", reader.df_tagesschau_articles, DocumentType.TITLE
-        )
-
-        df_taz_preprocessed_titles = self._get_preprocessed_df("taz_titles", reader.df_taz_articles, DocumentType.TITLE)
-
-        return df_bild_preprocessed_titles, df_tagesschau_preprocessed_titles, df_taz_preprocessed_titles
-
-    def get_paragraphs(self, reader: Reader) -> Tuple[DataFrame, DataFrame, DataFrame]:
-        df_bild_preprocessed_paragraphs = self._get_preprocessed_df(
-            "bild_paragraphs",
-            reader.df_bild_articles,
-            DocumentType.PARAGRAPH,
-        )
-
-        df_tagesschau_preprocessed_paragraphs = self._get_preprocessed_df(
-            "tagesschau_paragraphs", reader.df_tagesschau_articles, DocumentType.PARAGRAPH
-        )
-
-        df_taz_preprocessed_paragraphs = self._get_preprocessed_df(
-            "taz_paragraphs", reader.df_taz_articles, DocumentType.PARAGRAPH
-        )
-
-        return df_bild_preprocessed_paragraphs, df_tagesschau_preprocessed_paragraphs, df_taz_preprocessed_paragraphs
+    def get_titles(self, df_articles: DataFrame, overwrite: bool = False) -> DataFrame:
+        return self._get_preprocessed_df("titles", df_articles, DocumentType.TITLE, overwrite)
 
     def _get_preprocessed_df(
-        self,
-        preprocessed_file: str,
-        articles: DataFrame,
-        document_type: DocumentType,
+        self, preprocessed_filename: str, articles: DataFrame, document_type: DocumentType, overwrite: bool
     ) -> DataFrame:
         """
         Helper function to get the preprocessed pandas dataframe. If the preprocessing already was done ones (JSON files
@@ -116,23 +77,20 @@ class Preprocessing:
         Return:
         - df_preprocessed: Pandas data frame of the preprocessed input
         """
-        json_path = "src/output/" + preprocessed_file + ".json"
+        json_path = "src/output/" + preprocessed_filename + ".json"
 
-        if not Path(json_path).exists():
-            df_preprocessed: DataFrame
+        if Path(json_path).exists() and not overwrite:
+            return Reader.read_json_to_df_default(json_path)
 
-            if document_type.value == DocumentType.TITLE.value:
-                articles = articles[["title"]].rename(columns={"title": "text"})
-                df_preprocessed = self._apply_preprocessing(articles, False)
-            elif document_type.value == DocumentType.PARAGRAPH.value:
-                df_preprocessed = self._preprocess_paragraphs(articles)
-            else:
-                df_preprocessed = self._apply_preprocessing(articles)
-
-            Writer.write_articles(df_preprocessed, preprocessed_file)
+        if document_type.value == DocumentType.ARTICLE.value:
+            df_preprocessed = self._apply_preprocessing(articles)
+        elif document_type.value == DocumentType.PARAGRAPH.value:
+            df_preprocessed = self._preprocess_paragraphs(articles)
         else:
-            df_preprocessed = Reader.read_json_to_df_default(json_path)
+            articles = articles[["title", "media"]].rename(columns={"title": "text"})
+            df_preprocessed = self._apply_preprocessing(articles, False)
 
+        Writer.write_articles(df_preprocessed, preprocessed_filename)
         return df_preprocessed
 
     def _apply_preprocessing(self, dataframe: DataFrame, remove_rows_without_parties: bool = True) -> DataFrame:
@@ -181,16 +139,17 @@ class Preprocessing:
         print("End of preprocessing after {} seconds".format(end_time - start_time))
         return df_preprocessed
 
-    def _preprocess_paragraphs(self, articles) -> DataFrame:
+    def _preprocess_paragraphs(self, df_articles: DataFrame) -> DataFrame:
         # Split articles into paragraphs by splitting at newlines
-        paragraphs = list(map(lambda text: text.replace("\n*", "\n").split("\n"), articles["text"]))
+        paragraphs = list(map(lambda text: text.replace("\n+", "\n").split("\n"), df_articles["text"]))
         flat_list = [(index, item) for index, sublist in enumerate(paragraphs) for item in sublist]
         index, texts = zip(*flat_list)
 
-        # Store paragraphs with the original article index
-        dataframe = DataFrame(columns=["article_index", "text"])
+        # Store paragraphs with the original article index and media
+        dataframe = DataFrame(columns=["article_index", "text", "media"])
         dataframe["article_index"] = index
         dataframe["text"] = texts
+        dataframe["media"] = dataframe["article_index"].apply(lambda index: df_articles["media"][index])
 
         return self._apply_preprocessing(dataframe)
 
