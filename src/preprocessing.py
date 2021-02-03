@@ -100,6 +100,9 @@ class Preprocessing:
         # Copy original dataframe
         df_preprocessed = dataframe.copy()
 
+        # remove direct quotiations
+        df_preprocessed["text"] = self._remove_direct_quotations(df_preprocessed["text"])
+
         # Remove special characters
         df_preprocessed["text"] = self._remove_special_characters(df_preprocessed["text"])
 
@@ -159,6 +162,11 @@ class Preprocessing:
             .str.replace(r" - ", " ", regex=False)
             .str.replace(r" +", " ", regex=True)
             .str.strip()
+        )
+
+    def _remove_direct_quotations(self, text_series: Series) -> Series:
+        return (
+            text_series.str.replace(r'"(.*?)"', " ", regex=True)
         )
 
     def _remove_stopwords(self, text_series: Series) -> Series:
