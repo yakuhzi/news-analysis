@@ -1,10 +1,10 @@
-from keyword_extraction import KeywordExtraction
 from pandas import DataFrame
-from tfidf_sentiment import TfidfSentiment
-from utils.writer import Writer
 
-from src.preprocessing import Preprocessing
-from src.utils.reader import Reader
+from keyword_extraction import KeywordExtraction
+from preprocessing import Preprocessing
+from tfidf_sentiment import TfidfSentiment
+from utils.reader import Reader
+from utils.writer import Writer
 
 
 def merge_paragrahps_with_titles() -> DataFrame:
