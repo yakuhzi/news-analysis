@@ -50,8 +50,8 @@ class Preprocessing:
             "Linke": ["linke", "die linke", "den linken"],
         }
 
-        self.negation_words = ["nicht", "kein", "nein"]
-        self.negation_pattern = re.compile("nicht|kein|nein")
+        self.negation_words = ["nicht", "nie", "kein", "weder", "nirgendwo", "ohne", "selten", "kaum", "trotz", "obwohl"]
+        self.negation_pattern = re.compile('|'.join(self.negation_words))
 
     def get_articles(self, df_articles: DataFrame, overwrite: bool = False) -> DataFrame:
         return self._get_preprocessed_df("articles", df_articles, DocumentType.ARTICLE, overwrite)
