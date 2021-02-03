@@ -10,7 +10,7 @@ coverage = "*"
 
 [packages]
 pre-commit = "*"
-spacy = "*"
+spacy = "==2.3.0"
 pandas = "*"
 nltk = "*"
 gensim = "*"
