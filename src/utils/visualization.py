@@ -9,9 +9,12 @@ class Visualization:
     @staticmethod
     def show_pie_charts(df_paragraphs: DataFrame, by_party: bool = True):
         statistics = Visualization.get_statistics(df_paragraphs, by_party)
-        labels = "Positive", "Negative", "Neutral"
+        labels = ["Positive", "Negative", "Neutral"]
+        colors = ["#2ca02c", "#ff7f0e", "#1f77b4"]
 
         for key_1, value_1 in statistics.items():
+            lines = []
+
             if by_party:
                 fig, axs = plt.subplots(1, len(value_1))
                 fig.suptitle("Sentiment towards {}".format(key_1))
@@ -23,7 +26,10 @@ class Visualization:
             for (key_2, value_2), ax in zip(value_1.items(), axs):
                 ax.axis("equal")
                 ax.set_title(key_2)
-                ax.pie(value_2, labels=labels, autopct="%1.1f%%", shadow=True, startangle=90)
+                line = ax.pie(value_2, colors=colors, counterclock=False, autopct="%1.1f%%", shadow=True, startangle=90)
+                lines.append(line)
+
+            fig.legend(labels=labels, loc="lower right", borderaxespad=0.1, title="Sentiment")
 
         plt.show()
 
