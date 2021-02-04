@@ -15,7 +15,7 @@ class KeywordExtraction:
     def set_data(self, df_paragraphs):
         self.df_paragraphs = df_paragraphs
 
-    def get_term_weight_tuples(self) -> DataFrame:
+    def get_term_weight_tuples(self, parties: list = None) -> DataFrame:
         # Get nouns from dataframe
         nouns = self.df_paragraphs["nouns"].apply(lambda row: " ".join(row))
 
@@ -29,7 +29,8 @@ class KeywordExtraction:
         # Generate tf-idf for the given document
         transformer.fit(count_vectorized)
 
-        parties = ["CDU", "CSU", "SPD", "FDP", "AfD", "Grüne", "Linke"]
+        if parties is None:
+            parties = ["CDU", "CSU", "SPD", "FDP", "AfD", "Grüne", "Linke"]
         terms = []
 
         for party in parties:
