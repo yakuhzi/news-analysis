@@ -12,16 +12,19 @@ class Visualization:
         labels = ["Positive", "Negative", "Neutral"]
         colors = ["#2ca02c", "#ff7f0e", "#1f77b4"]
 
+        figures = []
         for key_1, value_1 in statistics.items():
             lines = []
 
             if by_party:
                 fig, axs = plt.subplots(1, len(value_1))
                 fig.suptitle("Sentiment towards {}".format(key_1))
+                figures.append(fig)
             else:
                 fig, axs = plt.subplots(2, math.ceil(len(value_1) / 2))
                 fig.suptitle("Sentiment of {} towards parties".format(key_1))
                 axs = [item for sublist in axs for item in sublist]
+                figures.append(fig)
 
             for (key_2, value_2), ax in zip(value_1.items(), axs):
                 ax.axis("equal")
@@ -31,7 +34,8 @@ class Visualization:
 
             fig.legend(labels=labels, loc="lower right", borderaxespad=0.1, title="Sentiment")
 
-        plt.show()
+        # plt.show()
+        return figures
 
     @staticmethod
     def get_statistics(df_paragraphs: DataFrame, by_party: bool) -> Dict[str, Dict[str, Tuple[int, int, int]]]:
