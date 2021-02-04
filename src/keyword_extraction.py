@@ -77,7 +77,7 @@ class KeywordExtraction:
         df_term_weights["normalized_weight"] = df_term_weights["weight"].apply(
             lambda row: row / df_term_weights["weight"].max() * 4
         )
-        fig = plt.figure(1, figsize=(12, 12))
+        fig = plt.figure(1, figsize=(10, 9))
 
         nx.draw(
             graph,

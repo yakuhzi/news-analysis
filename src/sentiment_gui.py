@@ -20,7 +20,7 @@ class SentimentGUI:
 
     def clear_plots(self, clear_plot_array=False):
         if self.current_plot is not None:
-            self.current_plot.get_tk_widget()["command"] = self.current_plot.get_tk_widget().forget()
+            self.current_plot.get_tk_widget()["command"] = self.current_plot.get_tk_widget().grid_forget()
         if clear_plot_array:
             self.plots = []
 
@@ -41,7 +41,7 @@ class SentimentGUI:
             self.previous_button["state"] = "normal"
         self.clear_plots()
         self.current_plot = self.plots[self.current_plot_index]
-        self.current_plot.get_tk_widget().pack(fill=tkinter.BOTH)
+        self.current_plot.get_tk_widget().grid(row=1, column=0, columnspan=3)
 
     def show_sentiment(self, by_party):
         self.clear_plots(clear_plot_array=True)
@@ -60,7 +60,7 @@ class SentimentGUI:
         keyword_extraction = KeywordExtraction(self.df_paragraphs)
         fig = keyword_extraction.show_graph(self.df_term_weights)
         self.current_plot = FigureCanvasTkAgg(fig, self.gui)
-        self.current_plot.get_tk_widget().pack(fill=tkinter.BOTH)
+        self.current_plot.get_tk_widget().grid(row=1, column=0, columnspan=3)
 
     def iterate_plot(self):
         self.show_diagram()
@@ -73,27 +73,27 @@ class SentimentGUI:
         button_by_party = tkinter.Button(
             self.gui, text="Sentiment by party", command=lambda: self.show_sentiment(by_party=True)
         )
-        button_by_party.pack(side=tkinter.TOP)
+        button_by_party.grid(row=0, column=0)
 
         button_by_outlet = tkinter.Button(
             self.gui, text="Sentiment by outlet", command=lambda: self.show_sentiment(by_party=False)
         )
-        button_by_outlet.pack(side=tkinter.TOP)
+        button_by_outlet.grid(row=0, column=1)
 
         button_topic = tkinter.Button(self.gui, text="Show topics", command=self.show_topics)
-        button_topic.pack(side=tkinter.TOP)
+        button_topic.grid(row=0, column=2)
 
         self.next_button = button_by_outlet = tkinter.Button(
             self.gui, text="Show next", command=lambda: self.show_diagram(increase=True)
         )
         self.next_button["state"] = "disabled"
-        button_by_outlet.pack(side=tkinter.BOTTOM)
+        button_by_outlet.grid(row=2, column=2)
 
         self.previous_button = button_by_outlet = tkinter.Button(
             self.gui, text="Show previous", command=lambda: self.show_diagram(increase=False)
         )
         self.previous_button["state"] = "disabled"
-        button_by_outlet.pack(side=tkinter.BOTTOM)
+        button_by_outlet.grid(row=2, column=0)
 
         # "Hack" for displaying topics correctly, otherwise they sometimes appear in pie charts
         self.show_topics()
