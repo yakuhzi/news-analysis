@@ -12,6 +12,9 @@ class KeywordExtraction:
     def __init__(self, df_paragraphs):
         self.df_paragraphs = df_paragraphs
 
+    def set_data(self, df_paragraphs):
+        self.df_paragraphs = df_paragraphs
+
     def get_term_weight_tuples(self) -> DataFrame:
         # Get nouns from dataframe
         nouns = self.df_paragraphs["nouns"].apply(lambda row: " ".join(row))
@@ -77,6 +80,7 @@ class KeywordExtraction:
         df_term_weights["normalized_weight"] = df_term_weights["weight"].apply(
             lambda row: row / df_term_weights["weight"].max() * 4
         )
+        plt.close()
         fig = plt.figure(1, figsize=(10, 9))
 
         nx.draw(

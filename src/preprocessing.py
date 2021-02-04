@@ -160,10 +160,13 @@ class Preprocessing:
         index, texts = zip(*flat_list)
 
         # Store paragraphs with the original article index and media
-        dataframe = DataFrame(columns=["article_index", "text", "media"])
+        dataframe = DataFrame(columns=["article_index", "text", "media", "date"])
         dataframe["article_index"] = index
         dataframe["text"] = texts
         dataframe["media"] = dataframe["article_index"].apply(lambda index: df_articles["media"][index])
+        dataframe["date"] = dataframe["article_index"].apply(lambda index: df_articles["date"][index])
+        dataframe["date"] = dataframe["date"].apply(lambda date: date.split("T")[0])
+        dataframe["date"] = dataframe["date"].replace(r"^\s*$", np.nan, regex=True)
 
         return self._apply_preprocessing(dataframe)
 
