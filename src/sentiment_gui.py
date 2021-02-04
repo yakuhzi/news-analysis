@@ -61,11 +61,29 @@ class SentimentGUI:
         self.current_plot = self.plots[self.current_plot_index]
         self.current_plot.get_tk_widget().grid(row=3, column=0, columnspan=3)
 
+    def get_parties(self):
+        party_list = []
+        if self.cdu_check.get() == 1:
+            party_list.append("CDU")
+        if self.csu_check.get() == 1:
+            party_list.append("CSU")
+        if self.spd_check.get() == 1:
+            party_list.append("SPD")
+        if self.afd_check.get() == 1:
+            party_list.append("AfD")
+        if self.gruene_check.get() == 1:
+            party_list.append("Grüne")
+        if self.linke_check.get() == 1:
+            party_list.append("Linke")
+        return party_list
+
     def show_sentiment(self, by_party):
         plt.close("all")
         self.clear_plots(clear_plot_array=True)
         self.current_plot_index = 0
-        figures = Visualization.show_pie_charts(self.df_paragraphs, by_party=by_party)
+        party_list = self.get_parties()
+        self.configure_dataframe()
+        figures = Visualization.show_pie_charts(self.df_paragraphs_configured, by_party=by_party, parties=party_list)
         for fig in figures:
             bar1 = FigureCanvasTkAgg(fig, self.gui)
             self.plots.append(bar1)

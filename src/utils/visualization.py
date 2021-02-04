@@ -7,8 +7,8 @@ from pandas import DataFrame
 
 class Visualization:
     @staticmethod
-    def show_pie_charts(df_paragraphs: DataFrame, by_party: bool = True):
-        statistics = Visualization.get_statistics(df_paragraphs, by_party)
+    def show_pie_charts(df_paragraphs: DataFrame, by_party: bool = True, parties: list = None):
+        statistics = Visualization.get_statistics(df_paragraphs, by_party, parties)
         labels = ["Positive", "Negative", "Neutral"]
         colors = ["#2ca02c", "#ff7f0e", "#1f77b4"]
 
@@ -21,9 +21,16 @@ class Visualization:
                 fig.suptitle("Sentiment towards {}".format(key_1))
                 figures.append(fig)
             else:
-                fig, axs = plt.subplots(2, math.ceil(len(value_1) / 2))
+                rows = 2 if len(value_1) > 2 else 1
+                columns = math.ceil(len(value_1) / 2) if len(value_1) > 2 else len(value_1)
+                fig, axs = plt.subplots(rows, columns)
                 fig.suptitle("Sentiment of {} towards parties".format(key_1))
-                axs = [item for sublist in axs for item in sublist]
+                if len(value_1) % 2 == 1 and len(value_1) > 1:
+                    fig.delaxes(axs.flatten()[-1])
+                if len(value_1) > 2:
+                    axs = [item for sublist in axs for item in sublist]
+                if len(value_1) == 1:
+                    axs = [axs]
                 figures.append(fig)
 
             for (key_2, value_2), ax in zip(value_1.items(), axs):
@@ -38,9 +45,12 @@ class Visualization:
         return figures
 
     @staticmethod
-    def get_statistics(df_paragraphs: DataFrame, by_party: bool) -> Dict[str, Dict[str, Tuple[int, int, int]]]:
+    def get_statistics(
+        df_paragraphs: DataFrame, by_party: bool, parties: list
+    ) -> Dict[str, Dict[str, Tuple[int, int, int]]]:
         statistics: Dict[str, Dict[str, Tuple[int, int, int]]] = {}
-        parties = ["CDU", "CSU", "SPD", "AfD", "Grüne", "Linke"]
+        if parties is None:
+            parties = ["CDU", "CSU", "SPD", "AfD", "Grüne", "Linke"]
         media = ["Tagesschau", "TAZ", "Bild"]
 
         for item_1 in parties if by_party else media:
