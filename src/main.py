@@ -1,3 +1,4 @@
+from k_means_polarity import KMeansPolarity
 from keyword_extraction import KeywordExtraction
 from pandas import DataFrame
 from tfidf_sentiment import TfidfSentiment
@@ -37,13 +38,17 @@ def extract_keywords() -> None:
 
 if __name__ == "__main__":
     reader = Reader()
-    reader.read_articles(100)
+    reader.read_articles(5000)
 
     preprocessing = Preprocessing()
     df_paragraphs_bild, df_paragraphs_tagesschau, df_paragraphs_taz = preprocessing.get_paragraphs(reader)
     df_titles_bild, df_titles_tagesschau, df_titles_taz = preprocessing.get_titles(reader)
 
     df_paragraphs = df_paragraphs_tagesschau.append(df_paragraphs_taz).append(df_paragraphs_bild)
+
+    k_means = KMeansPolarity(df_paragraphs["text"])
+    k_means.calc_polarity()
+
     tfidf_sentiment = TfidfSentiment(df_paragraphs)
     df_paragraphs = tfidf_sentiment.get_sentiment()
 

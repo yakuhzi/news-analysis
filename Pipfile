@@ -10,7 +10,7 @@ coverage = "*"
 
 [packages]
 pre-commit = "*"
-spacy = "*"
+spacy = "==2.3.0"
 pandas = "*"
 nltk = "*"
 gensim = "*"
@@ -18,6 +18,7 @@ matplotlib = "*"
 scikit-learn = "*"
 spacy-sentiws = "*"
 networkx = "*"
+seaborn = "*"
 
 [scripts]
 test = "coverage run -m unittest discover -p *_test.py"
