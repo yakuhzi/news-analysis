@@ -7,8 +7,8 @@ from pandas import DataFrame
 
 class Visualization:
     @staticmethod
-    def show_pie_charts(df_paragraphs: DataFrame, by_party: bool = True, parties: list = None):
-        statistics = Visualization.get_statistics(df_paragraphs, by_party, parties)
+    def show_pie_charts(df_paragraphs: DataFrame, by_party: bool = True, parties: list = None, media: list = None):
+        statistics = Visualization.get_statistics(df_paragraphs, by_party, parties, media)
         labels = ["Positive", "Negative", "Neutral"]
         colors = ["#2ca02c", "#ff7f0e", "#1f77b4"]
 
@@ -19,6 +19,8 @@ class Visualization:
             if by_party:
                 fig, axs = plt.subplots(1, len(value_1))
                 fig.suptitle("Sentiment towards {}".format(key_1))
+                if len(value_1) == 1:
+                    axs = [axs]
                 figures.append(fig)
             else:
                 rows = 2 if len(value_1) > 2 else 1
@@ -46,12 +48,13 @@ class Visualization:
 
     @staticmethod
     def get_statistics(
-        df_paragraphs: DataFrame, by_party: bool, parties: list
+        df_paragraphs: DataFrame, by_party: bool, parties: list, media: list
     ) -> Dict[str, Dict[str, Tuple[int, int, int]]]:
         statistics: Dict[str, Dict[str, Tuple[int, int, int]]] = {}
         if parties is None:
             parties = ["CDU", "CSU", "SPD", "AfD", "Grüne", "Linke"]
-        media = ["Tagesschau", "TAZ", "Bild"]
+        if media is None:
+            media = ["Tagesschau", "TAZ", "Bild"]
 
         for item_1 in parties if by_party else media:
             party_statistics: Dict[str, Tuple[int, int, int]] = {}

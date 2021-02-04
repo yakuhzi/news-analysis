@@ -26,6 +26,9 @@ class SentimentGUI:
         self.afd_check = None
         self.gruene_check = None
         self.linke_check = None
+        self.tagesschau_check = None
+        self.taz_check = None
+        self.bild_check = None
         self.entry_date_from = None
         self.entry_date_to = None
         pass
@@ -59,7 +62,7 @@ class SentimentGUI:
             self.previous_button["state"] = "normal"
         self.clear_plots()
         self.current_plot = self.plots[self.current_plot_index]
-        self.current_plot.get_tk_widget().grid(row=3, column=0, columnspan=3)
+        self.current_plot.get_tk_widget().grid(row=4, column=0, columnspan=3)
 
     def get_parties(self):
         party_list = []
@@ -77,13 +80,26 @@ class SentimentGUI:
             party_list.append("Linke")
         return party_list
 
+    def get_media(self):
+        media_list = []
+        if self.tagesschau_check.get() == 1:
+            media_list.append("Tagesschau")
+        if self.taz_check.get() == 1:
+            media_list.append("TAZ")
+        if self.bild_check.get() == 1:
+            media_list.append("Bild")
+        return media_list
+
     def show_sentiment(self, by_party):
         plt.close("all")
         self.clear_plots(clear_plot_array=True)
         self.current_plot_index = 0
         party_list = self.get_parties()
+        media_list = self.get_media()
         self.configure_dataframe()
-        figures = Visualization.show_pie_charts(self.df_paragraphs_configured, by_party=by_party, parties=party_list)
+        figures = Visualization.show_pie_charts(
+            self.df_paragraphs_configured, by_party=by_party, parties=party_list, media=media_list
+        )
         for fig in figures:
             bar1 = FigureCanvasTkAgg(fig, self.gui)
             self.plots.append(bar1)
@@ -100,7 +116,7 @@ class SentimentGUI:
         df_term_weights = self.keyword_extraction.get_term_weight_tuples(parties=party_list)
         fig = self.keyword_extraction.show_graph(df_term_weights)
         self.current_plot = FigureCanvasTkAgg(fig, self.gui)
-        self.current_plot.get_tk_widget().grid(row=3, column=0, columnspan=3)
+        self.current_plot.get_tk_widget().grid(row=4, column=0, columnspan=3)
 
     def iterate_plot(self):
         self.show_diagram()
@@ -133,6 +149,9 @@ class SentimentGUI:
         self.afd_check = tkinter.IntVar(value=1)
         self.gruene_check = tkinter.IntVar(value=1)
         self.linke_check = tkinter.IntVar(value=1)
+        self.tagesschau_check = tkinter.IntVar(value=1)
+        self.taz_check = tkinter.IntVar(value=1)
+        self.bild_check = tkinter.IntVar(value=1)
 
         button_by_party = tkinter.Button(
             self.gui, text="Sentiment by party", command=lambda: self.show_sentiment(by_party=True)
@@ -181,17 +200,26 @@ class SentimentGUI:
         check_linke = tkinter.Checkbutton(self.gui, text="Linke", variable=self.linke_check, onvalue=1, offvalue=0)
         check_linke.grid(row=2, column=5)
 
+        check_tagesschau = tkinter.Checkbutton(
+            self.gui, text="Tagesschau", variable=self.tagesschau_check, onvalue=1, offvalue=0
+        )
+        check_tagesschau.grid(row=3, column=0)
+        check_taz = tkinter.Checkbutton(self.gui, text="TAZ", variable=self.taz_check, onvalue=1, offvalue=0)
+        check_taz.grid(row=3, column=1)
+        check_bild = tkinter.Checkbutton(self.gui, text="Bild", variable=self.bild_check, onvalue=1, offvalue=0)
+        check_bild.grid(row=3, column=2)
+
         self.next_button = button_by_outlet = tkinter.Button(
             self.gui, text="Show next", command=lambda: self.show_diagram(increase=True)
         )
         self.next_button["state"] = "disabled"
-        button_by_outlet.grid(row=4, column=2)
+        button_by_outlet.grid(row=5, column=2)
 
         self.previous_button = button_by_outlet = tkinter.Button(
             self.gui, text="Show previous", command=lambda: self.show_diagram(increase=False)
         )
         self.previous_button["state"] = "disabled"
-        button_by_outlet.grid(row=4, column=0)
+        button_by_outlet.grid(row=5, column=0)
 
         # "Hack" for displaying topics correctly, otherwise they sometimes appear in pie charts
         self.show_topics()
