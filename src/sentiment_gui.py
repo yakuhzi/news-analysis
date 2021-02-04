@@ -62,7 +62,7 @@ class SentimentGUI:
             self.previous_button["state"] = "normal"
         self.clear_plots()
         self.current_plot = self.plots[self.current_plot_index]
-        self.current_plot.get_tk_widget().grid(row=4, column=0, columnspan=3)
+        self.current_plot.get_tk_widget().grid(row=4, column=0, columnspan=6)
 
     def get_parties(self):
         party_list = []
@@ -113,10 +113,12 @@ class SentimentGUI:
         self.configure_dataframe()
         self.keyword_extraction.set_data(self.df_paragraphs_configured)
         party_list = self.get_parties()
+        media_list = self.get_media()
+        self.keyword_extraction.set_active_media(media_list)
         df_term_weights = self.keyword_extraction.get_term_weight_tuples(parties=party_list)
         fig = self.keyword_extraction.show_graph(df_term_weights)
         self.current_plot = FigureCanvasTkAgg(fig, self.gui)
-        self.current_plot.get_tk_widget().grid(row=4, column=0, columnspan=3)
+        self.current_plot.get_tk_widget().grid(row=4, column=0, columnspan=6)
 
     def iterate_plot(self):
         self.show_diagram()
@@ -140,7 +142,7 @@ class SentimentGUI:
 
     def show_gui(self):
         self.gui = tkinter.Tk()
-        self.gui.geometry("1000x1000")
+        self.gui.geometry("1500x1200")
         # self.gui.geometry("%dx%d" % (self.gui.winfo_screenwidth(), self.gui.winfo_screenheight()))
         self.date_check = tkinter.IntVar(value=0)
         self.cdu_check = tkinter.IntVar(value=1)

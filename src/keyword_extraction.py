@@ -15,6 +15,9 @@ class KeywordExtraction:
     def set_data(self, df_paragraphs):
         self.df_paragraphs = df_paragraphs
 
+    def set_active_media(self, media_list: list):
+        self.df_paragraphs = self.df_paragraphs[self.df_paragraphs["media"].isin(media_list)]
+
     def get_term_weight_tuples(self, parties: list = None) -> DataFrame:
         # Get nouns from dataframe
         nouns = self.df_paragraphs["nouns"].apply(lambda row: " ".join(row))
