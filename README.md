@@ -58,12 +58,16 @@ from the university which is provided for this project. Details about the data a
 | Dataset Analysis                                 | December Milestone | 18.02.2020 | X        | X        |
 | Dataset Statistics                               | December Milestone | 18.02.2020 | X        | X        |
 | Preprocessing Pipeline                           | December Milestone | 18.02.2020 | X        | X        |
-| Topic Detection                                  | December Milestone | 18.02.2020 | X        | -        |
+| Topic Detection                                  | December Milestone | 18.02.2020 | X        | X        |
 | Milestone README                                 | December Milestone | 18.02.2020 | X        | X        |
 |                                                  |                    |            |          |          |
-| Sentiment Analysis                               | Final Report       | February   | X        | -        |
+| Negation Handling                                | Final Report       | February   | X        | X        |
 | Incorporate SentiWS (Sentiment Lexicon)          | Final Report       | February   | X        | X        |
-| Finding Features for corpus-based approach       | Final Report       | February   | -        | -        |
+| Sentiment Calculation                            | Final Report       | February   | X        | X        |
+| Sentiment Visualization                          | Final Report       | February   | X        | X        |
+| Sentiment Threshold                              | Final Report       | February   | X        | -        |
+| Filter Options                                   | Final Report       | February   | X        | -        |
+| Dimension Analysis                               | Final Report       | February   | X        | -        |
 | Final Codebase                                   | Final Report       | February   | -        | -        |
 | Final README                                     | Final Report       | February   | -        | -        |
 | Final Report                                     | Final Report       | 15.03.2021 | -        | -        |
@@ -120,7 +124,7 @@ The following steps are done by using the library spaCy. It provides a preproces
 * lemmatization
     Lastly lemmatization is done. The words (tokens) of the text are saved in their respective base form. This was preferred before stemming, since the sentiment analysis could be done by using a sentiment lexicon that weights words by their positive or negative indication. 
 
-![Pipeline](figures/PreprocessingPipeline.png)
+![Pipeline](figures/preprocessing_pipeline.png)
 
 For each data source the end result of the preprocessing is then stored in a seperate JSON-file called "source_preprocessed.json". Additionally to the original columns it now also has a column for the NER tagging (see following chapter), POS tagging and lemmatization.
 The JSON object is then structured as follows:
@@ -134,11 +138,11 @@ The JSON object is then structured as follows:
     "date": "date as text",
     "authors": null,
     "references": [],
-    "persons_ner": [
+    "persons": [
       "Person 1 in text",
       "Person 2 in text"
     ],
-    "organizations_ner": [
+    "organizations": [
       "Organization 1 in text",
       "Organization 2 in text"
     ],
@@ -161,7 +165,7 @@ Overall, the NER tagging performs quite okay, especially it is good in recognizi
 
 Here is one example of the Tagesschau data set (article at index 4):
 
-![Screenshot](figures/NER_tagging.PNG)
+![Screenshot](figures/ner_tagging.png)
 
 * Organizations
     * Many correctly recognized → especially things like Union, Liberale very good (not “actual” name of party/ 
@@ -243,23 +247,36 @@ As a measure of quality for the topics, we calculated the coherence score. As `L
 
 Another method of analysing the quality of the topics is using a visual representation of the topics with `pyLDAvis`. Therefore the method `visualize_topics()` of the TopicDetection class can be used.
 
-### Results
+#### Results
 ![Coherence Score](figures/coherence_score.png)  
 The figure above shows that the coherence score of LDA is increasing almost linearly with the number of topics. This is not ideal, as we want to cluster the topics of multiple articles and not create a topic per article. To improve the performance, we may need to improve the preprocessing and also make further analysis on how to adjust the parameters of the models.  
 
 ![Topic Visualization](figures/topic_visualization.png)  
 Also the visual representation of the LDA topics shows that the topics are not chosen perfectly. There is no real clustering as multiple unrelated topics are merged together (e.g. sonneborn and mordkommision).
 
-Although the figures above only show results from LDA, the results of the other methods are fairly similar. We have chosen `HDP` as another option for topic modeling, because it determines the number of topics automatically and no parameter for this has to be provided. But using this model, far too much topics are generated and almost no generalization of similar topics are made.
+Although the figures above only show results from LDA, the results of the other methods are fairly similar. We have chosen `HDP` as another option for topic modeling, because it determines the number of topics automatically and no parameter for this has to be provided. But using this model, far too many topics are generated and almost no generalization of similar topics are made.
 
 We also tried to cluster the topics using Hierarchical Agglomerative Clustering, but without much success. The following figure shows how the Dendrogram, that should help to find the optimal numbers of clusters. Normally the best choice of number of clusters should be where the largest vertical distance doesn't intersect any of the clusters. Here this is the case before any clusters are merged. Therefore, the number of optimal clusters should be equal to the number of articles. Obviously this is not what we want.
 
 ![HAC](figures/hac.png)  
 
-To overcome this issues, we need to further investigate why our documents can't be grouped that easy by topic. As already mentioned, we need to further finetune the preprocessed data and the parameters of some models or maybe look at a completely different approach.
+To overcome this issues, we need to further investigate why our documents can't be grouped that easy by a topic. As already mentioned, we need to further finetune the preprocessed data and the parameters of some models or maybe look at a completely different approach.
+
+### Keyword Extraction
+As the results of the topic detections are not as good as expected, a basic keyword extraction was done using TF-IDF scores. For each party the top three words are taken, and the count of each word occurrence in the paragraphs is counted. The results are shown in the following bipartite graph:  
+
+![Keyword extraction](figures/keyword_extraction.png)  
+
+### Sentiment Analysis
+For the sentiment analysis, each word of a paragraph was weighted by a sentiment score from SentiWS. Also the TF-IDF score of each word was calculated. By performing the dot product of the sentiment score, and the TF-IDF scores, the overall sentiment of a sentence was calculated. 
+
+#### Visualization
+The following image shows the sentiment towards the parties in the articles of the news agency TAZ.
+
+![Sentiment TAZ](figures/sentiment_taz.png)  
 
 
+#### Sentiment Clustering
+Instead of using SentiWS to calculate the sentiment scores of each word, we tried also to perform a clustering of the sentiment to get more accurate results. But as you can see in the following image, the clusters are not towards a sentiment and thus cannot be used for our task.
 
-
-
-
+![Coherence Score](figures/sentiment_clustering.png)  
