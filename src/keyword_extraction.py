@@ -12,7 +12,13 @@ class KeywordExtraction:
     def __init__(self, df_paragraphs):
         self.df_paragraphs = df_paragraphs
 
-    def get_term_weight_tuples(self) -> DataFrame:
+    def set_data(self, df_paragraphs):
+        self.df_paragraphs = df_paragraphs
+
+    def set_active_media(self, media_list: list):
+        self.df_paragraphs = self.df_paragraphs[self.df_paragraphs["media"].isin(media_list)]
+
+    def get_term_weight_tuples(self, parties: list = None) -> DataFrame:
         # Get nouns from dataframe
         nouns = self.df_paragraphs["nouns"].apply(lambda row: " ".join(row))
 
@@ -26,7 +32,8 @@ class KeywordExtraction:
         # Generate tf-idf for the given document
         transformer.fit(count_vectorized)
 
-        parties = ["CDU", "CSU", "SPD", "FDP", "AfD", "Grüne", "Linke"]
+        if parties is None:
+            parties = ["CDU", "CSU", "SPD", "FDP", "AfD", "Grüne", "Linke"]
         terms = []
 
         for party in parties:
@@ -66,7 +73,7 @@ class KeywordExtraction:
         paragraphs = self._get_party_paragraphs(self.df_paragraphs, party)
         return paragraphs["nouns"].apply(lambda row: row.count(term)).sum()
 
-    def show_graph(self, df_term_weights: DataFrame) -> None:
+    def show_graph(self, df_term_weights: DataFrame):
         graph = nx.Graph()
         graph.add_nodes_from(df_term_weights["party"], bipartite=0)
         graph.add_nodes_from(df_term_weights["term"], bipartite=1)
@@ -77,7 +84,8 @@ class KeywordExtraction:
         df_term_weights["normalized_weight"] = df_term_weights["weight"].apply(
             lambda row: row / df_term_weights["weight"].max() * 4
         )
-        plt.figure(1, figsize=(12, 12))
+        plt.close()
+        fig = plt.figure(1, figsize=(10, 9))
 
         nx.draw(
             graph,
@@ -86,7 +94,8 @@ class KeywordExtraction:
             with_labels=True,
         )
 
-        plt.show()
+        # plt.show()
+        return fig
 
     def _get_party_paragraphs(self, dataframe: DataFrame, party: str) -> DataFrame:
         return dataframe[dataframe.apply(lambda row: len(row["parties"]) == 1 and party in row["parties"], axis=1)]

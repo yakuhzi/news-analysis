@@ -1,12 +1,13 @@
 from keyword_extraction import KeywordExtraction
 from preprocessing import Preprocessing
+from sentiment_gui import SentimentGUI
 from tfidf_sentiment import TfidfSentiment
 from utils.reader import Reader
 from utils.visualization import Visualization
 
 if __name__ == "__main__":
     # Read articles from json
-    df_articles = Reader.read_articles(10000)
+    df_articles = Reader.read_articles(5000)
 
     # Apply preprocessing
     preprocessing = Preprocessing()
@@ -23,5 +24,8 @@ if __name__ == "__main__":
     tfidf_sentiment.map_sentiment()
 
     # Visualize sentiment by media and party
-    Visualization.show_pie_charts(tfidf_sentiment.df_paragraphs, by_party=True)
-    Visualization.show_pie_charts(tfidf_sentiment.df_paragraphs, by_party=False)
+    Visualization.get_pie_charts(tfidf_sentiment.df_paragraphs, by_party=True)
+    Visualization.get_pie_charts(tfidf_sentiment.df_paragraphs, by_party=False)
+
+    gui = SentimentGUI(df_paragraphs)
+    gui.show_gui()
