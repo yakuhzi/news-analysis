@@ -19,8 +19,9 @@ if __name__ == "__main__":
 
     # Calculate sentiment of paragraphs
     tfidf_sentiment = TfidfSentiment(df_paragraphs)
-    df_paragraphs = tfidf_sentiment.add_sentiment()
+    tfidf_sentiment.add_sentiment()
+    tfidf_sentiment.map_sentiment()
 
     # Visualize sentiment by media and party
-    Visualization.show_pie_charts(df_paragraphs, by_party=True)
-    Visualization.show_pie_charts(df_paragraphs, by_party=False)
+    Visualization.show_pie_charts(tfidf_sentiment.df_paragraphs, by_party=True)
+    Visualization.show_pie_charts(tfidf_sentiment.df_paragraphs, by_party=False)

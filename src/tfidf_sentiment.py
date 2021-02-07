@@ -1,5 +1,4 @@
 import numpy as np
-from pandas import DataFrame
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 from utils.writer import Writer
@@ -9,10 +8,14 @@ class TfidfSentiment:
     def __init__(self, df_paragraphs):
         self.df_paragraphs = df_paragraphs
 
-    def add_sentiment(self) -> DataFrame:
+    def add_sentiment(self, overwrite: bool = False) -> None:
+        # Sentiment already calculated
+        if "sentiment_score" in self.df_paragraphs and not overwrite:
+            return
+
         # Get text from dataframe
         self.df_paragraphs["text"] = self.df_paragraphs["text"].apply(
-            lambda row: [self._remove_umlaut(word) for word in row]
+            lambda row: [self._remove_umlauts(word) for word in row]
         )
 
         text = self.df_paragraphs["text"].apply(lambda row: " ".join(row))
@@ -44,26 +47,37 @@ class TfidfSentiment:
         )
 
         # Calculate sentiment from dot product of polarity and tfidf
-        self.df_paragraphs["sentiment"] = self.df_paragraphs.apply(
+        self.df_paragraphs["sentiment_score"] = self.df_paragraphs.apply(
             lambda row: np.dot(row["polarity"], row["tfidf"]), axis=1
         )
 
+        # Save paragraphs to disk
+        Writer.write_articles(self.df_paragraphs, "paragraphs")
+
+    def map_sentiment(self, overwrite: bool = False) -> None:
+        # Sentiment already mapped
+        if "sentiment" in self.df_paragraphs and not overwrite:
+            return
+
         # Map sentiment values to "Positive", "Negative" or "Neutral"
-        self.df_paragraphs["sentiment"] = self.df_paragraphs["sentiment"].apply(lambda row: self._map_sentiment(row))
+        self.df_paragraphs["sentiment"] = self.df_paragraphs["sentiment_score"].apply(
+            lambda score: self._map_sentiment(score)
+        )
 
         # Save paragraphs to disk
         Writer.write_articles(self.df_paragraphs, "paragraphs")
-        return self.df_paragraphs
 
-    def _map_sentiment(self, row):
-        if row > 0:
+    def _map_sentiment(self, score: str) -> str:
+        score = float(score)
+
+        if score > 0.001:
             return "Positive"
-        elif row < 0:
+        elif score < -0.001:
             return "Negative"
         else:
             return "Neutral"
 
-    def _remove_umlaut(self, string):
+    def _remove_umlauts(self, string):
         """
         Removes umlauts from strings and replaces them with the letter+e convention
         :param string: string to remove umlauts from

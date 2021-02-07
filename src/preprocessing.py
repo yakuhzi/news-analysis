@@ -10,6 +10,7 @@ from pandas import DataFrame, Series
 from pandas.core.common import SettingWithCopyWarning
 from spacy.lang.de.stop_words import STOP_WORDS
 from spacy_sentiws import spaCySentiWS
+from tqdm import tqdm
 
 from model.document_type import DocumentType
 from utils.reader import Reader
@@ -111,7 +112,7 @@ class Preprocessing:
         # Copy original dataframe
         df_preprocessed = dataframe.copy()
 
-        # remove direct quotiations
+        # Remove direct quotiations
         df_preprocessed["text"] = self._remove_direct_quotations(df_preprocessed["text"])
 
         # Remove special characters
@@ -129,10 +130,12 @@ class Preprocessing:
         # Get organizations
         df_preprocessed["organizations"] = self._tag_organizations(df_preprocessed["text"])
 
+        # Get parties
+        df_preprocessed["parties"] = self._get_parties(df_preprocessed["organizations"])
+
         # Remove rows with no parties
         if remove_rows_without_parties:
             df_preprocessed = self._remove_rows_without_parties(df_preprocessed)
-            print("Number of documents after filtering: {}".format(len(df_preprocessed)))
 
         # Sentiment polarity
         df_preprocessed["polarity"] = self.determine_sentiment_polarity(df_preprocessed["text"])
@@ -151,6 +154,10 @@ class Preprocessing:
 
         end_time = time.time()
         print("End of preprocessing after {} seconds".format(end_time - start_time))
+
+        if remove_rows_without_parties:
+            print("Number of documents after filtering: {}".format(len(df_preprocessed)))
+
         return df_preprocessed
 
     def _preprocess_paragraphs(self, df_articles: DataFrame) -> DataFrame:
@@ -167,6 +174,9 @@ class Preprocessing:
 
         return self._apply_preprocessing(dataframe)
 
+    def _remove_direct_quotations(self, text_series: Series) -> Series:
+        return text_series.str.replace(r'"(.*?)"', " ", regex=True)
+
     def _remove_special_characters(self, text_series: Series) -> Series:
         return (
             text_series.str.replace(r"[^A-Za-z0-9äöüÄÖÜß\-]", " ", regex=True)
@@ -175,51 +185,58 @@ class Preprocessing:
             .str.strip()
         )
 
-    def _remove_direct_quotations(self, text_series: Series) -> Series:
-        return text_series.str.replace(r'"(.*?)"', " ", regex=True)
-
     def _remove_stopwords(self, text_series: Series) -> Series:
-        return text_series.apply(lambda row: " ".join(word for word in row.split() if word not in self.stopwords))
+        tqdm.pandas(desc="Remove stopwords")
+        return text_series.progress_apply(
+            lambda row: " ".join(word for word in row.split() if word not in self.stopwords)
+        )
 
     def _tokenization(self, text_series: Series) -> Series:
-        return text_series.apply(lambda row: self.nlp(row))
+        tqdm.pandas(desc="Tokenization")
+        return text_series.progress_apply(lambda row: self.nlp(row))
 
     def _pos_tagging(self, token_series: Series) -> Series:
-        return token_series.apply(lambda doc: [token.tag_ for token in doc])
+        tqdm.pandas(desc="POS Tagging")
+        return token_series.progress_apply(lambda doc: [token.tag_ for token in doc])
 
     def _lemmatizing(self, token_series: Series) -> Series:
-        return token_series.apply(lambda doc: [token.lemma_.lower() for token in doc])
+        tqdm.pandas(desc="Lemmatization")
+        return token_series.progress_apply(lambda doc: [token.lemma_.lower() for token in doc])
 
     def _get_nouns(self, token_series: Series) -> Series:
-        return token_series.apply(lambda doc: [token.lemma_.lower() for token in doc if token.tag_ == "NN"])
+        tqdm.pandas(desc="Get nouns")
+        return token_series.progress_apply(lambda doc: [token.lemma_.lower() for token in doc if token.tag_ == "NN"])
 
     def _tag_persons(self, token_series: Series) -> Series:
-        return token_series.apply(lambda doc: list(set([entity.text for entity in doc.ents if entity.label_ == "PER"])))
+        tqdm.pandas(desc="Tag persons")
+        return token_series.progress_apply(
+            lambda doc: list(set([entity.text for entity in doc.ents if entity.label_ == "PER"]))
+        )
 
     def _tag_organizations(self, token_series: Series) -> Series:
-        return token_series.apply(lambda doc: list(set([entity.text for entity in doc.ents if entity.label_ == "ORG"])))
+        tqdm.pandas(desc="Tag organizations")
+        return token_series.progress_apply(
+            lambda doc: list(set([entity.text for entity in doc.ents if entity.label_ == "ORG"]))
+        )
 
     def _remove_entities(self, token_series: Series) -> Series:
-        return token_series.apply(lambda doc: [token for token in doc if not token.ent_type_])
+        tqdm.pandas(desc="Remove entities")
+        return token_series.progress_apply(lambda doc: [token for token in doc if not token.ent_type_])
+
+    def _get_parties(self, organization_series: Series) -> Series:
+        tqdm.pandas(desc="Get parties")
+        organization_series = organization_series.apply(lambda row: [x.lower() for x in row])
+        return organization_series.progress_apply(
+            lambda row: [party for party, synonyms in self.parties.items() if any(x in synonyms for x in row)]
+        )
 
     def _remove_rows_without_parties(self, dataframe: DataFrame) -> DataFrame:
-        df_preprocessed = dataframe.apply(self._find_parties, axis=1)
-        return df_preprocessed.loc[np.array(list(map(len, df_preprocessed.parties.values))) > 0]
-
-    def _find_parties(self, row):
-        organizations = [x.lower() for x in row["organizations"]]
-        parties = []
-
-        for organization in organizations:
-            for key, value in self.parties.items():
-                if organization in value and key not in parties:
-                    parties.append(key)
-
-        row["parties"] = parties
-        return row
+        tqdm.pandas(desc="Remove rows without parties")
+        return dataframe.loc[np.array(list(map(len, dataframe.parties.values))) > 0]
 
     def determine_sentiment_polarity(self, token_series: Series) -> Series:
-        return token_series.apply(lambda doc: [token._.sentiws for token in doc])
+        tqdm.pandas(desc="Determine sentiment polarity")
+        return token_series.progress_apply(lambda doc: [token._.sentiws for token in doc])
 
     def negation_handling(self, df_preprocessed: DataFrame) -> DataFrame:
         polarity_array = df_preprocessed["polarity"].to_numpy()
