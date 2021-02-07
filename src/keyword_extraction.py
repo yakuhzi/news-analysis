@@ -34,6 +34,7 @@ class KeywordExtraction:
 
         if parties is None:
             parties = ["CDU", "CSU", "SPD", "FDP", "AfD", "Grüne", "Linke"]
+
         terms = []
 
         for party in parties:
@@ -61,10 +62,6 @@ class KeywordExtraction:
         df_weights = DataFrame({"term": vectorizer.get_feature_names(), "TF_IDF": weights})
         df_weights = df_weights.sort_values("TF_IDF", ascending=False).reset_index(drop=False)
 
-        # df_weights.plot.bar(x="term", y="TF_IDF", rot=45, width=0.7, figsize=(10, 5))
-        # plt.title("TF_IDF", size=15)
-        # plt.show()
-
         top_terms = df_weights["term"].tolist()[:3]
         print("Top 3 words of {}: {}".format(party, top_terms))
         return top_terms
@@ -73,7 +70,7 @@ class KeywordExtraction:
         paragraphs = self._get_party_paragraphs(self.df_paragraphs, party)
         return paragraphs["nouns"].apply(lambda row: row.count(term)).sum()
 
-    def show_graph(self, df_term_weights: DataFrame):
+    def get_graph(self, df_term_weights: DataFrame):
         graph = nx.Graph()
         graph.add_nodes_from(df_term_weights["party"], bipartite=0)
         graph.add_nodes_from(df_term_weights["term"], bipartite=1)
@@ -84,6 +81,7 @@ class KeywordExtraction:
         df_term_weights["normalized_weight"] = df_term_weights["weight"].apply(
             lambda row: row / df_term_weights["weight"].max() * 4
         )
+
         plt.close()
         fig = plt.figure(1, figsize=(10, 9))
 
@@ -94,7 +92,6 @@ class KeywordExtraction:
             with_labels=True,
         )
 
-        # plt.show()
         return fig
 
     def _get_party_paragraphs(self, dataframe: DataFrame, party: str) -> DataFrame:

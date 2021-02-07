@@ -1,5 +1,4 @@
 import tkinter
-from datetime import datetime
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -97,7 +96,7 @@ class SentimentGUI:
         party_list = self.get_parties()
         media_list = self.get_media()
         self.configure_dataframe()
-        figures = Visualization.show_pie_charts(
+        figures = Visualization.get_pie_charts(
             self.df_paragraphs_configured, by_party=by_party, parties=party_list, media=media_list
         )
         for fig in figures:
@@ -116,7 +115,7 @@ class SentimentGUI:
         media_list = self.get_media()
         self.keyword_extraction.set_active_media(media_list)
         df_term_weights = self.keyword_extraction.get_term_weight_tuples(parties=party_list)
-        fig = self.keyword_extraction.show_graph(df_term_weights)
+        fig = self.keyword_extraction.get_graph(df_term_weights)
         self.current_plot = FigureCanvasTkAgg(fig, self.gui)
         self.current_plot.get_tk_widget().grid(row=4, column=0, columnspan=6)
 
