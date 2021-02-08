@@ -19,6 +19,8 @@ scikit-learn = "~=0.24"
 spacy-sentiws = "~=0.0"
 networkx = "~=2.5"
 tqdm = "~=4.56"
+transformers = "~=4.2.2"
+sentencepiece = "*"
 
 [scripts]
 test = "coverage run -m unittest discover -s ./tests -p *_test.py"

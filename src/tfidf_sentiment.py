@@ -52,7 +52,7 @@ class TfidfSentiment:
         )
 
         # Save paragraphs to disk
-        Writer.write_articles(self.df_paragraphs, "paragraphs")
+        Writer.write(self.df_paragraphs, "paragraphs")
 
     def map_sentiment(self, overwrite: bool = False) -> None:
         # Sentiment already mapped
@@ -65,7 +65,7 @@ class TfidfSentiment:
         )
 
         # Save paragraphs to disk
-        Writer.write_articles(self.df_paragraphs, "paragraphs")
+        Writer.write(self.df_paragraphs, "paragraphs")
 
     def _map_sentiment(self, score: str) -> str:
         score = float(score)

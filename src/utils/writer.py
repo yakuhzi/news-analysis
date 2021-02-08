@@ -12,7 +12,7 @@ class Writer:
     """
 
     @staticmethod
-    def write_articles(df: pd.DataFrame, filename: str):
+    def write(df: pd.DataFrame, filename: str):
         """
         Helper function to store Pandas dataframe into json file
 

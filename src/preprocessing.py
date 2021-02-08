@@ -21,13 +21,9 @@ warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
 class Preprocessing:
     def __init__(self):
+        self.nlp = None
+        self.sentiws = None
         self.stopwords = spacy.lang.de.stop_words.STOP_WORDS
-
-        # de_core_news_lg had the best score for entity recognition and syntax accuracy in german according to spacy.
-        # for more information, see https://spacy.io/models/de#de_core_news_lg
-        self.nlp = spacy.load("de_core_news_lg", disable=["parser"])
-        self.sentiws = spaCySentiWS(sentiws_path="src/data/sentiws/")
-        self.nlp.add_pipe(self.sentiws)
 
         self.parties = {
             "CDU": ["cdu", "union"],
@@ -63,6 +59,7 @@ class Preprocessing:
             "trotz",
             "obwohl",
         ]
+
         self.negation_pattern = re.compile("|".join(self.negation_words))
 
     def get_articles(self, df_articles: DataFrame, overwrite: bool = False) -> DataFrame:
@@ -102,18 +99,27 @@ class Preprocessing:
             articles = articles[["title", "media"]].rename(columns={"title": "text"})
             df_preprocessed = self._apply_preprocessing(articles, False)
 
-        Writer.write_articles(df_preprocessed, preprocessed_filename)
+        Writer.write(df_preprocessed, preprocessed_filename)
         return df_preprocessed
 
     def _apply_preprocessing(self, dataframe: DataFrame, remove_rows_without_parties: bool = True) -> DataFrame:
         print("Start of preprocessing")
         start_time = time.time()
 
+        # de_core_news_lg had the best score for entity recognition and syntax accuracy in german according to spacy.
+        # For more information, see https://spacy.io/models/de#de_core_news_l
+        if self.nlp is None or self.sentiws is None:
+            self.nlp = spacy.load("de_core_news_lg", disable=["parser"])
+            self.sentiws = spaCySentiWS(sentiws_path="src/data/sentiws/")
+            self.nlp.add_pipe(self.sentiws)
+
         # Copy original dataframe
         df_preprocessed = dataframe.copy()
 
         # Convert string date into datetime
         if "date" in df_preprocessed:
+            df_preprocessed["date"] = df_preprocessed["date"].apply(lambda date: date.split("T")[0])
+            df_preprocessed["date"] = df_preprocessed["date"].replace(r"^\s*$", np.nan, regex=True)
             df_preprocessed["date"].astype("datetime64[ns]")
 
         # Remove direct quotiations
@@ -176,8 +182,6 @@ class Preprocessing:
         dataframe["text"] = texts
         dataframe["media"] = dataframe["article_index"].apply(lambda index: df_articles["media"][index])
         dataframe["date"] = dataframe["article_index"].apply(lambda index: df_articles["date"][index])
-        dataframe["date"] = dataframe["date"].apply(lambda date: date.split("T")[0])
-        dataframe["date"] = dataframe["date"].replace(r"^\s*$", np.nan, regex=True)
 
         return self._apply_preprocessing(dataframe)
 
