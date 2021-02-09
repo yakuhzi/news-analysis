@@ -119,6 +119,24 @@ class SentimentGUI:
         self.current_plot = FigureCanvasTkAgg(fig, self.gui)
         self.current_plot.get_tk_widget().grid(row=4, column=0, columnspan=6)
 
+    def show_time_course(self):
+        self.next_button["state"] = "normal"
+        self.previous_button["state"] = "normal"
+        self.clear_plots(clear_plot_array=True)
+        self.configure_dataframe()
+        self.keyword_extraction.set_data(self.df_paragraphs_configured)
+        party_list = self.get_parties()
+        media_list = self.get_media()
+        self.keyword_extraction.set_active_media(media_list)
+        df_top_terms = self.keyword_extraction.get_top_terms_for_party(parties=party_list)
+        for party in party_list:
+            # use only top 3 words for each party
+            df_party_term = df_top_terms[df_top_terms["party"] == party]
+
+            # split time window into smaller chunks
+            # calculate weight for smaller time window
+            # draw plot for time window
+
     def iterate_plot(self):
         self.show_diagram()
 
@@ -155,17 +173,20 @@ class SentimentGUI:
         self.bild_check = tkinter.IntVar(value=1)
 
         button_by_party = tkinter.Button(
-            self.gui, text="Sentiment by party", command=lambda: self.show_sentiment(by_party=True)
+            self.gui, text="Sentiment by Party", command=lambda: self.show_sentiment(by_party=True)
         )
         button_by_party.grid(row=0, column=0)
 
         button_by_outlet = tkinter.Button(
-            self.gui, text="Sentiment by outlet", command=lambda: self.show_sentiment(by_party=False)
+            self.gui, text="Sentiment by Outlet", command=lambda: self.show_sentiment(by_party=False)
         )
         button_by_outlet.grid(row=0, column=1)
 
-        button_topic = tkinter.Button(self.gui, text="Show topics", command=self.show_topics)
+        button_topic = tkinter.Button(self.gui, text="Show Topics", command=self.show_topics)
         button_topic.grid(row=0, column=2)
+
+        button_time_course = tkinter.Button(self.gui, text="Show Time Course", command=self.show_time_course)
+        button_time_course.grid(row=0, column=3)
 
         check_filter_date = tkinter.Checkbutton(
             self.gui,

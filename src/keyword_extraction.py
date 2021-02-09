@@ -50,6 +50,33 @@ class KeywordExtraction:
 
         return DataFrame(tuples, columns=["party", "term", "weight"])
 
+    def get_top_terms_for_party(self, parties: list = None) -> DataFrame:
+        # Get nouns from dataframe
+        nouns = self.df_paragraphs["nouns"].apply(lambda row: " ".join(row))
+
+        # Vectorize character_words
+        vectorizer = CountVectorizer(min_df=5, token_pattern=r"(?u)\b[a-zA-Z0-9_\-][a-zA-Z0-9_\-]+\b")
+        count_vectorized = vectorizer.fit_transform(nouns)
+
+        # Apply tf-idf to count_vectorized
+        transformer = TfidfTransformer(smooth_idf=True, use_idf=True)
+
+        # Generate tf-idf for the given document
+        transformer.fit(count_vectorized)
+
+        if parties is None:
+            parties = ["CDU", "CSU", "SPD", "FDP", "AfD", "Grüne", "Linke"]
+
+        tuples = []
+
+        for party in parties:
+            terms = self._get_top_words(party, vectorizer, transformer)
+            terms = list(set(terms))
+            for term in terms:
+                tuples.append((party, term))
+
+        return DataFrame(tuples, columns=["party", "term"])
+
     def _get_top_words(self, party: str, vectorizer: CountVectorizer, transformer: TfidfTransformer) -> List[str]:
         paragraphs = self._get_party_paragraphs(self.df_paragraphs, party)
         paragraphs["nouns"] = self._remove_party_positions(paragraphs)
