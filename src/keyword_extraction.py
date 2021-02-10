@@ -45,7 +45,7 @@ class KeywordExtraction:
 
         for party in parties:
             for term in terms:
-                term_count = self._get_term_count(party, term)
+                term_count = self._get_term_count(self.df_paragraphs, party, term)
                 tuples.append((party, term, term_count))
 
         return DataFrame(tuples, columns=["party", "term", "weight"])
@@ -93,8 +93,8 @@ class KeywordExtraction:
         print("Top 3 words of {}: {}".format(party, top_terms))
         return top_terms
 
-    def _get_term_count(self, party: str, term: str) -> int:
-        paragraphs = self._get_party_paragraphs(self.df_paragraphs, party)
+    def _get_term_count(self, df, party: str, term: str) -> int:
+        paragraphs = self._get_party_paragraphs(df, party)
         return paragraphs["nouns"].apply(lambda row: row.count(term)).sum()
 
     def get_graph(self, df_term_weights: DataFrame):

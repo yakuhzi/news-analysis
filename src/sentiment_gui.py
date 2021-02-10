@@ -37,8 +37,18 @@ class SentimentGUI:
     def configure_dataframe(self):
         self.df_paragraphs_configured = self.df_paragraphs
         if self.date_check.get() == 1:
-            self.filter_time(self.entry_date_from.get(), self.entry_date_to.get())
+            start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
+            end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
+            self.filter_time(start_date, end_date)
 
+    def configure_dataframe_for_time_course(self, start_date, end_date):
+        df_paragraphs_time_interval = self.df_paragraphs_configured[self.df_paragraphs_configured["date"].notna()]
+        if start_date and end_date:
+            df_paragraphs_time_interval = df_paragraphs_time_interval[
+                (df_paragraphs_time_interval["date"] > start_date) & (df_paragraphs_time_interval["date"] < end_date)
+                ]
+        return df_paragraphs_time_interval
+    
     def clear_plots(self, clear_plot_array=False):
         if self.current_plot is not None:
             self.current_plot.get_tk_widget()["command"] = self.current_plot.get_tk_widget().grid_forget()
@@ -134,19 +144,31 @@ class SentimentGUI:
         for party in party_list:
             # use only top 3 words for each party
             df_party_term = df_top_terms[df_top_terms["party"] == party]
-            # split time window into smaller chunks
-            # calculate months between dates
-            start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
-            end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
-            next_start_date = start_date + relativedelta(months=+1)
-            # get tfidf for each month
-            # draw plot for time window
+            for term in df_party_term:
+                # split time window into smaller chunks
+                # calculate months between dates
+                start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
+                end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
+                next_end_date = start_date + relativedelta(months=+1)
+                weight_list = []
+                while next_end_date < end_date:
+                    # get weight for each month
+                    start_date = next_end_date
+                    next_end_date = start_date + relativedelta(months=+1)
+                    df_interval_paragraphs = self.configure_dataframe_for_time_course(start_date, next_end_date)
+                    weight = self.keyword_extraction.get_term_count(df_interval_paragraphs, party, term)
+                    weight_list.append(weight)
+
+                # draw plot for time window
+                print(weight_list)
 
     def iterate_plot(self):
         self.show_diagram()
 
     def filter_time(self, min_date=None, max_date=None):
         self.df_paragraphs_configured = self.df_paragraphs_configured[self.df_paragraphs_configured["date"].notna()]
+        self.df_paragraphs_configured["date"] = self.df_paragraphs_configured["date"].apply(lambda row: datetime.datetime.strptime(row, "%Y-%m-%d"))
+        print(self.df_paragraphs_configured.head())
         if min_date and max_date:
             self.df_paragraphs_configured = self.df_paragraphs_configured[
                 (self.df_paragraphs_configured["date"] > min_date) & (self.df_paragraphs_configured["date"] < max_date)
