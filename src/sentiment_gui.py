@@ -5,6 +5,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from keyword_extraction import KeywordExtraction
 from utils.visualization import Visualization
+import datetime
+from dateutil.relativedelta import relativedelta
 
 
 class SentimentGUI:
@@ -132,9 +134,12 @@ class SentimentGUI:
         for party in party_list:
             # use only top 3 words for each party
             df_party_term = df_top_terms[df_top_terms["party"] == party]
-
             # split time window into smaller chunks
-            # calculate weight for smaller time window
+            # calculate months between dates
+            start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
+            end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
+            next_start_date = start_date + relativedelta(months=+1)
+            # get tfidf for each month
             # draw plot for time window
 
     def iterate_plot(self):
@@ -200,13 +205,13 @@ class SentimentGUI:
         label_date_from = tkinter.Label(self.gui, text="Date: From ")
         label_date_from.grid(row=1, column=1)
         self.entry_date_from = tkinter.Entry(self.gui, bd=5)
-        # entry_date_from.insert(tkinter.END, min(self.df_paragraphs["date"].to_list()))
+        # self.entry_date_from.insert(tkinter.END, min(self.df_paragraphs["date"].to_list()))
         self.entry_date_from.grid(row=1, column=2)
 
         label_date_to = tkinter.Label(self.gui, text=" To ")
         label_date_to.grid(row=1, column=3)
         self.entry_date_to = tkinter.Entry(self.gui, bd=5)
-        # entry_date_to.insert(tkinter.END, max(self.df_paragraphs["date"]))
+        # self.entry_date_to.insert(tkinter.END, max(self.df_paragraphs["date"]))
         self.entry_date_to.grid(row=1, column=4)
 
         check_cdu = tkinter.Checkbutton(self.gui, text="CDU", variable=self.cdu_check, onvalue=1, offvalue=0)
