@@ -182,7 +182,7 @@ class Preprocessing:
         return self._apply_preprocessing(dataframe)
 
     def _remove_direct_quotations(self, text_series: Series) -> Series:
-        return text_series.str.replace(r'"(.*?)"', " ", regex=True)
+        return text_series.str.replace(r'"(.*?)"', "", regex=True).str.strip()
 
     def _remove_special_characters(self, text_series: Series) -> Series:
         return (
