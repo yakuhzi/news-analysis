@@ -37,15 +37,15 @@ class SentimentGUI:
     def configure_dataframe(self):
         self.df_paragraphs_configured = self.df_paragraphs
         if self.date_check.get() == 1:
-            start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
-            end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
-            self.filter_time(start_date, end_date)
+            self.filter_time(self.entry_date_from.get(), self.entry_date_to.get())
 
     def configure_dataframe_for_time_course(self, start_date, end_date):
         df_paragraphs_time_interval = self.df_paragraphs_configured[self.df_paragraphs_configured["date"].notna()]
         if start_date and end_date:
+            start = start_date.strftime("%Y-%m-%d")
+            end = end_date.strftime("%Y-%m-%d")
             df_paragraphs_time_interval = df_paragraphs_time_interval[
-                (df_paragraphs_time_interval["date"] > start_date) & (df_paragraphs_time_interval["date"] < end_date)
+                (df_paragraphs_time_interval["date"] > start) & (df_paragraphs_time_interval["date"] < end)
                 ]
         return df_paragraphs_time_interval
     
@@ -167,7 +167,7 @@ class SentimentGUI:
 
     def filter_time(self, min_date=None, max_date=None):
         self.df_paragraphs_configured = self.df_paragraphs_configured[self.df_paragraphs_configured["date"].notna()]
-        self.df_paragraphs_configured["date"] = self.df_paragraphs_configured["date"].apply(lambda row: datetime.datetime.strptime(row, "%Y-%m-%d"))
+        #self.df_paragraphs_configured["date"] = self.df_paragraphs_configured["date"].apply(lambda row: datetime.datetime.strptime(row, "%Y-%m-%d"))
         print(self.df_paragraphs_configured.head())
         if min_date and max_date:
             self.df_paragraphs_configured = self.df_paragraphs_configured[
