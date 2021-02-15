@@ -1,6 +1,7 @@
 import math
 from typing import Dict, Tuple
 
+import datetime
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 
@@ -54,6 +55,14 @@ class Visualization:
 
             # Add legend to plot
             fig.legend(labels=labels, loc="lower right", borderaxespad=0.1, title="Sentiment")
+
+        return figures
+
+    @staticmethod
+    def get_plots(
+            media: str = None, party: str = None, term: str = None, weight_list: list = None,
+            start_date: datetime = None, end_date: datetime = None):
+        figures = []
 
         return figures
 

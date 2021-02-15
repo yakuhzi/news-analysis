@@ -3,6 +3,7 @@ import tkinter
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+import pandas as pd
 from keyword_extraction import KeywordExtraction
 from utils.visualization import Visualization
 import datetime
@@ -141,26 +142,38 @@ class SentimentGUI:
         media_list = self.get_media()
         self.keyword_extraction.set_active_media(media_list)
         df_top_terms = self.keyword_extraction.get_top_terms_for_party(parties=party_list)
+        df_image = pd.DataFrame(columns=['party', 'media', 'term', 'weight'])
         for party in party_list:
-            # use only top 3 words for each party
-            df_party_term = df_top_terms[df_top_terms["party"] == party]
-            for term in df_party_term:
-                # split time window into smaller chunks
-                # calculate months between dates
-                start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
-                end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
-                next_end_date = start_date + relativedelta(months=+1)
-                weight_list = []
-                while next_end_date < end_date:
-                    # get weight for each month
-                    start_date = next_end_date
-                    next_end_date = start_date + relativedelta(months=+1)
-                    df_interval_paragraphs = self.configure_dataframe_for_time_course(start_date, next_end_date)
-                    weight = self.keyword_extraction.get_term_count(df_interval_paragraphs, party, term)
-                    weight_list.append(weight)
-
-                # draw plot for time window
-                print(weight_list)
+            for media in media_list:
+                # use only top 3 words for each party
+                df_party_term = df_top_terms[df_top_terms["party"] == party]
+                for term in df_party_term["term"]:
+                    # split time window into smaller chunks
+                    # calculate months between dates
+                    initial_start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
+                    start_date = initial_start_date
+                    initial_end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
+                    next_end_date = initial_start_date + relativedelta(months=+1)
+                    weight_list = []
+                    while next_end_date < initial_end_date:
+                        # get weight for each month
+                        df_interval_paragraphs = self.configure_dataframe_for_time_course(start_date, next_end_date)
+                        weight = self.keyword_extraction.get_term_count(df_interval_paragraphs, party, term)
+                        weight_list.append(weight)
+                        start_date = next_end_date
+                        next_end_date = start_date + relativedelta(months=+1)
+                    df_image = df_image.append({"party": party,
+                                                "media": media,
+                                                "term": term,
+                                                "weight": weight_list}, ignore_index=True)
+            # draw plot for time window
+            figures = Visualization.get_plots(
+                 media, party, term, weight_list, initial_start_date, initial_end_date
+             )
+            for fig in figures:
+                bar1 = FigureCanvasTkAgg(fig, self.gui)
+                self.plots.append(bar1)
+            self.show_diagram(first_image=True)
 
     def iterate_plot(self):
         self.show_diagram()
