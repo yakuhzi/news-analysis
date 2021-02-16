@@ -1,11 +1,15 @@
 import re
+import warnings
 from typing import List
 
 import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt
 from pandas import DataFrame
+from pandas.core.common import SettingWithCopyWarning
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+
+warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
 
 class KeywordExtraction:
@@ -18,7 +22,7 @@ class KeywordExtraction:
     def set_active_media(self, media_list: list):
         self.df_paragraphs = self.df_paragraphs[self.df_paragraphs["media"].isin(media_list)]
 
-    def get_term_weight_tuples(self, parties: list = None) -> DataFrame:
+    def get_term_weight_tuples(self, parties: list = None, topn: int = 3) -> DataFrame:
         # Get nouns from dataframe
         nouns = self.df_paragraphs["nouns"].apply(lambda row: " ".join(row))
 
@@ -38,7 +42,7 @@ class KeywordExtraction:
         terms = []
 
         for party in parties:
-            terms += self._get_top_words(party, vectorizer, transformer)
+            terms += self._get_top_words(topn, party, vectorizer, transformer)
 
         terms = list(set(terms))
         tuples = []
@@ -50,20 +54,22 @@ class KeywordExtraction:
 
         return DataFrame(tuples, columns=["party", "term", "weight"])
 
-    def _get_top_words(self, party: str, vectorizer: CountVectorizer, transformer: TfidfTransformer) -> List[str]:
-        paragraphs = self._get_party_paragraphs(self.df_paragraphs, party)
-        paragraphs["nouns"] = self._remove_party_positions(paragraphs)
+    def _get_top_words(
+        self, topn: int, party: str, vectorizer: CountVectorizer, transformer: TfidfTransformer
+    ) -> List[str]:
+        party_paragraphs = self._get_party_paragraphs(self.df_paragraphs, party)
+        party_paragraphs["nouns"] = self._remove_party_positions(party_paragraphs)
 
-        nouns = paragraphs["nouns"].to_string()
+        nouns = party_paragraphs["nouns"].apply(lambda row: " ".join(row))
 
-        tf_idf_vector = transformer.transform(vectorizer.transform([nouns]))
+        tf_idf_vector = transformer.transform(vectorizer.transform(nouns))
         weights = np.asarray(tf_idf_vector.mean(axis=0)).ravel().tolist()
 
         df_weights = DataFrame({"term": vectorizer.get_feature_names(), "TF_IDF": weights})
         df_weights = df_weights.sort_values("TF_IDF", ascending=False).reset_index(drop=False)
 
-        top_terms = df_weights["term"].tolist()[:3]
-        print("Top 3 words of {}: {}".format(party, top_terms))
+        top_terms = df_weights["term"].tolist()[:topn]
+        print("Top {} words of {}: {}".format(topn, party, top_terms))
         return top_terms
 
     def _get_term_count(self, party: str, term: str) -> int:
