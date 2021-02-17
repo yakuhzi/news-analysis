@@ -59,11 +59,10 @@ class Visualization:
         return figures
 
     @staticmethod
-    def get_plots(
-            media: str = None, party: str = None, term: str = None, weight_list: list = None,
-            start_date: datetime = None, end_date: datetime = None):
+    def get_plots(df_time_course: DataFrame):
         figures = []
-
+        for index, row in df_time_course.iterrows():
+            print(row["term"])
         return figures
 
     @staticmethod

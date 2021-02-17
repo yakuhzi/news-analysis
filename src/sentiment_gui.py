@@ -166,14 +166,12 @@ class SentimentGUI:
                                                 "media": media,
                                                 "term": term,
                                                 "weight": weight_list}, ignore_index=True)
-            # draw plot for time window
-            figures = Visualization.get_plots(
-                 media, party, term, weight_list, initial_start_date, initial_end_date
-             )
-            for fig in figures:
-                bar1 = FigureCanvasTkAgg(fig, self.gui)
-                self.plots.append(bar1)
-            self.show_diagram(first_image=True)
+        # draw plot for time window
+        figures = Visualization.get_plots(df_image)
+        for fig in figures:
+            bar1 = FigureCanvasTkAgg(fig, self.gui)
+            self.plots.append(bar1)
+        self.show_diagram(first_image=True)
 
     def iterate_plot(self):
         self.show_diagram()
