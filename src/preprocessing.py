@@ -116,6 +116,8 @@ class Preprocessing:
         if "date" in df_preprocessed:
             df_preprocessed["date"].astype("datetime64[ns]")
 
+        df_preprocessed["original_text"] = df_preprocessed["text"]
+
         # Remove direct quotiations
         df_preprocessed["text"] = self._remove_direct_quotations(df_preprocessed["text"])
 
@@ -171,8 +173,9 @@ class Preprocessing:
         index, texts = zip(*flat_list)
 
         # Store paragraphs with the original article index and media
-        dataframe = DataFrame(columns=["article_index", "text", "media", "date"])
+        dataframe = DataFrame(columns=["article_index", "title", "text", "media", "date"])
         dataframe["article_index"] = index
+        dataframe["title"] = dataframe["article_index"].apply(lambda index: df_articles["title"][index])
         dataframe["text"] = texts
         dataframe["media"] = dataframe["article_index"].apply(lambda index: df_articles["media"][index])
         dataframe["date"] = dataframe["article_index"].apply(lambda index: df_articles["date"][index])
