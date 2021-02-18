@@ -60,7 +60,9 @@ class Visualization:
     @staticmethod
     def get_plots(df_time_course: DataFrame):
         figures = []
-        colors = ["#2ca02c", "#ff7f0e", "#1f77b4"]
+        colors = {"Tagesschau": "#2ca02c",
+                  "TAZ": "#ff7f0e",
+                  "Bild": "#1f77b4"}
 
         # Define terms for grouping
         different_terms = df_time_course.term.unique()
@@ -70,7 +72,9 @@ class Visualization:
         for term in different_terms:
             fig, axs = plt.subplots(1, 1)
             fig.suptitle("Usage of term {0}".format(term))
-
+            weights_array = []
+            media_name = []
+            color_media = []
             for party in different_parties:
                 # plots to draw
                 df_step1 = df_time_course[df_time_course["term"] == term]
@@ -80,10 +84,13 @@ class Visualization:
                     df_plot = df_step2[df_step2["media"] == media]
                     if not df_plot.empty:
                         weights = df_plot["weight"]
-                        weights_array = np.asarray(weights)[0]
-                        axs.plot(range(len(weights_array)), weights_array)
-                        axs.set_title(media)
-
+                        weights_array.append(np.asarray(weights)[0])
+                        # get right color for media
+                        color_media.append(colors[media])
+                        media_name.append(media)
+            axs.plot(range(len(weights_array[0])), weights_array[2], color=color_media[2], label=media_name[2])
+            axs.plot(range(len(weights_array[0])), weights_array[1], color=color_media[1], label=media_name[1])
+            axs.plot(range(len(weights_array[0])), weights_array[0], color=color_media[0], label=media_name[0])
             figures.append(fig)
         return figures
 
