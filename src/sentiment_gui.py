@@ -156,17 +156,20 @@ class SentimentGUI:
                     initial_end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
                     next_end_date = initial_start_date + relativedelta(months=+1)
                     weight_list = []
+                    dates = []
                     while next_end_date < initial_end_date:
                         # get weight for each month
                         df_interval_paragraphs = self.configure_dataframe_for_time_course(start_date, next_end_date, media)
                         weight = self.keyword_extraction.get_term_count(df_interval_paragraphs, party, term)
+                        dates.append(start_date)
                         weight_list.append(weight)
                         start_date = next_end_date
                         next_end_date = start_date + relativedelta(months=+1)
                     df_image = df_image.append({"party": party,
                                                 "media": media,
                                                 "term": term,
-                                                "weight": weight_list}, ignore_index=True)
+                                                "weight": weight_list,
+                                                "dates": dates}, ignore_index=True)
         # draw plot for time window
         figures = Visualization.get_plots(df_image)
         for fig in figures:
