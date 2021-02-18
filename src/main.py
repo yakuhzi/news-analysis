@@ -1,5 +1,6 @@
 from preprocessing import Preprocessing
 from tfidf_sentiment import TfidfSentiment
+from utils.comparison import Comparison
 from utils.labeling import Labeling
 from utils.reader import Reader
 
@@ -19,11 +20,17 @@ if __name__ == "__main__":
 
     # Calculate sentiment of paragraphs
     tfidf_sentiment = TfidfSentiment(df_paragraphs)
-    tfidf_sentiment.add_sentiment()
-    tfidf_sentiment.map_sentiment()
+    tfidf_sentiment.add_sentiment(overwrite=False)
+    tfidf_sentiment.map_sentiment(overwrite=True)
 
+    # Label data
     labeling = Labeling(df_paragraphs)
-    labeling.label(start=100, end=150)
+    labeling.label(start=0, end=50)
+
+    # Compare labeled data with results
+    comparison = Comparison("labeled_paragraphs")
+    comparison.polarity()
+    comparison.polarity_to_subjectivity()
 
     # Visualize sentiment by media and party
     # figures_by_party = Visualization.get_pie_charts(tfidf_sentiment.df_paragraphs, by_party=True)

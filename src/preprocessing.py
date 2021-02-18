@@ -119,7 +119,10 @@ class Preprocessing:
         df_preprocessed["original_text"] = df_preprocessed["text"]
 
         # Remove direct quotiations
-        df_preprocessed["text"] = self._remove_direct_quotations(df_preprocessed["text"])
+        # df_preprocessed["text"] = self._remove_direct_quotations(df_preprocessed["text"])
+
+        # Remove rows with quotations
+        df_preprocessed = self._remove_quotations_rows(df_preprocessed)
 
         # Remove special characters
         df_preprocessed["text"] = self._remove_special_characters(df_preprocessed["text"])
@@ -141,7 +144,8 @@ class Preprocessing:
 
         # Remove rows with no parties
         if remove_rows_without_parties:
-            df_preprocessed = self._remove_rows_without_parties(df_preprocessed)
+            # df_preprocessed = self._remove_rows_without_parties(df_preprocessed)
+            df_preprocessed = self._keep_rows_with_one_party(df_preprocessed)
 
         # Sentiment polarity
         df_preprocessed["polarity"] = self.determine_sentiment_polarity(df_preprocessed["text"])
@@ -186,6 +190,9 @@ class Preprocessing:
 
     def _remove_direct_quotations(self, text_series: Series) -> Series:
         return text_series.str.replace(r'"(.*?)"', " ", regex=True)
+
+    def _remove_quotations_rows(self, dataframe: DataFrame) -> DataFrame:
+        return dataframe.loc[not dataframe["text"].str.contains(r'["„“]')]
 
     def _remove_special_characters(self, text_series: Series) -> Series:
         return (
@@ -241,8 +248,10 @@ class Preprocessing:
         )
 
     def _remove_rows_without_parties(self, dataframe: DataFrame) -> DataFrame:
-        tqdm.pandas(desc="Remove rows without parties")
         return dataframe.loc[np.array(list(map(len, dataframe.parties.values))) > 0]
+
+    def _keep_rows_with_one_party(self, dataframe: DataFrame) -> DataFrame:
+        return dataframe.loc[np.array(list(map(len, dataframe.parties.values))) == 1]
 
     def determine_sentiment_polarity(self, token_series: Series) -> Series:
         tqdm.pandas(desc="Determine sentiment polarity")
