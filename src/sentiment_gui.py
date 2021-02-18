@@ -40,8 +40,9 @@ class SentimentGUI:
         if self.date_check.get() == 1:
             self.filter_time(self.entry_date_from.get(), self.entry_date_to.get())
 
-    def configure_dataframe_for_time_course(self, start_date, end_date):
+    def configure_dataframe_for_time_course(self, start_date, end_date, media):
         df_paragraphs_time_interval = self.df_paragraphs_configured[self.df_paragraphs_configured["date"].notna()]
+        df_paragraphs_time_interval = df_paragraphs_time_interval[df_paragraphs_time_interval["media"]==media]
         if start_date and end_date:
             start = start_date.strftime("%Y-%m-%d")
             end = end_date.strftime("%Y-%m-%d")
@@ -157,7 +158,7 @@ class SentimentGUI:
                     weight_list = []
                     while next_end_date < initial_end_date:
                         # get weight for each month
-                        df_interval_paragraphs = self.configure_dataframe_for_time_course(start_date, next_end_date)
+                        df_interval_paragraphs = self.configure_dataframe_for_time_course(start_date, next_end_date, media)
                         weight = self.keyword_extraction.get_term_count(df_interval_paragraphs, party, term)
                         weight_list.append(weight)
                         start_date = next_end_date
