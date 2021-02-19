@@ -1,13 +1,33 @@
 import math
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from pandas import DataFrame
 
 
 class Visualization:
+    """
+    Helper class for sentiment visualization
+    """
+
     @staticmethod
-    def get_pie_charts(df_paragraphs: DataFrame, by_party: bool = True, parties: list = None, media: list = None):
+    def get_pie_charts(
+        df_paragraphs: DataFrame, by_party: bool = True, parties: list = None, media: list = None
+    ) -> List[Figure]:
+        """
+        Get figures of pie charts for the sentiment either grouped by party or by media outlet.
+
+        Arguments:
+        - df_paragraphs: the dataframe of the paragraphs
+        - by_party: If True, group data by party, otherwise group by media
+        - parties: List of parties to consider. Defaults to all parties.
+        - media: List of media outlets to consider. Defaults to all media outlets.
+
+        Return:
+        - List of figures containing the pie charts
+        """
+
         # Get sentiment statistics
         statistics = Visualization.get_statistics(df_paragraphs, by_party, parties, media)
 
@@ -61,6 +81,18 @@ class Visualization:
     def get_statistics(
         df_paragraphs: DataFrame, by_party: bool, parties: list, media: list
     ) -> Dict[str, Dict[str, Tuple[int, int, int]]]:
+        """
+        Get statistics for the sentiment either grouped by party or by media outlet.
+
+        Arguments:
+        - df_paragraphs: the dataframe of the paragraphs
+        - by_party: If True, group data by party, otherwise group by media
+        - parties: List of parties to consider. Defaults to all parties.
+        - media: List of media outlets to consider. Defaults to all media outlets.
+
+        Return:
+        - Dictionary containing the statistics
+        """
         statistics: Dict[str, Dict[str, Tuple[int, int, int]]] = {}
 
         # Define parties for grouping
