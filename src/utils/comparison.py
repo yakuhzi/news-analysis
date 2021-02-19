@@ -15,7 +15,31 @@ class Comparison:
         comparison = np.where((unlabeled_series == labeled_series), True, False)
         number_of_equal = np.count_nonzero(comparison)
 
+        comparison_neutral = np.where(
+            ((unlabeled_series == labeled_series) & (unlabeled_series == "Neutral")), True, False
+        )
+        number_of_equal_neutral = np.count_nonzero(comparison_neutral)
+        neutral = np.where(labeled_series == "Neutral", True, False)
+        number_of_neutrals = np.count_nonzero(neutral)
+
+        comparison_positive = np.where(
+            ((unlabeled_series == labeled_series) & (unlabeled_series == "Positive")), True, False
+        )
+        number_of_equal_positives = np.count_nonzero(comparison_positive)
+        positive = np.where(labeled_series == "Positive", True, False)
+        number_of_positives = np.count_nonzero(positive)
+
+        comparison_negative = np.where(
+            ((unlabeled_series == labeled_series) & (unlabeled_series == "Negative")), True, False
+        )
+        number_of_equal_negatives = np.count_nonzero(comparison_negative)
+        negative = np.where(labeled_series == "Negative", True, False)
+        number_of_negatives = np.count_nonzero(negative)
+
         print("Polarity matched with labeled data: {} out of {} times".format(number_of_equal, len(comparison)))
+        print("Neutral polarity matched: {} out of {} times".format(number_of_equal_neutral, number_of_neutrals))
+        print("Positive polarity matched: {} out of {} times".format(number_of_equal_positives, number_of_positives))
+        print("Negative polarity matched: {} out of {} times".format(number_of_equal_negatives, number_of_negatives))
 
         print("Unlabeled {}: {}".format(unlabeled_series.value_counts().keys()[0], unlabeled_series.value_counts()[0]))
         print("Unlabeled {}: {}".format(unlabeled_series.value_counts().keys()[1], unlabeled_series.value_counts()[1]))

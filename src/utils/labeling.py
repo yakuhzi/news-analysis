@@ -15,9 +15,9 @@ class Labeling:
             "spd",
             "sozialdemokraten",
             "bündnis90 die grünen",
-            "die grüne",
             "die grünen",
             "den grünen",
+            "die grüne",
             "grünen",
             "grüne",
             "fdp",
@@ -26,13 +26,12 @@ class Labeling:
             "freie demokratische partei",
             "afd",
             "alternative für deutschland",
-            "den linken" "die linke",
+            "den linken",
+            "die linke",
             "linke",
         ]
 
-        persons = [item for sublist in dataframe["persons"].tolist() for item in sublist]
         self.partyPattern = re.compile("|".join(parties), re.IGNORECASE)
-        self.personPattern = re.compile("|".join(persons), re.IGNORECASE)
 
     def label(self, start: int = 0, end: int = None):
         if end is None:
@@ -41,11 +40,21 @@ class Labeling:
         dataframe = self.dataframe.iloc[start:end]
 
         for index, row in dataframe.iterrows():
-            title = self.partyPattern.sub("<Partei>", row["title"])
-            title = self.personPattern.sub("<Person>", title)
+            title = row["title"]
+            text = row["original_text"]
+            persons = list(filter(lambda person: len(person) > 2, row["persons"]))
 
-            text = self.partyPattern.sub("<Partei>", row["original_text"])
-            text = self.personPattern.sub("<Person>", text)
+            if len(persons) > 0:
+                personPattern = re.compile("|".join(persons), re.IGNORECASE)
+                title = personPattern.sub("<Person>", title)
+                text = personPattern.sub("<Person>", text)
+
+            title = self.partyPattern.sub("<Partei>", title)
+            text = self.partyPattern.sub("<Partei>", text)
+
+            mediaPattern = re.compile("|".join(["bild", "bildplus", "taz", "tagesschau"]), re.IGNORECASE)
+            title = mediaPattern.sub("<Zeitung>", title)
+            text = mediaPattern.sub("<Zeitung>", text)
 
             print("================================================")
             print(title)

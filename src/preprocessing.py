@@ -192,7 +192,7 @@ class Preprocessing:
         return text_series.str.replace(r'"(.*?)"', " ", regex=True)
 
     def _remove_quotations_rows(self, dataframe: DataFrame) -> DataFrame:
-        return dataframe.loc[not dataframe["text"].str.contains(r'["„“]')]
+        return dataframe.loc[dataframe["text"].str.contains(r'["„“]') is False]
 
     def _remove_special_characters(self, text_series: Series) -> Series:
         return (
