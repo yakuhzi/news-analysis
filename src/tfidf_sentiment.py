@@ -42,13 +42,13 @@ class TfidfSentiment:
         )
 
         # Replace nan polarity values with 0
-        self.df_paragraphs["polarity"] = self.df_paragraphs["polarity"].apply(
+        self.df_paragraphs["sentiment_sentiws"] = self.df_paragraphs["sentiment_sentiws"].apply(
             lambda row: [0 if x is None else x for x in row]
         )
 
         # Calculate sentiment from dot product of polarity and tfidf
         self.df_paragraphs["sentiment_score"] = self.df_paragraphs.apply(
-            lambda row: np.dot(row["polarity"], row["tfidf"]), axis=1
+            lambda row: np.dot(row["sentiment_sentiws"], row["tfidf"]), axis=1
         )
 
         # Save paragraphs to disk

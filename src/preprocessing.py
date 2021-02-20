@@ -11,6 +11,7 @@ from pandas.core.common import SettingWithCopyWarning
 from spacy.lang.de.stop_words import STOP_WORDS
 from tqdm import tqdm
 from textblob_de import TextBlobDE
+from spacy_sentiws import spaCySentiWS
 
 from model.document_type import DocumentType
 from utils.reader import Reader
@@ -125,13 +126,13 @@ class Preprocessing:
         # df_preprocessed["text"] = self._remove_stopwords(df_preprocessed["text"])
 
         # Tokenization
-        df_preprocessed["tokens"] = self._tokenization(df_preprocessed["text"])
+        df_preprocessed["text"] = self._tokenization(df_preprocessed["text"])
 
         # Get persons
-        df_preprocessed["persons"] = self._tag_persons(df_preprocessed["tokens"])
+        df_preprocessed["persons"] = self._tag_persons(df_preprocessed["text"])
 
         # Get organizations
-        df_preprocessed["organizations"] = self._tag_organizations(df_preprocessed["tokens"])
+        df_preprocessed["organizations"] = self._tag_organizations(df_preprocessed["text"])
 
         # Get parties
         df_preprocessed["parties"] = self._get_parties(df_preprocessed["organizations"])
@@ -140,20 +141,23 @@ class Preprocessing:
         if remove_rows_without_parties:
             df_preprocessed = self._remove_rows_without_parties(df_preprocessed)
 
-        # Sentiment polarity
-        df_preprocessed["sentiment"] = self.determine_sentiment_polarity(df_preprocessed["text"])
+        # Sentiment polarity with textblob
+        df_preprocessed["sentiment_textblob"] = self.determine_sentiment_polarity_TextBlob(df_preprocessed["original_text"])
+
+        # Sentiment polarity with sentiws
+        df_preprocessed["sentiment_sentiws"] = self.determine_sentiment_polarity_sentiws(df_preprocessed["text"])
 
         # POS tagging
-        df_preprocessed["pos_tags"] = self._pos_tagging(df_preprocessed["tokens"])
+        df_preprocessed["pos_tags"] = self._pos_tagging(df_preprocessed["text"])
 
         # Get nouns
-        df_preprocessed["nouns"] = self._get_nouns(df_preprocessed["tokens"])
+        df_preprocessed["nouns"] = self._get_nouns(df_preprocessed["text"])
 
         # Lemmatization
-        df_preprocessed["tokens"] = self._lemmatizing(df_preprocessed["tokens"])
+        df_preprocessed["text"] = self._lemmatizing(df_preprocessed["text"])
 
         # Negation handling
-        #df_preprocessed = self.negation_handling(df_preprocessed)
+        df_preprocessed = self.negation_handling(df_preprocessed)
 
         end_time = time.time()
         print("End of preprocessing after {} seconds".format(end_time - start_time))
@@ -241,12 +245,20 @@ class Preprocessing:
         tqdm.pandas(desc="Remove rows without parties")
         return dataframe.loc[np.array(list(map(len, dataframe.parties.values))) > 0]
 
-    def determine_sentiment_polarity(self, token_series: Series) -> Series:
+    def determine_sentiment_polarity_TextBlob(self, token_series: Series) -> Series:
         tqdm.pandas(desc="Determine sentiment polarity")
         return token_series.progress_apply(lambda doc: TextBlobDE(doc).sentiment)
 
+    def determine_sentiment_polarity_SentiWS(self, text_series: Series) -> Series:
+        tqdm.pandas(desc="Determine sentiment polarity")
+        return text_series.progress_apply(lambda doc: TextBlobDE(doc).sentiment)
+
+    def determine_sentiment_polarity_sentiws(self, tokens_series: Series) -> Series:
+        tqdm.pandas(desc="Determine sentiment polarity")
+        return tokens_series.progress_apply(lambda row: [(word, word._.sentiws) for word in row])
+
     def negation_handling(self, df_preprocessed: DataFrame) -> DataFrame:
-        polarity_array = df_preprocessed["polarity"].to_numpy()
+        polarity_array = df_preprocessed["sentiment_sentiws"].to_numpy()
         word_array = df_preprocessed["text"].to_numpy()
 
         for entry in range(len(polarity_array)):
@@ -269,8 +281,8 @@ class Preprocessing:
                         elif polarity_array[entry][i] > 0:
                             polarity_array[entry][i] = -polarity_array[entry][i]
 
-        df_preprocessed.drop("polarity", inplace=True, axis=1)
-        polarity_data = DataFrame(data=polarity_array, columns=["polarity"])
+        df_preprocessed.drop("sentiment_sentiws", inplace=True, axis=1)
+        polarity_data = DataFrame(data=polarity_array, columns=["sentiment_sentiws"])
         df_preprocessed.reset_index(drop=True, inplace=True)
         polarity_data.reset_index(drop=True, inplace=True)
         result = pd.concat([df_preprocessed, polarity_data], axis=1)
