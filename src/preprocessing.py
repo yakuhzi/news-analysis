@@ -79,15 +79,12 @@ class Preprocessing:
     ) -> DataFrame:
         """
         Helper function to get the preprocessed pandas dataframe. If the preprocessing already was done ones (JSON files
-        exist) the tagging is not done again but the json files with the perprocessing are read into a pandas data frame.
+        exist) the tagging is not done again but the json files with the perprocessing are read into a pandas dataframe.
         If preprocessing is proceeded, the result will be stored in a json file.
 
-        Arguments:
-        - preprocessed_json_file: Name of json file to store/ read the results of preprocessing.
-        - df_to_preprocess: data frame with the text to preprocess, if the data still needs to be preprocessed
-
-        Return:
-        - df_preprocessed: Pandas data frame of the preprocessed input
+        :param preprocessed_json_file: Name of json file to store/ read the results of preprocessing.
+        :param df_to_preprocess: data frame with the text to preprocess, if the data still needs to be preprocessed.
+        :return: df_preprocessed: Pandas data frame of the preprocessed input.
         """
         json_path = "src/output/" + preprocessed_filename + ".json"
 

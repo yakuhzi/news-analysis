@@ -12,14 +12,13 @@ class Writer:
     """
 
     @staticmethod
-    def write_articles(df: pd.DataFrame, filename: str):
+    def write_articles(dataframe: pd.DataFrame, filename: str) -> None:
         """
         Helper function to store Pandas dataframe into json file
 
-        Arguments:
-        - df: the Pandas data frame which should be stored in json
-        - filename: the path where the dataframe should be stored
+        :param dataframe: the Pandas data frame which should be stored in json
+        :param filename: the path where the dataframe should be stored
         """
         path = "src/output/" + filename + ".json"
         with open(path, "w", encoding="utf-8") as file:
-            df.to_json(file, force_ascii=False, orient="records", default_handler=str, index=True)
+            dataframe.to_json(file, force_ascii=False, orient="records", default_handler=str, index=True)

@@ -18,14 +18,12 @@ class Visualization:
         """
         Get figures of pie charts for the sentiment either grouped by party or by media outlet.
 
-        Arguments:
-        - df_paragraphs: the dataframe of the paragraphs
-        - by_party: If True, group data by party, otherwise group by media
-        - parties: List of parties to consider. Defaults to all parties.
-        - media: List of media outlets to consider. Defaults to all media outlets.
+        :param df_paragraphs: the dataframe of the paragraphs
+        :param by_party: If True, group data by party, otherwise group by media
+        :param parties: List of parties to consider. Defaults to all parties.
+        :param media: List of media outlets to consider. Defaults to all media outlets.
 
-        Return:
-        - List of figures containing the pie charts
+        :return: List of figures containing the pie charts
         """
 
         # Get sentiment statistics
@@ -84,14 +82,12 @@ class Visualization:
         """
         Get statistics for the sentiment either grouped by party or by media outlet.
 
-        Arguments:
-        - df_paragraphs: the dataframe of the paragraphs
-        - by_party: If True, group data by party, otherwise group by media
-        - parties: List of parties to consider. Defaults to all parties.
-        - media: List of media outlets to consider. Defaults to all media outlets.
+        :param df_paragraphs: the dataframe of the paragraphs
+        :param by_party: If True, group data by party, otherwise group by media
+        :param parties: List of parties to consider. Defaults to all parties.
+        :param media: List of media outlets to consider. Defaults to all media outlets.
 
-        Return:
-        - Dictionary containing the statistics
+        :return: Dictionary containing the statistics
         """
         statistics: Dict[str, Dict[str, Tuple[int, int, int]]] = {}
 
