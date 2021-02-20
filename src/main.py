@@ -5,7 +5,7 @@ from utils.reader import Reader
 
 if __name__ == "__main__":
     # Read articles from json
-    df_articles = Reader.read_articles(10000)
+    df_articles = Reader.read_articles(100)
 
     # Apply preprocessing
     preprocessing = Preprocessing()
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     tfidf_sentiment.map_sentiment()
 
     labeling = Labeling(df_paragraphs)
-    labeling.label(start=100, end=150)
+    labeling.label(start=0, end=50)
 
     # Visualize sentiment by media and party
     # figures_by_party = Visualization.get_pie_charts(tfidf_sentiment.df_paragraphs, by_party=True)

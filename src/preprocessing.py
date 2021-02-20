@@ -9,8 +9,8 @@ import spacy
 from pandas import DataFrame, Series
 from pandas.core.common import SettingWithCopyWarning
 from spacy.lang.de.stop_words import STOP_WORDS
-from spacy_sentiws import spaCySentiWS
 from tqdm import tqdm
+from textblob_de import TextBlobDE
 
 from model.document_type import DocumentType
 from utils.reader import Reader
@@ -26,9 +26,6 @@ class Preprocessing:
         # de_core_news_lg had the best score for entity recognition and syntax accuracy in german according to spacy.
         # for more information, see https://spacy.io/models/de#de_core_news_lg
         self.nlp = spacy.load("de_core_news_lg", disable=["parser"])
-        self.sentiws = spaCySentiWS(sentiws_path="src/data/sentiws/")
-        self.nlp.add_pipe(self.sentiws)
-
         self.parties = {
             "CDU": ["cdu", "union"],
             "CSU": ["csu"],
@@ -128,13 +125,13 @@ class Preprocessing:
         # df_preprocessed["text"] = self._remove_stopwords(df_preprocessed["text"])
 
         # Tokenization
-        df_preprocessed["text"] = self._tokenization(df_preprocessed["text"])
+        df_preprocessed["tokens"] = self._tokenization(df_preprocessed["text"])
 
         # Get persons
-        df_preprocessed["persons"] = self._tag_persons(df_preprocessed["text"])
+        df_preprocessed["persons"] = self._tag_persons(df_preprocessed["tokens"])
 
         # Get organizations
-        df_preprocessed["organizations"] = self._tag_organizations(df_preprocessed["text"])
+        df_preprocessed["organizations"] = self._tag_organizations(df_preprocessed["tokens"])
 
         # Get parties
         df_preprocessed["parties"] = self._get_parties(df_preprocessed["organizations"])
@@ -144,19 +141,19 @@ class Preprocessing:
             df_preprocessed = self._remove_rows_without_parties(df_preprocessed)
 
         # Sentiment polarity
-        df_preprocessed["polarity"] = self.determine_sentiment_polarity(df_preprocessed["text"])
+        df_preprocessed["sentiment"] = self.determine_sentiment_polarity(df_preprocessed["text"])
 
         # POS tagging
-        df_preprocessed["pos_tags"] = self._pos_tagging(df_preprocessed["text"])
+        df_preprocessed["pos_tags"] = self._pos_tagging(df_preprocessed["tokens"])
 
         # Get nouns
-        df_preprocessed["nouns"] = self._get_nouns(df_preprocessed["text"])
+        df_preprocessed["nouns"] = self._get_nouns(df_preprocessed["tokens"])
 
         # Lemmatization
-        df_preprocessed["text"] = self._lemmatizing(df_preprocessed["text"])
+        df_preprocessed["tokens"] = self._lemmatizing(df_preprocessed["tokens"])
 
         # Negation handling
-        df_preprocessed = self.negation_handling(df_preprocessed)
+        #df_preprocessed = self.negation_handling(df_preprocessed)
 
         end_time = time.time()
         print("End of preprocessing after {} seconds".format(end_time - start_time))
@@ -246,7 +243,7 @@ class Preprocessing:
 
     def determine_sentiment_polarity(self, token_series: Series) -> Series:
         tqdm.pandas(desc="Determine sentiment polarity")
-        return token_series.progress_apply(lambda doc: [token._.sentiws for token in doc])
+        return token_series.progress_apply(lambda doc: TextBlobDE(doc).sentiment)
 
     def negation_handling(self, df_preprocessed: DataFrame) -> DataFrame:
         polarity_array = df_preprocessed["polarity"].to_numpy()
