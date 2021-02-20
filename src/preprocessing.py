@@ -10,6 +10,7 @@ from pandas import DataFrame, Series
 from pandas.core.common import SettingWithCopyWarning
 from spacy.lang.de.stop_words import STOP_WORDS
 from spacy_sentiws import spaCySentiWS
+from textblob_de import TextBlobDE
 from tqdm import tqdm
 
 from model.document_type import DocumentType
@@ -143,8 +144,12 @@ class Preprocessing:
         if remove_rows_without_parties:
             df_preprocessed = self._remove_rows_without_parties(df_preprocessed)
 
-        # Sentiment polarity
+        # Sentiment polarity sentiws
         df_preprocessed["polarity"] = self.determine_sentiment_polarity(df_preprocessed["text"])
+
+        # Sentiment polarity TextBlob
+        df_preprocessed["sentiment_textblob"] = self.determine_sentiment_polarity_TextBlob(
+            df_preprocessed["original_text"])
 
         # POS tagging
         df_preprocessed["pos_tags"] = self._pos_tagging(df_preprocessed["text"])
@@ -243,6 +248,10 @@ class Preprocessing:
     def _remove_rows_without_parties(self, dataframe: DataFrame) -> DataFrame:
         tqdm.pandas(desc="Remove rows without parties")
         return dataframe.loc[np.array(list(map(len, dataframe.parties.values))) > 0]
+
+    def determine_sentiment_polarity_TextBlob(self, token_series: Series) -> Series:
+        tqdm.pandas(desc="Determine sentiment polarity")
+        return token_series.progress_apply(lambda doc: TextBlobDE(doc).sentiment)
 
     def determine_sentiment_polarity(self, token_series: Series) -> Series:
         tqdm.pandas(desc="Determine sentiment polarity")
