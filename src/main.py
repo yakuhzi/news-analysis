@@ -6,7 +6,7 @@ from utils.reader import Reader
 
 if __name__ == "__main__":
     # Read articles from json
-    df_articles = Reader.read_articles(50)
+    df_articles = Reader.read_articles(10000)
 
     # Apply preprocessing
     preprocessing = Preprocessing()
@@ -19,9 +19,9 @@ if __name__ == "__main__":
     # plt.show()
 
     # Calculate sentiment of paragraphs
-    tfidf_sentiment = TfidfSentiment(df_paragraphs)
-    tfidf_sentiment.add_sentiment(overwrite=False)
-    tfidf_sentiment.map_sentiment(overwrite=True)
+    #tfidf_sentiment = TfidfSentiment(df_paragraphs)
+    #tfidf_sentiment.add_sentiment(overwrite=False)
+    #tfidf_sentiment.map_sentiment(overwrite=True)
 
     # Label data
     labeling = Labeling(df_paragraphs)
