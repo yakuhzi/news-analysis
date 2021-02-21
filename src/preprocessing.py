@@ -102,7 +102,7 @@ class Preprocessing:
             articles = articles[["title", "media"]].rename(columns={"title": "text"})
             df_preprocessed = self._apply_preprocessing(articles, False)
 
-        Writer.write_articles(df_preprocessed, preprocessed_filename)
+        Writer.write_dataframe(df_preprocessed, preprocessed_filename)
         return df_preprocessed
 
     def _apply_preprocessing(self, dataframe: DataFrame, remove_rows_without_parties: bool = True) -> DataFrame:

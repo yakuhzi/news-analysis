@@ -114,7 +114,14 @@ class SentimentGUI:
         party_list = self.get_parties()
         media_list = self.get_media()
         self.keyword_extraction.set_active_media(media_list)
-        df_term_weights = self.keyword_extraction.get_term_weight_tuples(parties=party_list)
+
+        by_party = True
+
+        if by_party:
+            df_term_weights = self.keyword_extraction.get_term_weight_tuples(True, parties=party_list)
+        else:
+            df_term_weights = self.keyword_extraction.get_term_weight_tuples(False, media=media_list)
+
         fig = self.keyword_extraction.get_graph(df_term_weights)
         self.current_plot = FigureCanvasTkAgg(fig, self.gui)
         self.current_plot.get_tk_widget().grid(row=4, column=0, columnspan=6)

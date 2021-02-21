@@ -12,7 +12,7 @@ class Writer:
     """
 
     @staticmethod
-    def write_articles(df: pd.DataFrame, filename: str):
+    def write_dataframe(dataframe: pd.DataFrame, filename: str):
         """
         Helper function to store Pandas dataframe into json file
 
@@ -22,4 +22,4 @@ class Writer:
         """
         path = "src/output/" + filename + ".json"
         with open(path, "w", encoding="utf-8") as file:
-            df.to_json(file, force_ascii=False, orient="records", default_handler=str, index=True)
+            dataframe.to_json(file, force_ascii=False, orient="records", default_handler=str, index=True)
