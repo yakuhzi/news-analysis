@@ -64,6 +64,10 @@ class TfidfSentiment:
             lambda score: self._map_sentiment(score)
         )
 
+        self.df_paragraphs["sentiment_textBlob"] = self.df_paragraphs["polarity_textBlob"].apply(
+            lambda score: self._map_sentiment(score)
+        )
+
         # Save paragraphs to disk
         Writer.write_articles(self.df_paragraphs, "paragraphs")
 

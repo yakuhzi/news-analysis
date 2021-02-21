@@ -24,11 +24,11 @@ if __name__ == "__main__":
     #tfidf_sentiment.map_sentiment(overwrite=True)
 
     # Label data
-    labeling = Labeling(df_paragraphs)
-    labeling.label(start=0, end=50)
+    #labeling = Labeling(df_paragraphs)
+    #labeling.label(start=0, end=50)
 
     # Compare labeled data with results
-    comparison = Comparison("labeled_paragraphs")
+    comparison = Comparison("labeled_paragraphs_textBlob")
     comparison.polarity()
     comparison.polarity_to_subjectivity()
 

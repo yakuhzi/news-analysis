@@ -103,5 +103,6 @@ class Comparison:
         subjective_series = Series(not_neutral_when_subjective)
         objective_series = Series(not_neutral_when_objective)
 
+        print("==========================================================================")
         print("Not neutral but subjective: {}".format(subjective_series.value_counts()[1]))
         print("Not neutral but objective: {}".format(objective_series.value_counts()[1]))

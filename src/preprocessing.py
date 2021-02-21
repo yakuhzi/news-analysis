@@ -120,7 +120,7 @@ class Preprocessing:
         df_preprocessed["original_text"] = df_preprocessed["text"]
 
         # Remove direct quotiations
-        # df_preprocessed["text"] = self._remove_direct_quotations(df_preprocessed["text"])
+        df_preprocessed["text"] = self._remove_direct_quotations(df_preprocessed["text"])
 
         # Remove rows with quotations
         df_preprocessed = self._remove_quotations_rows(df_preprocessed)
@@ -149,22 +149,22 @@ class Preprocessing:
             df_preprocessed = self._keep_rows_with_one_party(df_preprocessed)
 
         # Sentiment polarity sentiws
-        #df_preprocessed["sentiment_sentiws"] = self.determine_sentiment_polarity(df_preprocessed["text"])
+        df_preprocessed["sentiment_sentiws"] = self.determine_sentiment_polarity(df_preprocessed["text"])
 
         # Sentiment polarity TextBlob
         df_preprocessed["polarity_textBlob"] = self.determine_sentiment_polarity_TextBlob(df_preprocessed["original_text"])
 
         # POS tagging
-        #df_preprocessed["pos_tags"] = self._pos_tagging(df_preprocessed["text"])
+        df_preprocessed["pos_tags"] = self._pos_tagging(df_preprocessed["text"])
 
         # Get nouns
-        #df_preprocessed["nouns"] = self._get_nouns(df_preprocessed["text"])
+        df_preprocessed["nouns"] = self._get_nouns(df_preprocessed["text"])
 
         # Lemmatization
-        #df_preprocessed["text"] = self._lemmatizing(df_preprocessed["text"])
+        df_preprocessed["text"] = self._lemmatizing(df_preprocessed["text"])
 
         # Negation handling
-        #df_preprocessed = self.negation_handling(df_preprocessed)
+        df_preprocessed = self.negation_handling(df_preprocessed)
 
         end_time = time.time()
         print("End of preprocessing after {} seconds".format(end_time - start_time))
