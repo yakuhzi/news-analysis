@@ -1,16 +1,34 @@
-import math
-from typing import Dict, Tuple
-
 import datetime
-import matplotlib.pyplot as plt
+import math
+from typing import Dict, List, Tuple
+
 import matplotlib.dates as mdates
-from pandas import DataFrame
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.figure import Figure
+from pandas import DataFrame
 
 
 class Visualization:
+    """
+    Helper class for sentiment visualization
+    """
+
     @staticmethod
-    def get_pie_charts(df_paragraphs: DataFrame, by_party: bool = True, parties: list = None, media: list = None):
+    def get_pie_charts(
+        df_paragraphs: DataFrame, by_party: bool = True, parties: list = None, media: list = None
+    ) -> List[Figure]:
+        """
+        Get figures of pie charts for the sentiment either grouped by party or by media outlet.
+
+        :param df_paragraphs: the dataframe of the paragraphs
+        :param by_party: If True, group data by party, otherwise group by media
+        :param parties: List of parties to consider. Defaults to all parties.
+        :param media: List of media outlets to consider. Defaults to all media outlets.
+
+        :return: List of figures containing the pie charts
+        """
+
         # Get sentiment statistics
         statistics = Visualization.get_statistics(df_paragraphs, by_party, parties, media)
 
@@ -61,9 +79,7 @@ class Visualization:
     @staticmethod
     def get_plots(df_time_course: DataFrame):
         figures = []
-        colors = {"Tagesschau": "#2ca02c",
-                  "TAZ": "#ff7f0e",
-                  "Bild": "#1f77b4"}
+        colors = {"Tagesschau": "#2ca02c", "TAZ": "#ff7f0e", "Bild": "#1f77b4"}
 
         # Define terms for grouping
         different_terms = df_time_course.term.unique()
@@ -77,7 +93,7 @@ class Visualization:
                 # plots to draw
                 df_step1 = df_time_course[df_time_course["term"] == term]
                 df_step2 = df_step1[df_step1["party"] == party]
-                #lines to draw
+                # lines to draw
                 for media in different_media:
                     df_plot = df_step2[df_step2["media"] == media]
                     if not df_plot.empty:
@@ -88,8 +104,8 @@ class Visualization:
                         dates = df_plot["dates"]
                         dates_array = np.asarray(dates)[0]
                         axs.plot(dates_array, weights_array, color=line_color, label=media)
-                        axs.set_xlabel('Months')
-                        axs.set_ylabel('Frequency of Usage')
+                        axs.set_xlabel("Months")
+                        axs.set_ylabel("Frequency of Usage")
                         axs.legend(loc="best", title="Outlet", frameon=False)
             figures.append(fig)
         return figures
@@ -98,6 +114,16 @@ class Visualization:
     def get_statistics(
         df_paragraphs: DataFrame, by_party: bool, parties: list, media: list
     ) -> Dict[str, Dict[str, Tuple[int, int, int]]]:
+        """
+        Get statistics for the sentiment either grouped by party or by media outlet.
+
+        :param df_paragraphs: the dataframe of the paragraphs
+        :param by_party: If True, group data by party, otherwise group by media
+        :param parties: List of parties to consider. Defaults to all parties.
+        :param media: List of media outlets to consider. Defaults to all media outlets.
+
+        :return: Dictionary containing the statistics
+        """
         statistics: Dict[str, Dict[str, Tuple[int, int, int]]] = {}
 
         # Define parties for grouping

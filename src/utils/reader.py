@@ -13,6 +13,9 @@ class Reader:
     def read_articles(number_of_samples: int = None) -> DataFrame:
         """
         Reads the news article for every news agency and returns them.
+
+        :param number_of_samples: Number of samples to read. If None returns all available articles.
+        :return: Dataframe containing the articles.
         """
         df_tagesschau_articles = Reader.read("src/data/tagesschau.json")
         df_tagesschau_articles["media"] = "Tagesschau"
@@ -36,12 +39,8 @@ class Reader:
         """
         Read a json into a Pandas dataframe without any modifications on types.
 
-        Arguments:
-        - path: the path of the json file
-        - set_article_index: if True, the original article index is set as index in the data frame
-
-        Return:
-        - Pandas data frame build from the json file
+        :param path: the path of the json file.
+        :return: Dataframe build from the json file.
         """
         with open(path, encoding="utf8") as json_file:
             json_dict = json.load(json_file)
@@ -57,11 +56,8 @@ class Reader:
         """
         Helper function to read a json from a file and store it in pandas dataframe.
 
-        Arguments:
-        - path: Path to json file.
-
-        Return:
-        - articles: Panda data frame of JSON articles parsed from the input file.
+        :param path: Path to json file.
+        :return: Dataframe of JSON articles parsed from the input file.
         """
         with open(path, encoding="utf8") as json_file:
             json_dict = json.load(json_file)["articles"]
