@@ -29,7 +29,23 @@ class SentimentGUI:
         self.plots = []
         self.current_plot = None
         self.current_plot_index = 0
-        self.current_help_message = ""
+        self.help_messages = {
+            PlotType.SENTIMENT_PARTY: "These are piecharts showing the sentiment towards a certain party\n of the "
+            "selected media. This can be either positive, negative or neutral\n "
+            '(see legend). With a click on "Show next" or "Show previous"\n you can '
+            "see the sentiment for other parties.",
+            PlotType.SENTIMENT_OUTLET: "These are piecharts showing the sentiment of a certain media\n towards the "
+            "selected parties. This can be either positive, negative or neutral\n "
+            '(see legend). With a click on "Show next" or "Show previous"\n you can '
+            "see the sentiment for other media.",
+            PlotType.TOPICS: "This is a bipartite graph showing the most important topics for the selected "
+            "parties.\n On the left side you can see the parties and on the right side the "
+            "the corresponding terms.\n The thickness of the connecting lines are the term "
+            "counts\n how often the term appears for each party.",
+            PlotType.TIME_COURSE: "This is a line graph showing the importance of a certain term in the selected "
+            'media.\n With a click on "Show next" or "Show previous"\n'
+            "you can see the importance of another term.",
+        }
         self.current_plot_type = None
         self.gui = None
         self.next_button = None
@@ -173,20 +189,8 @@ class SentimentGUI:
         self.clear_plots(clear_plot_array=True)
         if by_party:
             self.current_plot_type = PlotType.SENTIMENT_PARTY
-            self.current_help_message = (
-                "These are piecharts showing the sentiment towards a certain party\n of the "
-                "selected media. This can be either positive, negative or neutral\n "
-                '(see legend). With a click on "Show next" or "Show previous"\n you can '
-                "see the sentiment for other parties."
-            )
         else:
             self.current_plot_type = PlotType.SENTIMENT_OUTLET
-            self.current_help_message = (
-                "These are piecharts showing the sentiment of a certain media\n towards the "
-                "selected parties. This can be either positive, negative or neutral\n "
-                '(see legend). With a click on "Show next" or "Show previous"\n you can '
-                "see the sentiment for other media."
-            )
         self.current_plot_index = 0
         # get currently enabled parties and media
         party_list = self.get_parties()
@@ -216,12 +220,6 @@ class SentimentGUI:
         self.clear_plots(clear_plot_array=True)
         # set help text
         self.help_button["state"] = "normal"
-        self.current_help_message = (
-            "This is a bipartite graph showing the most important topics for the selected "
-            "parties.\n On the left side you can see the parties and on the right side the "
-            "the corresponding terms.\n The thickness of the connecting lines are the term "
-            "counts\n how often the term appears for each party."
-        )
         # filter time
         self.configure_dataframe()
         # set the filtered dataframe for the keyword extraction to only include filtered articles
@@ -243,11 +241,6 @@ class SentimentGUI:
         self.previous_button["state"] = "normal"
         self.clear_plots(clear_plot_array=True)
         self.help_button["state"] = "normal"
-        self.current_help_message = (
-            "This is a line graph showing the importance of a certain term in the selected "
-            'media.\n With a click on "Show next" or "Show previous"\n'
-            "you can see the importance of another term."
-        )
         self.configure_dataframe()
         self.keyword_extraction.set_data(self.df_paragraphs_configured)
         party_list = self.get_parties()
@@ -312,7 +305,7 @@ class SentimentGUI:
         popup = tkinter.Tk()
         popup.geometry("500x200")
         popup.wm_title("Description")
-        label = tkinter.Label(popup, text=self.current_help_message)
+        label = tkinter.Label(popup, text=self.help_messages[self.current_plot_type])
         label.pack(side="top", fill="x", pady=10)
         button = tkinter.Button(popup, text="Okay", command=popup.destroy)
         button.pack()
