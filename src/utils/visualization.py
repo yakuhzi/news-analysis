@@ -1,13 +1,34 @@
+import datetime
 import math
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.figure import Figure
 from pandas import DataFrame
 
 
 class Visualization:
+    """
+    Helper class for sentiment visualization
+    """
+
     @staticmethod
-    def get_pie_charts(df_paragraphs: DataFrame, by_party: bool = True, parties: list = None, media: list = None):
+    def get_pie_charts(
+        df_paragraphs: DataFrame, by_party: bool = True, parties: list = None, media: list = None
+    ) -> List[Figure]:
+        """
+        Get figures of pie charts for the sentiment either grouped by party or by media outlet.
+
+        :param df_paragraphs: the dataframe of the paragraphs
+        :param by_party: If True, group data by party, otherwise group by media
+        :param parties: List of parties to consider. Defaults to all parties.
+        :param media: List of media outlets to consider. Defaults to all media outlets.
+
+        :return: List of figures containing the pie charts
+        """
+
         # Get sentiment statistics
         statistics = Visualization.get_statistics(df_paragraphs, by_party, parties, media)
 
@@ -18,7 +39,6 @@ class Visualization:
         figures = []
 
         for key_1, value_1 in statistics.items():
-            lines = []
 
             if by_party:
                 # Group pie charts by party
@@ -49,8 +69,7 @@ class Visualization:
             for (key_2, value_2), ax in zip(value_1.items(), axs):
                 ax.axis("equal")
                 ax.set_title(key_2)
-                line = ax.pie(value_2, colors=colors, counterclock=False, autopct="%1.1f%%", shadow=True, startangle=90)
-                lines.append(line)
+                ax.pie(value_2, colors=colors, counterclock=False, autopct="%1.1f%%", shadow=True, startangle=90)
 
             # Add legend to plot
             fig.legend(labels=labels, loc="lower right", borderaxespad=0.1, title="Sentiment")
@@ -58,9 +77,53 @@ class Visualization:
         return figures
 
     @staticmethod
+    def get_plots(df_time_course: DataFrame):
+        figures = []
+        colors = {"Tagesschau": "#2ca02c", "TAZ": "#ff7f0e", "Bild": "#1f77b4"}
+
+        # Define terms for grouping
+        different_terms = df_time_course.term.unique()
+        different_parties = df_time_course.party.unique()
+        different_media = df_time_course.media.unique()
+
+        for term in different_terms:
+            fig, axs = plt.subplots(1, 1)
+            fig.suptitle("Usage of term {0}".format(term))
+            for party in different_parties:
+                # plots to draw
+                df_step1 = df_time_course[df_time_course["term"] == term]
+                df_step2 = df_step1[df_step1["party"] == party]
+                # lines to draw
+                for media in different_media:
+                    df_plot = df_step2[df_step2["media"] == media]
+                    if not df_plot.empty:
+                        weights = df_plot["weight"]
+                        weights_array = np.asarray(weights)[0]
+                        # get right color for media
+                        line_color = colors[media]
+                        dates = df_plot["dates"]
+                        dates_array = np.asarray(dates)[0]
+                        axs.plot(dates_array, weights_array, color=line_color, label=media)
+                        axs.set_xlabel("Months")
+                        axs.set_ylabel("Frequency of Usage")
+                        axs.legend(loc="best", title="Outlet", frameon=False)
+            figures.append(fig)
+        return figures
+
+    @staticmethod
     def get_statistics(
         df_paragraphs: DataFrame, by_party: bool, parties: list, media: list
     ) -> Dict[str, Dict[str, Tuple[int, int, int]]]:
+        """
+        Get statistics for the sentiment either grouped by party or by media outlet.
+
+        :param df_paragraphs: the dataframe of the paragraphs
+        :param by_party: If True, group data by party, otherwise group by media
+        :param parties: List of parties to consider. Defaults to all parties.
+        :param media: List of media outlets to consider. Defaults to all media outlets.
+
+        :return: Dictionary containing the statistics
+        """
         statistics: Dict[str, Dict[str, Tuple[int, int, int]]] = {}
 
         # Define parties for grouping

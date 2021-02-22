@@ -66,12 +66,30 @@ class Preprocessing:
         self.negation_pattern = re.compile("|".join(self.negation_words))
 
     def get_articles(self, df_articles: DataFrame, overwrite: bool = False) -> DataFrame:
+        """
+        Helper function to get a dataframe containing the preprocessed articles.
+        :param df_articles: dataframe with the text to preprocess
+        :param overwrite: determines if the previous data is allowed to be overwritten. Default is False.
+        :return: preprocessed dataframe with preprocessed articles, which is result of method _get_preprocessed_df
+        """
         return self._get_preprocessed_df("articles", df_articles, DocumentType.ARTICLE, overwrite)
 
     def get_paragraphs(self, df_articles: DataFrame, overwrite: bool = False) -> DataFrame:
+        """
+        Helper function to get a preprocessed dataframe with the paragraphs of the articles.
+        :param df_articles: dataframe with the text to preprocess
+        :param overwrite: determines if the previous data is allowed to be overwritten. Default is False.
+        :return: preprocessed dataframe with preprocessed paragraphs, which is result of method _get_preprocessed_df
+        """
         return self._get_preprocessed_df("paragraphs", df_articles, DocumentType.PARAGRAPH, overwrite)
 
     def get_titles(self, df_articles: DataFrame, overwrite: bool = False) -> DataFrame:
+        """
+        Helper function to get a preprocessed dataframe with the titles of the articles.
+        :param df_articles: dataframe with the text to preprocess
+        :param overwrite: determines if the previous data is allowed to be overwritten. Default is False.
+        :return: preprocessed dataframe, which is result of method _get_preprocessed_df
+        """
         return self._get_preprocessed_df("titles", df_articles, DocumentType.TITLE, overwrite)
 
     def _get_preprocessed_df(
@@ -79,15 +97,14 @@ class Preprocessing:
     ) -> DataFrame:
         """
         Helper function to get the preprocessed pandas dataframe. If the preprocessing already was done ones (JSON files
-        exist) the tagging is not done again but the json files with the perprocessing are read into a pandas data frame.
-        If preprocessing is proceeded, the result will be stored in a json file.
-
-        Arguments:
-        - preprocessed_json_file: Name of json file to store/ read the results of preprocessing.
-        - df_to_preprocess: data frame with the text to preprocess, if the data still needs to be preprocessed
-
-        Return:
-        - df_preprocessed: Pandas data frame of the preprocessed input
+        exist) the tagging is not done again but the json files with the perprocessing are read into a pandas dataframe.
+        If preprocessing is proceeded, the result will be stored in a json file. According to the document type, a
+        different preprocessing is done.
+        :param preprocessed_filename: Name of json file to store/ read the results of preprocessing.
+        :param articles: dataframe with the text to preprocess, if the data still needs to be preprocessed.
+        :param document_type: type of the document that is going to be preprocessed.
+        :param overwrite: determines if the previous data is allowed to be overwritten.
+        :return: df_preprocessed: Pandas data frame of the preprocessed input.
         """
         json_path = "src/output/" + preprocessed_filename + ".json"
 
@@ -106,6 +123,12 @@ class Preprocessing:
         return df_preprocessed
 
     def _apply_preprocessing(self, dataframe: DataFrame, remove_rows_without_parties: bool = True) -> DataFrame:
+        """
+        Helper function responsible for applying preprocessing steps in correct order.
+        :param dataframe: data that needs to be preprocessed.
+        :param remove_rows_without_parties: determines if rows, that do not contain information about parties are deleted.
+        :return: preprcessed dataframe.
+        """
         print("Start of preprocessing")
         start_time = time.time()
 
@@ -165,6 +188,12 @@ class Preprocessing:
         return df_preprocessed
 
     def _preprocess_paragraphs(self, df_articles: DataFrame) -> DataFrame:
+        """
+        Helper function that splits up paragraphs and stores them with the original article in a dataframe. After that
+        the original preprocessing is done.
+        :param df_articles: dataframe with articles that need to be split up in paragraphs.
+        :return: dataframe with preprocessed articles, split up by paragraph.
+        """
         # Split articles into paragraphs by splitting at newlines
         paragraphs = list(map(lambda text: text.replace("\n+", "\n").split("\n"), df_articles["text"]))
         flat_list = [(index, item) for index, sublist in enumerate(paragraphs) for item in sublist]
@@ -246,6 +275,12 @@ class Preprocessing:
         return token_series.progress_apply(lambda doc: [token._.sentiws for token in doc])
 
     def negation_handling(self, df_preprocessed: DataFrame) -> DataFrame:
+        """
+        checks if 4 tokens before or after sentiws assigned a polarity score a negation word can be found. If this is the
+        case, the polarity is inverted.
+        :param df_preprocessed: dataframe containing scores from sentiws for each word.
+        :return: dataframe with inverted scores if a negation word could be found.
+        """
         polarity_array = df_preprocessed["polarity"].to_numpy()
         word_array = df_preprocessed["text"].to_numpy()
 
