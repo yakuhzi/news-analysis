@@ -61,6 +61,7 @@ class SentimentGUI:
         self.previous_button = None
         self.help_button = None
         self.date_check = None
+        self.check_filter_date = None
         self.cdu_check = None
         self.csu_check = None
         self.spd_check = None
@@ -317,6 +318,9 @@ class SentimentGUI:
 
     def show_time_course(self):
         self.current_plot_type = PlotType.TIME_COURSE
+        if self.date_check.get() == 0:
+            self.check_filter_date.toggle()
+            self.enable_date_setting()
         party_list, media_list = self._topic_setup()
         df_top_terms = self.keyword_extraction.get_top_terms_for_party(parties=party_list)
         df_image = pd.DataFrame(columns=["party", "media", "term", "weight"])
@@ -460,7 +464,7 @@ class SentimentGUI:
         button_time_course.grid(row=0, column=5)
 
         # checkbox anf text fields to filter dates
-        check_filter_date = tkinter.Checkbutton(
+        self.check_filter_date = tkinter.Checkbutton(
             self.gui,
             text="Filter dates",
             variable=self.date_check,
@@ -468,7 +472,7 @@ class SentimentGUI:
             offvalue=0,
             command=self.enable_date_setting,
         )
-        check_filter_date.grid(row=1, column=0)
+        self.check_filter_date.grid(row=1, column=0)
         label_date_from = tkinter.Label(self.gui, text="Date: From ")
         label_date_from.grid(row=1, column=1)
         self.entry_date_from = tkinter.Entry(self.gui, bd=5)
