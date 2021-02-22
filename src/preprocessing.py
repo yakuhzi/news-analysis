@@ -137,6 +137,8 @@ class Preprocessing:
 
         # Convert string date into datetime
         if "date" in df_preprocessed:
+            df_preprocessed["date"] = df_preprocessed["date"].apply(lambda date: date.split("T")[0])
+            df_preprocessed["date"] = df_preprocessed["date"].replace(r"^\s*$", np.nan, regex=True)
             df_preprocessed["date"].astype("datetime64[ns]")
 
         # Remove direct quotiations
@@ -205,8 +207,6 @@ class Preprocessing:
         dataframe["text"] = texts
         dataframe["media"] = dataframe["article_index"].apply(lambda index: df_articles["media"][index])
         dataframe["date"] = dataframe["article_index"].apply(lambda index: df_articles["date"][index])
-        dataframe["date"] = dataframe["date"].apply(lambda date: date.split("T")[0])
-        dataframe["date"] = dataframe["date"].replace(r"^\s*$", np.nan, regex=True)
 
         return self._apply_preprocessing(dataframe)
 
