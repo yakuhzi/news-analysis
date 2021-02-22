@@ -13,6 +13,7 @@ from spacy_sentiws import spaCySentiWS
 from tqdm import tqdm
 
 from model.document_type import DocumentType
+from model.filter_type import FilterType
 from utils.reader import Reader
 from utils.writer import Writer
 
@@ -112,17 +113,17 @@ class Preprocessing:
             return Reader.read_json_to_df_default(json_path)
 
         if document_type.value == DocumentType.ARTICLE.value:
-            df_preprocessed = self._apply_preprocessing(articles)
+            df_preprocessed = self._apply_preprocessing(articles, FilterType.PARTIES)
         elif document_type.value == DocumentType.PARAGRAPH.value:
             df_preprocessed = self._preprocess_paragraphs(articles)
         else:
             articles = articles[["title", "media"]].rename(columns={"title": "text"})
-            df_preprocessed = self._apply_preprocessing(articles, False)
+            df_preprocessed = self._apply_preprocessing(articles, FilterType.NONE)
 
         Writer.write_dataframe(df_preprocessed, preprocessed_filename)
         return df_preprocessed
 
-    def _apply_preprocessing(self, dataframe: DataFrame, remove_rows_without_parties: bool = True) -> DataFrame:
+    def _apply_preprocessing(self, dataframe: DataFrame, filter_type: FilterType) -> DataFrame:
         """
         Helper function responsible for applying preprocessing steps in correct order.
         :param dataframe: data that needs to be preprocessed.
@@ -141,8 +142,10 @@ class Preprocessing:
             df_preprocessed["date"] = df_preprocessed["date"].replace(r"^\s*$", np.nan, regex=True)
             df_preprocessed["date"].astype("datetime64[ns]")
 
-        # Remove direct quotiations
-        df_preprocessed["text"] = self._remove_direct_quotations(df_preprocessed["text"])
+        df_preprocessed["original_text"] = df_preprocessed["text"]
+
+        # Remove rows with quotations
+        df_preprocessed = self._remove_quotations_rows(df_preprocessed)
 
         # Remove special characters
         df_preprocessed["text"] = self._remove_special_characters(df_preprocessed["text"])
@@ -163,8 +166,12 @@ class Preprocessing:
         df_preprocessed["parties"] = self._get_parties(df_preprocessed["organizations"])
 
         # Remove rows with no parties
-        if remove_rows_without_parties:
+        if filter_type.value == FilterType.PARTIES.value:
             df_preprocessed = self._remove_rows_without_parties(df_preprocessed)
+
+        # Remove rows with no parties or more than one party
+        if filter_type.value == FilterType.SINGLE_PARTY.value:
+            df_preprocessed = self._keep_rows_with_one_party(df_preprocessed)
 
         # Sentiment polarity
         df_preprocessed["polarity"] = self.determine_sentiment_polarity(df_preprocessed["text"])
@@ -184,7 +191,7 @@ class Preprocessing:
         end_time = time.time()
         print("End of preprocessing after {} seconds".format(end_time - start_time))
 
-        if remove_rows_without_parties:
+        if filter_type.value != FilterType.NONE.value:
             print("Number of documents after filtering: {}".format(len(df_preprocessed)))
 
         return df_preprocessed
@@ -202,16 +209,20 @@ class Preprocessing:
         index, texts = zip(*flat_list)
 
         # Store paragraphs with the original article index and media
-        dataframe = DataFrame(columns=["article_index", "text", "media", "date"])
+        dataframe = DataFrame(columns=["article_index", "title", "text", "media", "date"])
         dataframe["article_index"] = index
+        dataframe["title"] = dataframe["article_index"].apply(lambda index: df_articles["title"][index])
         dataframe["text"] = texts
         dataframe["media"] = dataframe["article_index"].apply(lambda index: df_articles["media"][index])
         dataframe["date"] = dataframe["article_index"].apply(lambda index: df_articles["date"][index])
 
-        return self._apply_preprocessing(dataframe)
+        return self._apply_preprocessing(dataframe, FilterType.PARTIES)
 
     def _remove_direct_quotations(self, text_series: Series) -> Series:
         return text_series.str.replace(r'"(.*?)"', "", regex=True).str.strip()
+
+    def _remove_quotations_rows(self, dataframe: DataFrame) -> DataFrame:
+        return dataframe.loc[dataframe["text"].str.contains(r'["„“]') is False]
 
     def _remove_special_characters(self, text_series: Series) -> Series:
         return (
@@ -267,8 +278,10 @@ class Preprocessing:
         )
 
     def _remove_rows_without_parties(self, dataframe: DataFrame) -> DataFrame:
-        tqdm.pandas(desc="Remove rows without parties")
         return dataframe.loc[np.array(list(map(len, dataframe.parties.values))) > 0]
+
+    def _keep_rows_with_one_party(self, dataframe: DataFrame) -> DataFrame:
+        return dataframe.loc[np.array(list(map(len, dataframe.parties.values))) == 1]
 
     def determine_sentiment_polarity(self, token_series: Series) -> Series:
         tqdm.pandas(desc="Determine sentiment polarity")
@@ -276,10 +289,10 @@ class Preprocessing:
 
     def negation_handling(self, df_preprocessed: DataFrame) -> DataFrame:
         """
-        checks if 4 tokens before or after sentiws assigned a polarity score a negation word can be found. If this is the
+        Checks if 4 tokens before or after sentiws assigned a polarity score a negation word can be found. If this is the
         case, the polarity is inverted.
-        :param df_preprocessed: dataframe containing scores from sentiws for each word.
-        :return: dataframe with inverted scores if a negation word could be found.
+        :param df_preprocessed: Dataframe containing scores from sentiws for each word.
+        :return: Dataframe with inverted scores if a negation word could be found.
         """
         polarity_array = df_preprocessed["polarity"].to_numpy()
         word_array = df_preprocessed["text"].to_numpy()
