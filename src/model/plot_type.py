@@ -6,4 +6,5 @@ class PlotType(Enum):
     SENTIMENT_OUTLET = 2
     TOPICS_PARTY = 3
     TOPICS_MEDIA = 4
-    TIME_COURSE = 5
+    TOPICS_PARTY_MEDIA = 5
+    TIME_COURSE = 6

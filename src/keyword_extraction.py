@@ -65,10 +65,10 @@ class KeywordExtraction:
         # Generate tf-idf for the given document
         transformer.fit(count_vectorized)
 
-        if by_party and parties is None or all_terms:
+        if parties is None:
             parties = ["CDU", "CSU", "SPD", "FDP", "AfD", "Grüne", "Linke"]
 
-        if not by_party and media is None or all_terms:
+        if media is None:
             media = ["Bild", "Tagesschau", "TAZ"]
 
         terms = []

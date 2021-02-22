@@ -45,7 +45,12 @@ class SentimentGUI:
             PlotType.TOPICS_MEDIA: "This is a bipartite graph showing the most important topics for the selected "
             "media.\n On the left side you can see the media and on the right side the "
             "the corresponding terms.\n The thickness of the connecting lines are the term "
-            "counts\n how often the term appears for each party.",
+            "counts\n how often the term appears for each media.",
+            PlotType.TOPICS_PARTY_MEDIA: "This is a tripartite graph showing the most important topics for the "
+            "selected parties and media.\n On the left side you can see the parties,\n in the "
+            "middle the important terms and on the right side the media.\n"
+            "The thickness of the connecting lines are the term "
+            "counts\n how often the term appears for each party or media.",
             PlotType.TIME_COURSE: "This is a line graph showing the importance of a certain term in the selected "
             'media.\n With a click on "Show next" or "Show previous"\n'
             "you can see the importance of another term.",
@@ -213,19 +218,16 @@ class SentimentGUI:
         self.show_diagram(first_image=True)
         self.next_button["state"] = "normal"
 
-    def show_topics(self, by_party) -> None:
+    def _topic_setup(self) -> (List[str], List[str]):
         """
-        shows a bipartite graph with the important topics/keywords for each party
+        helper function to set up everything needed for displaying topics (bipartite/tripartite graphs and time course)
+        :return: party_list: list of currently enabled parties, media_list: list of currently enabled media
         """
-        if by_party:
-            self.current_plot_type = PlotType.TOPICS_PARTY
-        else:
-            self.current_plot_type = PlotType.TOPICS_MEDIA
         # disable previous and next button as it is only one figure to show
         self.next_button["state"] = "disabled"
         self.previous_button["state"] = "disabled"
         self.clear_plots(clear_plot_array=True)
-        # set help text
+        # enable help button
         self.help_button["state"] = "normal"
         # filter time
         self.configure_dataframe()
@@ -236,6 +238,18 @@ class SentimentGUI:
         media_list = self.get_media()
         # get keywords/ graph for media and parties
         self.keyword_extraction.set_active_media(media_list)
+        return party_list, media_list
+
+    def show_topics(self, by_party) -> None:
+        """
+        shows a bipartite graph with the important topics/keywords for each party or media
+        :param by_party: if true, important topics of the parties are shown, otherwise of the media
+        """
+        if by_party:
+            self.current_plot_type = PlotType.TOPICS_PARTY
+        else:
+            self.current_plot_type = PlotType.TOPICS_MEDIA
+        party_list, media_list = self._topic_setup()
         df_term_weights = self.keyword_extraction.get_term_weight_tuples(
             by_party=by_party, parties=party_list, media=media_list
         )
@@ -244,17 +258,28 @@ class SentimentGUI:
         self.current_plot = FigureCanvasTkAgg(fig, self.gui)
         self.current_plot.get_tk_widget().grid(row=5, column=0, columnspan=6)
 
+    def show_topics_party_media(self) -> None:
+        """
+        shows a tripartite graph with the important topics/keywords for each party and media
+        """
+        self.current_plot_type = PlotType.TOPICS_PARTY_MEDIA
+        party_list, media_list = self._topic_setup()
+        df_term_weights_party = self.keyword_extraction.get_term_weight_tuples(
+            by_party=True, all_terms=True, parties=party_list, media=media_list
+        )
+        df_term_weights_media = self.keyword_extraction.get_term_weight_tuples(
+            by_party=False, all_terms=True, parties=party_list, media=media_list
+        )
+        fig = self.keyword_extraction.get_tripartite_graph(
+            df_party_weights=df_term_weights_party, df_media_weights=df_term_weights_media
+        )
+        # show the plot in GUI
+        self.current_plot = FigureCanvasTkAgg(fig, self.gui)
+        self.current_plot.get_tk_widget().grid(row=5, column=0, columnspan=6)
+
     def show_time_course(self):
         self.current_plot_type = PlotType.TIME_COURSE
-        self.next_button["state"] = "normal"
-        self.previous_button["state"] = "normal"
-        self.clear_plots(clear_plot_array=True)
-        self.help_button["state"] = "normal"
-        self.configure_dataframe()
-        self.keyword_extraction.set_data(self.df_paragraphs_configured)
-        party_list = self.get_parties()
-        media_list = self.get_media()
-        self.keyword_extraction.set_active_media(media_list)
+        party_list, media_list = self._topic_setup()
         df_top_terms = self.keyword_extraction.get_top_terms_for_party(parties=party_list)
         df_image = pd.DataFrame(columns=["party", "media", "term", "weight"])
         for party in party_list:
@@ -331,8 +356,12 @@ class SentimentGUI:
             self.show_sentiment(by_party=True)
         elif self.current_plot_type == PlotType.SENTIMENT_OUTLET:
             self.show_sentiment(by_party=False)
-        elif self.current_plot_type == PlotType.TOPICS:
-            self.show_topics()
+        elif self.current_plot_type == PlotType.TOPICS_PARTY:
+            self.show_topics(by_party=True)
+        elif self.current_plot_type == PlotType.TOPICS_MEDIA:
+            self.show_topics(by_party=False)
+        elif self.current_plot_type == PlotType.TOPICS_PARTY_MEDIA:
+            self.show_topics_party_media()
         elif self.current_plot_type == PlotType.TIME_COURSE:
             self.show_time_course()
 
@@ -382,9 +411,15 @@ class SentimentGUI:
         )
         button_topic_media.grid(row=0, column=3)
 
+        # button to show topics of parties and media
+        button_topic_media = tkinter.Button(
+            self.gui, text="Show Topics of Parties and Media", command=lambda: self.show_topics_party_media()
+        )
+        button_topic_media.grid(row=0, column=4)
+
         # button to show time course
         button_time_course = tkinter.Button(self.gui, text="Show Time Course", command=self.show_time_course)
-        button_time_course.grid(row=0, column=4)
+        button_time_course.grid(row=0, column=5)
 
         # checkbox anf text fields to filter dates
         check_filter_date = tkinter.Checkbutton(
