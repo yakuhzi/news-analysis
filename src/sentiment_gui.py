@@ -1,15 +1,15 @@
-import datetime
 import tkinter
 import webbrowser
 from typing import List
+import datetime
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from dateutil.relativedelta import relativedelta
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from pandas import DataFrame
 
 from keyword_extraction import KeywordExtraction
+from time_course import TimeCourse
 from utils.visualization import Visualization
 
 
@@ -25,6 +25,7 @@ class SentimentGUI:
         self.df_paragraphs = df_paragraphs
         self.df_paragraphs_configured = df_paragraphs.copy()
         self.keyword_extraction = KeywordExtraction(self.df_paragraphs_configured)
+        self.time_course = TimeCourse()
         self.plots = []
         self.current_plot = None
         self.current_plot_index = 0
@@ -67,17 +68,6 @@ class SentimentGUI:
             self.df_paragraphs_configured = self.df_paragraphs_configured[
                 (self.df_paragraphs_configured["date"] > min_date) & (self.df_paragraphs_configured["date"] < max_date)
             ]
-
-    def configure_dataframe_for_time_course(self, start_date, end_date, media):
-        df_paragraphs_time_interval = self.df_paragraphs_configured[self.df_paragraphs_configured["date"].notna()]
-        df_paragraphs_time_interval = df_paragraphs_time_interval[df_paragraphs_time_interval["media"] == media]
-        if start_date and end_date:
-            start = start_date.strftime("%Y-%m-%d")
-            end = end_date.strftime("%Y-%m-%d")
-            df_paragraphs_time_interval = df_paragraphs_time_interval[
-                (df_paragraphs_time_interval["date"] > start) & (df_paragraphs_time_interval["date"] < end)
-            ]
-        return df_paragraphs_time_interval
 
     def clear_plots(self, clear_plot_array: bool = False) -> None:
         """
@@ -248,34 +238,10 @@ class SentimentGUI:
         media_list = self.get_media()
         self.keyword_extraction.set_active_media(media_list)
         df_top_terms = self.keyword_extraction.get_top_terms_for_party(parties=party_list)
-        df_image = pd.DataFrame(columns=["party", "media", "term", "weight"])
-        for party in party_list:
-            for media in media_list:
-                # use only top 3 words for each party
-                df_party_term = df_top_terms[df_top_terms["party"] == party]
-                for term in df_party_term["term"]:
-                    # split time window into smaller chunks
-                    # calculate months between dates
-                    initial_start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
-                    start_date = initial_start_date
-                    initial_end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
-                    next_end_date = initial_start_date + relativedelta(months=+1)
-                    weight_list = []
-                    dates = []
-                    while next_end_date < initial_end_date:
-                        # get weight for each month
-                        df_interval_paragraphs = self.configure_dataframe_for_time_course(
-                            start_date, next_end_date, media
-                        )
-                        weight = self.keyword_extraction.get_term_count(df_interval_paragraphs, True, party, term)
-                        dates.append(start_date)
-                        weight_list.append(weight)
-                        start_date = next_end_date
-                        next_end_date = start_date + relativedelta(months=+1)
-                    df_image = df_image.append(
-                        {"party": party, "media": media, "term": term, "weight": weight_list, "dates": dates},
-                        ignore_index=True,
-                    )
+        initial_start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
+        initial_end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
+        df_image = self.time_course.get_time_course(party_list, media_list, df_top_terms, self.keyword_extraction,
+                                                    initial_start_date, initial_end_date, self.df_paragraphs_configured)
         # draw plot for time window
         figures = Visualization.get_plots(df_image)
         for fig in figures:
