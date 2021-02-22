@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
 
 import unittest
 
-from pandas import DataFrame, testing
+from pandas import DataFrame
 
 from src.keyword_extraction import KeywordExtraction
 
