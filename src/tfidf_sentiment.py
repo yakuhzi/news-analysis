@@ -5,10 +5,20 @@ from utils.writer import Writer
 
 
 class TfidfSentiment:
+    """
+    Class that calculates the sentiment of the paragraphs.
+    """
+
     def __init__(self, df_paragraphs):
         self.df_paragraphs = df_paragraphs
 
     def add_sentiment(self, overwrite: bool = False) -> None:
+        """
+        Calculate sentiment score for each row in the dataframe and add it into the column "sentiment_score".
+
+        :param overwrite: If True, overwrites the current sentiment.
+        """
+
         # Sentiment already calculated
         if "sentiment_score" in self.df_paragraphs and not overwrite:
             return
@@ -52,9 +62,15 @@ class TfidfSentiment:
         )
 
         # Save paragraphs to disk
-        Writer.write_articles(self.df_paragraphs, "paragraphs")
+        Writer.write_dataframe(self.df_paragraphs, "paragraphs")
 
     def map_sentiment(self, overwrite: bool = False) -> None:
+        """
+        Maps the sentiment_score to "Positive", "Negative" or "Neutral" for all paragraphs.
+
+        :param overwrite: If True, overwrites the current sentiment.
+        """
+
         # Sentiment already mapped
         if "sentiment" in self.df_paragraphs and not overwrite:
             return
@@ -65,9 +81,15 @@ class TfidfSentiment:
         )
 
         # Save paragraphs to disk
-        Writer.write_articles(self.df_paragraphs, "paragraphs")
+        Writer.write_dataframe(self.df_paragraphs, "paragraphs")
 
     def _map_sentiment(self, score: str) -> str:
+        """
+        Helper function that maps the sentiment_score to "Positive", "Negative" or "Neutral".
+
+        :param score: The calculated sentiment_score of a paragraph.
+        :return: "Positive", "Negative" or "Neutral" dependent of the score input.
+        """
         score = float(score)
 
         if score > 0.001:
@@ -77,11 +99,12 @@ class TfidfSentiment:
         else:
             return "Neutral"
 
-    def _remove_umlauts(self, string):
+    def _remove_umlauts(self, string: str) -> str:
         """
-        Removes umlauts from strings and replaces them with the letter+e convention
-        :param string: string to remove umlauts from
-        :return: unumlauted string
+        Removes umlauts from strings and replaces them with the letter+e convention.
+
+        :param string: String to remove umlauts from.
+        :return: Unumlauted string.
         """
         string = string.encode()
 
