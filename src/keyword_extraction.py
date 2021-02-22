@@ -87,10 +87,9 @@ class KeywordExtraction:
         for party_or_media in parties if by_party else media:
             for term in terms:
                 term_count = self.get_term_count(self.df_paragraphs, by_party, party_or_media, term)
-                color = "r" if party_or_media == "Bild" else "g"
-                tuples.append((party_or_media, term, term_count, color))
+                tuples.append((party_or_media, term, term_count))
 
-        return DataFrame(tuples, columns=["party" if by_party else "media", "term", "weight", "color"])
+        return DataFrame(tuples, columns=["party" if by_party else "media", "term", "weight"])
 
     def get_top_terms_for_party(self, parties: Optional[List[str]] = None) -> DataFrame:
         # Get nouns from dataframe
@@ -212,13 +211,11 @@ class KeywordExtraction:
         graph.add_weighted_edges_from(
             [(row["party"], row["term"], row["weight"]) for idx, row in df_party_weights.iterrows()],
             weight="weight",
-            color="r",
         )
 
         graph.add_weighted_edges_from(
             [(row["media"], row["term"], row["weight"]) for idx, row in df_media_weights.iterrows()],
             weight="weight",
-            color="g",
         )
 
         df_party_weights["normalized_weight"] = df_party_weights["weight"].apply(
