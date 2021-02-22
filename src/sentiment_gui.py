@@ -10,6 +10,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from pandas import DataFrame
 
 from keyword_extraction import KeywordExtraction
+from model.plot_type import PlotType
 from utils.visualization import Visualization
 
 
@@ -29,6 +30,7 @@ class SentimentGUI:
         self.current_plot = None
         self.current_plot_index = 0
         self.current_help_message = ""
+        self.current_plot_type = None
         self.gui = None
         self.next_button = None
         self.previous_button = None
@@ -124,7 +126,7 @@ class SentimentGUI:
         self.help_button["state"] = "normal"
         # set current plot
         self.current_plot = self.plots[self.current_plot_index]
-        self.current_plot.get_tk_widget().grid(row=4, column=0, columnspan=6)
+        self.current_plot.get_tk_widget().grid(row=5, column=0, columnspan=6)
 
     def get_parties(self) -> List[str]:
         """
@@ -170,6 +172,7 @@ class SentimentGUI:
         plt.close("all")
         self.clear_plots(clear_plot_array=True)
         if by_party:
+            self.current_plot_type = PlotType.SENTIMENT_PARTY
             self.current_help_message = (
                 "These are piecharts showing the sentiment towards a certain party\n of the "
                 "selected media. This can be either positive, negative or neutral\n "
@@ -177,6 +180,7 @@ class SentimentGUI:
                 "see the sentiment for other parties."
             )
         else:
+            self.current_plot_type = PlotType.SENTIMENT_OUTLET
             self.current_help_message = (
                 "These are piecharts showing the sentiment of a certain media\n towards the "
                 "selected parties. This can be either positive, negative or neutral\n "
@@ -205,6 +209,7 @@ class SentimentGUI:
         """
         shows a bipartite graph with the important topics/keywords for each party
         """
+        self.current_plot_type = PlotType.TOPICS
         # disable previous and next button as it is only one figure to show
         self.next_button["state"] = "disabled"
         self.previous_button["state"] = "disabled"
@@ -230,9 +235,10 @@ class SentimentGUI:
         fig = self.keyword_extraction.get_graph(df_term_weights)
         # show the plot in GUI
         self.current_plot = FigureCanvasTkAgg(fig, self.gui)
-        self.current_plot.get_tk_widget().grid(row=4, column=0, columnspan=6)
+        self.current_plot.get_tk_widget().grid(row=5, column=0, columnspan=6)
 
     def show_time_course(self):
+        self.current_plot_type = PlotType.TIME_COURSE
         self.next_button["state"] = "normal"
         self.previous_button["state"] = "normal"
         self.clear_plots(clear_plot_array=True)
@@ -315,6 +321,19 @@ class SentimentGUI:
     def open_browser(self, url):
         webbrowser.open_new(url)
 
+    def update_gui(self) -> None:
+        """
+        updates the gui in case a filter criteria has been changed
+        """
+        if self.current_plot_type == PlotType.SENTIMENT_PARTY:
+            self.show_sentiment(by_party=True)
+        elif self.current_plot_type == PlotType.SENTIMENT_OUTLET:
+            self.show_sentiment(by_party=False)
+        elif self.current_plot_type == PlotType.TOPICS:
+            self.show_topics()
+        elif self.current_plot_type == PlotType.TIME_COURSE:
+            self.show_time_course()
+
     def show_gui(self) -> None:
         """
         Set up the GUI
@@ -322,6 +341,7 @@ class SentimentGUI:
         self.gui = tkinter.Tk()
         # initial size of window
         self.gui.geometry("1500x1200")
+        self.gui.wm_title("News Analysis")
         # initial checkbox value for date filtering (initially disabled)
         self.date_check = tkinter.IntVar(value=0)
         # initial checkbox values to enable/disable parties (initially all enabled)
@@ -400,21 +420,26 @@ class SentimentGUI:
         check_bild = tkinter.Checkbutton(self.gui, text="Bild", variable=self.bild_check, onvalue=1, offvalue=0)
         check_bild.grid(row=3, column=2)
 
+        update_button = self.next_button = tkinter.Button(
+            self.gui, text="Update filter criteria", command=self.update_gui
+        )
+        update_button.grid(row=4, column=0, columnspan=5)
+
         # button to show next plot of currently available plots (in plots list)
         self.next_button = tkinter.Button(self.gui, text="Show next", command=lambda: self.show_diagram(increase=True))
         self.next_button["state"] = "disabled"
-        self.next_button.grid(row=5, column=2)
+        self.next_button.grid(row=6, column=2)
 
         # button to previous next plot of currently available plots (in plots list)
         self.previous_button = tkinter.Button(
             self.gui, text="Show previous", command=lambda: self.show_diagram(increase=False)
         )
         self.previous_button["state"] = "disabled"
-        self.previous_button.grid(row=5, column=0)
+        self.previous_button.grid(row=6, column=0)
 
         self.help_button = tkinter.Button(self.gui, text="What does this graph show?", command=lambda: self.popupmsg())
         self.help_button["state"] = "disabled"
-        self.help_button.grid(row=5, column=4)
+        self.help_button.grid(row=6, column=4)
 
         github_link = tkinter.Label(
             self.gui,
@@ -423,11 +448,12 @@ class SentimentGUI:
             cursor="hand2",
         )
         github_link.bind("<Button-1>", lambda e: self.open_browser("https://github.com/yakuhzi/news-analysis"))
-        github_link.grid(row=6, column=0, columnspan=6)
+        github_link.grid(row=7, column=0, columnspan=6)
 
         # "Hack" for displaying topics correctly, otherwise they sometimes appear in pie charts
         self.show_topics()
         self.clear_plots()
+        self.current_plot_type = None
 
         # show GUI
         self.gui.mainloop()
