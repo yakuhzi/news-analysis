@@ -74,11 +74,13 @@ class KeywordExtraction:
         terms = []
 
         # Get top words by TF-IDF weight
-        for party in [] if parties is None else parties:
-            terms += self._get_top_words(True, party, vectorizer, transformer, topn)
+        if by_party or all_terms:
+            for party in parties:
+                terms += self._get_top_words(True, party, vectorizer, transformer, topn)
 
-        for m in [] if media is None else media:
-            terms += self._get_top_words(False, m, vectorizer, transformer, topn)
+        if not by_party or all_terms:
+            for m in media:
+                terms += self._get_top_words(False, m, vectorizer, transformer, topn)
 
         terms = list(set(terms))
         tuples = []
@@ -180,10 +182,13 @@ class KeywordExtraction:
         :return: The bipartite graph as figure
         """
         graph = nx.Graph()
-        graph.add_nodes_from(df_term_weights["party"], bipartite=0)
         graph.add_nodes_from(df_term_weights["term"], bipartite=1)
+
+        column = "party" if "party" in df_term_weights else "media"
+
+        graph.add_nodes_from(df_term_weights[column], bipartite=0)
         graph.add_weighted_edges_from(
-            [(row["party"], row["term"], row["weight"]) for idx, row in df_term_weights.iterrows()], weight="weight"
+            [(row[column], row["term"], row["weight"]) for idx, row in df_term_weights.iterrows()], weight="weight"
         )
 
         df_term_weights["normalized_weight"] = df_term_weights["weight"].apply(
@@ -195,7 +200,7 @@ class KeywordExtraction:
 
         nx.draw(
             graph,
-            pos=nx.drawing.layout.bipartite_layout(graph, df_term_weights["party"]),
+            pos=nx.drawing.layout.bipartite_layout(graph, df_term_weights[column]),
             width=df_term_weights["normalized_weight"].tolist(),
             with_labels=True,
         )
