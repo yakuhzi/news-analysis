@@ -13,6 +13,7 @@ from spacy_sentiws import spaCySentiWS
 from tqdm import tqdm
 
 from model.document_type import DocumentType
+from model.filter_type import FilterType
 from utils.reader import Reader
 from utils.writer import Writer
 
@@ -112,17 +113,17 @@ class Preprocessing:
             return Reader.read_json_to_df_default(json_path)
 
         if document_type.value == DocumentType.ARTICLE.value:
-            df_preprocessed = self._apply_preprocessing(articles)
+            df_preprocessed = self._apply_preprocessing(articles, FilterType.PARTIES)
         elif document_type.value == DocumentType.PARAGRAPH.value:
             df_preprocessed = self._preprocess_paragraphs(articles)
         else:
             articles = articles[["title", "media"]].rename(columns={"title": "text"})
-            df_preprocessed = self._apply_preprocessing(articles, False)
+            df_preprocessed = self._apply_preprocessing(articles, FilterType.NONE)
 
         Writer.write_dataframe(df_preprocessed, preprocessed_filename)
         return df_preprocessed
 
-    def _apply_preprocessing(self, dataframe: DataFrame, remove_rows_without_parties: bool = True) -> DataFrame:
+    def _apply_preprocessing(self, dataframe: DataFrame, filter_type: FilterType) -> DataFrame:
         """
         Helper function responsible for applying preprocessing steps in correct order.
         :param dataframe: data that needs to be preprocessed.
@@ -142,9 +143,6 @@ class Preprocessing:
             df_preprocessed["date"].astype("datetime64[ns]")
 
         df_preprocessed["original_text"] = df_preprocessed["text"]
-
-        # Remove direct quotiations
-        # df_preprocessed["text"] = self._remove_direct_quotations(df_preprocessed["text"])
 
         # Remove rows with quotations
         df_preprocessed = self._remove_quotations_rows(df_preprocessed)
@@ -168,8 +166,11 @@ class Preprocessing:
         df_preprocessed["parties"] = self._get_parties(df_preprocessed["organizations"])
 
         # Remove rows with no parties
-        if remove_rows_without_parties:
-            # df_preprocessed = self._remove_rows_without_parties(df_preprocessed)
+        if filter_type.value == FilterType.PARTIES.value:
+            df_preprocessed = self._remove_rows_without_parties(df_preprocessed)
+
+        # Remove rows with no parties or more than one party
+        if filter_type.value == FilterType.SINGLE_PARTY.value:
             df_preprocessed = self._keep_rows_with_one_party(df_preprocessed)
 
         # Sentiment polarity
@@ -190,7 +191,7 @@ class Preprocessing:
         end_time = time.time()
         print("End of preprocessing after {} seconds".format(end_time - start_time))
 
-        if remove_rows_without_parties:
+        if filter_type.value != FilterType.NONE.value:
             print("Number of documents after filtering: {}".format(len(df_preprocessed)))
 
         return df_preprocessed
@@ -215,7 +216,7 @@ class Preprocessing:
         dataframe["media"] = dataframe["article_index"].apply(lambda index: df_articles["media"][index])
         dataframe["date"] = dataframe["article_index"].apply(lambda index: df_articles["date"][index])
 
-        return self._apply_preprocessing(dataframe)
+        return self._apply_preprocessing(dataframe, FilterType.PARTIES)
 
     def _remove_direct_quotations(self, text_series: Series) -> Series:
         return text_series.str.replace(r'"(.*?)"', "", regex=True).str.strip()

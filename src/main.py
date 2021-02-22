@@ -14,7 +14,7 @@ if __name__ == "__main__":
     # Calculate sentiment of paragraphs
     tfidf_sentiment = TfidfSentiment(df_paragraphs)
     tfidf_sentiment.add_sentiment(overwrite=False)
-    tfidf_sentiment.map_sentiment(overwrite=True)
+    tfidf_sentiment.map_sentiment(overwrite=False)
 
     # Show GUI
     gui = SentimentGUI(df_paragraphs)
