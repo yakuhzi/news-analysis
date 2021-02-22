@@ -61,7 +61,7 @@ class KeywordExtraction:
         terms = []
         # get top words by TF-IDF weight
         for party in parties:
-            terms += self._get_top_words(topn, party, vectorizer, transformer)
+            terms += self._get_top_words(party, vectorizer, transformer, topn)
 
         terms = list(set(terms))
         tuples = []
@@ -101,7 +101,7 @@ class KeywordExtraction:
         return DataFrame(tuples, columns=["party", "term"])
 
     def _get_top_words(
-        self, topn: int, party: str, vectorizer: CountVectorizer, transformer: TfidfTransformer
+        self, party: str, vectorizer: CountVectorizer, transformer: TfidfTransformer, topn: int = 3
     ) -> List[str]:
         """
         get the most important words for a party by TF-IDF score
