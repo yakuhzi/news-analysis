@@ -36,7 +36,7 @@ class KeywordExtractionTest(unittest.TestCase):
         cls.keyword_extraction = KeywordExtraction(df_paragraphs)
 
     def test_get_term_weight_tuples(self):
-        tuples = self.keyword_extraction.get_term_weight_tuples(parties=["CDU", "Grüne"], topn=1)
+        tuples = self.keyword_extraction.get_term_weight_tuples(by_party=True, parties=["CDU", "Grüne"], topn=1)
 
         df_tuples = DataFrame(
             {
