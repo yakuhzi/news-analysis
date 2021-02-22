@@ -1,4 +1,5 @@
 import re
+import warnings
 from typing import List
 
 import networkx as nx
@@ -6,7 +7,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 from pandas import DataFrame
+from pandas.core.common import SettingWithCopyWarning
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+
+warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
 
 class KeywordExtraction:
@@ -31,10 +35,11 @@ class KeywordExtraction:
         """
         self.df_paragraphs = self.df_paragraphs[self.df_paragraphs["media"].isin(media_list)]
 
-    def get_term_weight_tuples(self, parties: list = None) -> DataFrame:
+    def get_term_weight_tuples(self, parties: list = None, topn: int = 3) -> DataFrame:
         """
         get most important keywords by TF-IDF weights and count their appearance
         :param parties: the parties of which the topic should be analyzed
+        :param topn: how many top words should be chosen for each party
         :return: a data frame with the most important term-weight-tuples for the respective parties
         """
         # Get nouns from dataframe
@@ -56,7 +61,7 @@ class KeywordExtraction:
         terms = []
         # get top words by TF-IDF weight
         for party in parties:
-            terms += self._get_top_words(party, vectorizer, transformer)
+            terms += self._get_top_words(topn, party, vectorizer, transformer)
 
         terms = list(set(terms))
         tuples = []
@@ -95,7 +100,9 @@ class KeywordExtraction:
 
         return DataFrame(tuples, columns=["party", "term"])
 
-    def _get_top_words(self, party: str, vectorizer: CountVectorizer, transformer: TfidfTransformer) -> List[str]:
+    def _get_top_words(
+        self, topn: int, party: str, vectorizer: CountVectorizer, transformer: TfidfTransformer
+    ) -> List[str]:
         """
         get the most important words for a party by TF-IDF score
         :param party: party to get keywords from
@@ -103,22 +110,22 @@ class KeywordExtraction:
         :param transformer: the TF-IDF transformer to use for calculating TF-IDF scores
         :return: the top 3 terms for the party as list
         """
-        paragraphs = self._get_party_paragraphs(self.df_paragraphs, party)
-        paragraphs["nouns"] = self._remove_blacklist_words(paragraphs)
+        party_paragraphs = self._get_party_paragraphs(self.df_paragraphs, party)
+        party_paragraphs["nouns"] = self._remove_blacklist_words(party_paragraphs)
 
-        nouns = paragraphs["nouns"].to_string()
+        nouns = party_paragraphs["nouns"].apply(lambda row: " ".join(row))
 
         # transform nouns
-        tf_idf_vector = transformer.transform(vectorizer.transform([nouns]))
+        tf_idf_vector = transformer.transform(vectorizer.transform(nouns))
         weights = np.asarray(tf_idf_vector.mean(axis=0)).ravel().tolist()
 
         # create dataframe with weights and sort in descending order
         df_weights = DataFrame({"term": vectorizer.get_feature_names(), "TF_IDF": weights})
         df_weights = df_weights.sort_values("TF_IDF", ascending=False).reset_index(drop=False)
 
-        # transform dataframe to list and return top 3 elements
-        top_terms = df_weights["term"].tolist()[:3]
-        print("Top 3 words of {}: {}".format(party, top_terms))
+        # transform dataframe to list and return top n elements
+        top_terms = df_weights["term"].tolist()[:topn]
+        print("Top {} words of {}: {}".format(topn, party, top_terms))
         return top_terms
 
     def get_term_count(self, df: DataFrame, party: str, term: str) -> int:
