@@ -226,7 +226,7 @@ class SentimentGUI:
         media_list = self.get_media()
         # get keywords/ graph for media and parties
         self.keyword_extraction.set_active_media(media_list)
-        df_term_weights = self.keyword_extraction.get_term_weight_tuples(parties=party_list)
+        df_term_weights = self.keyword_extraction.get_term_weight_tuples(by_party=True, parties=party_list)
         fig = self.keyword_extraction.get_graph(df_term_weights)
         # show the plot in GUI
         self.current_plot = FigureCanvasTkAgg(fig, self.gui)
@@ -267,7 +267,7 @@ class SentimentGUI:
                         df_interval_paragraphs = self.configure_dataframe_for_time_course(
                             start_date, next_end_date, media
                         )
-                        weight = self.keyword_extraction.get_term_count(df_interval_paragraphs, party, term)
+                        weight = self.keyword_extraction.get_term_count(df_interval_paragraphs, True, party, term)
                         dates.append(start_date)
                         weight_list.append(weight)
                         start_date = next_end_date
