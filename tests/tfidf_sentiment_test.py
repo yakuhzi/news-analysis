@@ -26,21 +26,28 @@ class TfidfSentimentTest(unittest.TestCase):
             [0, 0, 0, 0, 0],
         ]
 
-        df_paragraphs = DataFrame({"text": text, "polarity": polarity})
+        polarity_textblob = [0.4, -0.4, 0]
+
+        df_paragraphs = DataFrame({"text": text, "polarity": polarity, "polarity_textblob": polarity_textblob})
+
         self.tfidf_sentiment = TfidfSentiment(df_paragraphs)
 
-    def test_add_sentiment(self):
-        self.tfidf_sentiment.add_sentiment()
+    def test_calculate_sentiment_score(self):
+        self.tfidf_sentiment.calculate_sentiment_score()
         sentiment_series = Series([0.08615052200619643, -0.08615052200619643, 0.0])
         output_sentiment_series = self.tfidf_sentiment.df_paragraphs["sentiment_score"]
         testing.assert_series_equal(output_sentiment_series, sentiment_series, check_names=False)
 
     def test_map_sentiment(self):
-        self.tfidf_sentiment.add_sentiment()
+        self.tfidf_sentiment.calculate_sentiment_score()
         self.tfidf_sentiment.map_sentiment()
         sentiment_series = Series(["Positive", "Negative", "Neutral"])
-        output_sentiment_series = self.tfidf_sentiment.df_paragraphs["sentiment"]
-        testing.assert_series_equal(output_sentiment_series, sentiment_series, check_names=False)
+
+        sentiment_series_sentiws = self.tfidf_sentiment.df_paragraphs["sentiment"]
+        sentiment_series_textblob = self.tfidf_sentiment.df_paragraphs["sentiment_textblob"]
+
+        testing.assert_series_equal(sentiment_series_sentiws, sentiment_series, check_names=False)
+        testing.assert_series_equal(sentiment_series_textblob, sentiment_series, check_names=False)
 
     def test_map_sentiment_row(self):
         sentiment_positive = self.tfidf_sentiment._map_sentiment("0.1")

@@ -1,6 +1,6 @@
 import re
 import warnings
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import networkx as nx
 import numpy as np
@@ -71,7 +71,7 @@ class KeywordExtraction:
         if media is None:
             media = ["Bild", "Tagesschau", "TAZ"]
 
-        terms = []
+        terms: List[str] = []
 
         # Get top words by TF-IDF weight
         if by_party or all_terms:
@@ -83,7 +83,7 @@ class KeywordExtraction:
                 terms += self._get_top_words(False, m, vectorizer, transformer, topn)
 
         terms = list(set(terms))
-        tuples = []
+        tuples: List[Tuple[str, str, int]] = []
 
         # Count appearance of term for party or media to determine weight for bipartite graph
         for party_or_media in parties if by_party else media:
@@ -175,7 +175,7 @@ class KeywordExtraction:
 
         return paragraphs["nouns"].apply(lambda row: row.count(term)).sum()
 
-    def get_graph(self, df_term_weights: DataFrame) -> Figure:
+    def get_bipartite_graph(self, df_term_weights: DataFrame) -> Figure:
         """
         Creates a bipartite graph fom the term-weight-tuples which were previously calculated
         :param df_term_weights: The term-weight-tuples dataframe
@@ -187,12 +187,14 @@ class KeywordExtraction:
         column = "party" if "party" in df_term_weights else "media"
 
         graph.add_nodes_from(df_term_weights[column], bipartite=0)
-        graph.add_weighted_edges_from(
-            [(row[column], row["term"], row["weight"]) for idx, row in df_term_weights.iterrows()], weight="weight"
-        )
 
         df_term_weights["normalized_weight"] = df_term_weights["weight"].apply(
             lambda row: row / df_term_weights["weight"].max() * 4
+        )
+
+        graph.add_weighted_edges_from(
+            [(row[column], row["term"], row["normalized_weight"]) for idx, row in df_term_weights.iterrows()],
+            weight="weight",
         )
 
         plt.close()
@@ -201,27 +203,23 @@ class KeywordExtraction:
         nx.draw(
             graph,
             pos=nx.drawing.layout.bipartite_layout(graph, df_term_weights[column]),
-            width=df_term_weights["normalized_weight"].tolist(),
+            width=list(nx.get_edge_attributes(graph, "weight").values()),
             with_labels=True,
         )
 
         return fig
 
     def get_tripartite_graph(self, df_party_weights: DataFrame, df_media_weights: DataFrame):
+        """
+        Creates a tripartite graph fom the term-weight-tuples which were previously calculated
+        :param df_party_weights: The term-weight-tuples dataframe of the parties
+        :param df_media_weights: The term-weight-tuples dataframe of the media
+        :return: The tripartite graph as figure
+        """
         graph = nx.Graph()
         graph.add_nodes_from(df_party_weights["party"], bipartite=0)
         graph.add_nodes_from(df_party_weights["term"], bipartite=1)
         graph.add_nodes_from(df_media_weights["media"], bipartite=2)
-
-        graph.add_weighted_edges_from(
-            [(row["party"], row["term"], row["weight"]) for idx, row in df_party_weights.iterrows()],
-            weight="weight",
-        )
-
-        graph.add_weighted_edges_from(
-            [(row["media"], row["term"], row["weight"]) for idx, row in df_media_weights.iterrows()],
-            weight="weight",
-        )
 
         df_party_weights["normalized_weight"] = df_party_weights["weight"].apply(
             lambda row: row / df_party_weights["weight"].max() * 4
@@ -231,14 +229,23 @@ class KeywordExtraction:
             lambda row: row / df_media_weights["weight"].max() * 4
         )
 
+        graph.add_weighted_edges_from(
+            [(row["party"], row["term"], row["normalized_weight"]) for idx, row in df_party_weights.iterrows()],
+            weight="weight",
+        )
+
+        graph.add_weighted_edges_from(
+            [(row["media"], row["term"], row["normalized_weight"]) for idx, row in df_media_weights.iterrows()],
+            weight="weight",
+        )
+
         plt.close()
         fig = plt.figure(1, figsize=(10, 9))
 
         nx.draw(
             graph,
             pos=nx.multipartite_layout(graph, subset_key="bipartite"),
-            # pos=nx.drawing.layout.bipartite_layout(graph, df_party_weights["party"]),
-            width=df_party_weights["normalized_weight"].tolist(),
+            width=list(nx.get_edge_attributes(graph, "weight").values()),
             with_labels=True,
         )
 

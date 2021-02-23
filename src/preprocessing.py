@@ -3,6 +3,7 @@ import time
 import warnings
 from pathlib import Path
 
+import nltk
 import numpy as np
 import pandas as pd
 import spacy
@@ -10,11 +11,12 @@ from pandas import DataFrame, Series
 from pandas.core.common import SettingWithCopyWarning
 from spacy.lang.de.stop_words import STOP_WORDS
 from spacy_sentiws import spaCySentiWS
+from textblob_de import TextBlobDE
 from tqdm import tqdm
 
 from model.document_type import DocumentType
+from model.filter_type import FilterType
 from utils.reader import Reader
-from utils.writer import Writer
 
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
@@ -25,9 +27,8 @@ class Preprocessing:
 
         # de_core_news_lg had the best score for entity recognition and syntax accuracy in german according to spacy.
         # for more information, see https://spacy.io/models/de#de_core_news_lg
-        self.nlp = spacy.load("de_core_news_lg", disable=["parser"])
-        self.sentiws = spaCySentiWS(sentiws_path="src/data/sentiws/")
-        self.nlp.add_pipe(self.sentiws)
+        self.nlp = None
+        self.sentiws = None
 
         self.parties = {
             "CDU": ["cdu", "union"],
@@ -93,7 +94,7 @@ class Preprocessing:
         return self._get_preprocessed_df("titles", df_articles, DocumentType.TITLE, overwrite)
 
     def _get_preprocessed_df(
-        self, preprocessed_filename: str, articles: DataFrame, document_type: DocumentType, overwrite: bool
+        self, preprocessed_filename: str, df_articles: DataFrame, document_type: DocumentType, overwrite: bool
     ) -> DataFrame:
         """
         Helper function to get the preprocessed pandas dataframe. If the preprocessing already was done ones (JSON files
@@ -101,10 +102,10 @@ class Preprocessing:
         If preprocessing is proceeded, the result will be stored in a json file. According to the document type, a
         different preprocessing is done.
         :param preprocessed_filename: Name of json file to store/ read the results of preprocessing.
-        :param articles: dataframe with the text to preprocess, if the data still needs to be preprocessed.
-        :param document_type: type of the document that is going to be preprocessed.
-        :param overwrite: determines if the previous data is allowed to be overwritten.
-        :return: df_preprocessed: Pandas data frame of the preprocessed input.
+        :param df_articles: Dataframe with the text to preprocess, if the data still needs to be preprocessed.
+        :param document_type: Type of the document that is going to be preprocessed.
+        :param overwrite: Determines if the previous data is allowed to be overwritten.
+        :return: df_preprocessed: Pandas dataframe of the preprocessed input.
         """
         json_path = "src/output/" + preprocessed_filename + ".json"
 
@@ -112,23 +113,31 @@ class Preprocessing:
             return Reader.read_json_to_df_default(json_path)
 
         if document_type.value == DocumentType.ARTICLE.value:
-            df_preprocessed = self._apply_preprocessing(articles)
+            df_preprocessed = self._apply_preprocessing(df_articles, document_type, FilterType.PARTIES)
         elif document_type.value == DocumentType.PARAGRAPH.value:
-            df_preprocessed = self._preprocess_paragraphs(articles)
+            df_preprocessed = self._preprocess_paragraphs(df_articles)
         else:
-            articles = articles[["title", "media"]].rename(columns={"title": "text"})
-            df_preprocessed = self._apply_preprocessing(articles, False)
+            df_articles = df_articles[["title", "media"]].rename(columns={"title": "text"})
+            df_preprocessed = self._apply_preprocessing(df_articles, document_type, FilterType.NONE)
 
-        Writer.write_dataframe(df_preprocessed, preprocessed_filename)
         return df_preprocessed
 
-    def _apply_preprocessing(self, dataframe: DataFrame, remove_rows_without_parties: bool = True) -> DataFrame:
+    def _apply_preprocessing(
+        self, dataframe: DataFrame, document_type: DocumentType, filter_type: FilterType
+    ) -> DataFrame:
         """
         Helper function responsible for applying preprocessing steps in correct order.
         :param dataframe: data that needs to be preprocessed.
-        :param remove_rows_without_parties: determines if rows, that do not contain information about parties are deleted.
-        :return: preprcessed dataframe.
+        :param document_type: Type of the document that is going to be preprocessed.
+        :param filter_type: Specifies if documents with no parties or multiple parties should be removed.
+        :return: Preprocessed dataframe.
         """
+        self.nlp = spacy.load("de_core_news_lg", disable=["parser"])
+        self.sentiws = spaCySentiWS(sentiws_path="src/data/sentiws/")
+        self.nlp.add_pipe(self.sentiws)
+
+        nltk.download("punkt")
+
         print("Start of preprocessing")
         start_time = time.time()
 
@@ -141,8 +150,11 @@ class Preprocessing:
             df_preprocessed["date"] = df_preprocessed["date"].replace(r"^\s*$", np.nan, regex=True)
             df_preprocessed["date"].astype("datetime64[ns]")
 
-        # Remove direct quotiations
-        df_preprocessed["text"] = self._remove_direct_quotations(df_preprocessed["text"])
+        df_preprocessed["original_text"] = df_preprocessed["text"]
+
+        # Remove rows with quotations if document is a paragraph
+        if document_type.value == DocumentType.PARAGRAPH.value:
+            df_preprocessed = self._remove_quotations_rows(df_preprocessed)
 
         # Remove special characters
         df_preprocessed["text"] = self._remove_special_characters(df_preprocessed["text"])
@@ -163,11 +175,18 @@ class Preprocessing:
         df_preprocessed["parties"] = self._get_parties(df_preprocessed["organizations"])
 
         # Remove rows with no parties
-        if remove_rows_without_parties:
+        if filter_type.value == FilterType.PARTIES.value:
             df_preprocessed = self._remove_rows_without_parties(df_preprocessed)
 
-        # Sentiment polarity
-        df_preprocessed["polarity"] = self.determine_sentiment_polarity(df_preprocessed["text"])
+        # Remove rows with no parties or more than one party
+        if filter_type.value == FilterType.SINGLE_PARTY.value:
+            df_preprocessed = self._keep_rows_with_one_party(df_preprocessed)
+
+        # Sentiment polarity sentiws
+        df_preprocessed["polarity"] = self.determine_polarity_sentiws(df_preprocessed["text"])
+
+        # Sentiment polarity TextBlob
+        df_preprocessed["polarity_textblob"] = self.determine_polarity_textblob(df_preprocessed["original_text"])
 
         # POS tagging
         df_preprocessed["pos_tags"] = self._pos_tagging(df_preprocessed["text"])
@@ -184,7 +203,7 @@ class Preprocessing:
         end_time = time.time()
         print("End of preprocessing after {} seconds".format(end_time - start_time))
 
-        if remove_rows_without_parties:
+        if filter_type.value != FilterType.NONE.value:
             print("Number of documents after filtering: {}".format(len(df_preprocessed)))
 
         return df_preprocessed
@@ -202,16 +221,20 @@ class Preprocessing:
         index, texts = zip(*flat_list)
 
         # Store paragraphs with the original article index and media
-        dataframe = DataFrame(columns=["article_index", "text", "media", "date"])
+        dataframe = DataFrame(columns=["article_index", "title", "text", "media", "date"])
         dataframe["article_index"] = index
+        dataframe["title"] = dataframe["article_index"].apply(lambda index: df_articles["title"][index])
         dataframe["text"] = texts
         dataframe["media"] = dataframe["article_index"].apply(lambda index: df_articles["media"][index])
         dataframe["date"] = dataframe["article_index"].apply(lambda index: df_articles["date"][index])
 
-        return self._apply_preprocessing(dataframe)
+        return self._apply_preprocessing(dataframe, DocumentType.PARAGRAPH, FilterType.PARTIES)
 
     def _remove_direct_quotations(self, text_series: Series) -> Series:
         return text_series.str.replace(r'"(.*?)"', "", regex=True).str.strip()
+
+    def _remove_quotations_rows(self, dataframe: DataFrame) -> DataFrame:
+        return dataframe.loc[dataframe["text"].str.contains(r'["„“]') == 0]
 
     def _remove_special_characters(self, text_series: Series) -> Series:
         return (
@@ -267,19 +290,25 @@ class Preprocessing:
         )
 
     def _remove_rows_without_parties(self, dataframe: DataFrame) -> DataFrame:
-        tqdm.pandas(desc="Remove rows without parties")
         return dataframe.loc[np.array(list(map(len, dataframe.parties.values))) > 0]
 
-    def determine_sentiment_polarity(self, token_series: Series) -> Series:
-        tqdm.pandas(desc="Determine sentiment polarity")
+    def _keep_rows_with_one_party(self, dataframe: DataFrame) -> DataFrame:
+        return dataframe.loc[np.array(list(map(len, dataframe.parties.values))) == 1]
+
+    def determine_polarity_sentiws(self, token_series: Series) -> Series:
+        tqdm.pandas(desc="Determine sentiment polarity with SentiWS")
         return token_series.progress_apply(lambda doc: [token._.sentiws for token in doc])
+
+    def determine_polarity_textblob(self, token_series: Series) -> Series:
+        tqdm.pandas(desc="Determine sentiment polarity with TextBlob")
+        return token_series.progress_apply(lambda doc: TextBlobDE(doc).sentiment[0])
 
     def negation_handling(self, df_preprocessed: DataFrame) -> DataFrame:
         """
-        checks if 4 tokens before or after sentiws assigned a polarity score a negation word can be found. If this is the
+        Checks if 4 tokens before or after sentiws assigned a polarity score a negation word can be found. If this is the
         case, the polarity is inverted.
-        :param df_preprocessed: dataframe containing scores from sentiws for each word.
-        :return: dataframe with inverted scores if a negation word could be found.
+        :param df_preprocessed: Dataframe containing scores from sentiws for each word.
+        :return: Dataframe with inverted scores if a negation word could be found.
         """
         polarity_array = df_preprocessed["polarity"].to_numpy()
         word_array = df_preprocessed["text"].to_numpy()

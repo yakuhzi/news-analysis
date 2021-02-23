@@ -16,7 +16,7 @@ class Visualization:
 
     @staticmethod
     def get_pie_charts(
-        df_paragraphs: DataFrame, by_party: bool = True, parties: list = None, media: list = None
+        df_paragraphs: DataFrame, by_party: bool = True, parties: List[str] = None, media: List[str] = None
     ) -> List[Figure]:
         """
         Get figures of pie charts for the sentiment either grouped by party or by media outlet.
@@ -89,30 +89,28 @@ class Visualization:
         for term in different_terms:
             fig, axs = plt.subplots(1, 1)
             fig.suptitle("Usage of term {0}".format(term))
-            for party in different_parties:
-                # plots to draw
-                df_step1 = df_time_course[df_time_course["term"] == term]
-                df_step2 = df_step1[df_step1["party"] == party]
-                # lines to draw
-                for media in different_media:
-                    df_plot = df_step2[df_step2["media"] == media]
-                    if not df_plot.empty:
-                        weights = df_plot["weight"]
-                        weights_array = np.asarray(weights)[0]
-                        # get right color for media
-                        line_color = colors[media]
-                        dates = df_plot["dates"]
-                        dates_array = np.asarray(dates)[0]
-                        axs.plot(dates_array, weights_array, color=line_color, label=media)
-                        axs.set_xlabel("Months")
-                        axs.set_ylabel("Frequency of Usage")
-                        axs.legend(loc="best", title="Outlet", frameon=False)
+            # plots to draw
+            df_step1 = df_time_course[df_time_course["term"] == term]
+            # lines to draw
+            for media in different_media:
+                df_plot = df_step1[df_step1["media"] == media]
+                if not df_plot.empty:
+                    weights = df_plot["weight"]
+                    weights_array = np.asarray(weights)[0]
+                    # get right color for media
+                    line_color = colors[media]
+                    dates = df_plot["dates"]
+                    dates_array = np.asarray(dates)[0]
+                    axs.plot(dates_array, weights_array, color=line_color, label=media)
+                    axs.set_xlabel("Months")
+                    axs.set_ylabel("Frequency of Usage")
+                    axs.legend(loc="best", title="Outlet", frameon=False)
             figures.append(fig)
         return figures
 
     @staticmethod
     def get_statistics(
-        df_paragraphs: DataFrame, by_party: bool, parties: list, media: list
+        df_paragraphs: DataFrame, by_party: bool, parties: List[str], media: List[str]
     ) -> Dict[str, Dict[str, Tuple[int, int, int]]]:
         """
         Get statistics for the sentiment either grouped by party or by media outlet.

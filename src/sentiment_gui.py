@@ -276,7 +276,7 @@ class SentimentGUI:
         df_term_weights = self.keyword_extraction.get_term_weight_tuples(
             by_party=by_party, parties=party_list, media=media_list, topn=ntopics
         )
-        fig = self.keyword_extraction.get_graph(df_term_weights)
+        fig = self.keyword_extraction.get_bipartite_graph(df_term_weights)
         # show the plot in GUI
         self.current_plot = FigureCanvasTkAgg(fig, self.gui)
         self.current_plot.get_tk_widget().grid(row=5, column=0, columnspan=6, rowspan=8)
