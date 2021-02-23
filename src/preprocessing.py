@@ -14,6 +14,7 @@ from textblob_de import TextBlobDE
 from tqdm import tqdm
 
 from model.document_type import DocumentType
+from model.filter_type import FilterType
 from utils.reader import Reader
 from utils.writer import Writer
 
@@ -67,28 +68,45 @@ class Preprocessing:
         self.negation_pattern = re.compile("|".join(self.negation_words))
 
     def get_articles(self, df_articles: DataFrame, overwrite: bool = False) -> DataFrame:
+        """
+        Helper function to get a dataframe containing the preprocessed articles.
+        :param df_articles: dataframe with the text to preprocess
+        :param overwrite: determines if the previous data is allowed to be overwritten. Default is False.
+        :return: preprocessed dataframe with preprocessed articles, which is result of method _get_preprocessed_df
+        """
         return self._get_preprocessed_df("articles", df_articles, DocumentType.ARTICLE, overwrite)
 
     def get_paragraphs(self, df_articles: DataFrame, overwrite: bool = False) -> DataFrame:
+        """
+        Helper function to get a preprocessed dataframe with the paragraphs of the articles.
+        :param df_articles: dataframe with the text to preprocess
+        :param overwrite: determines if the previous data is allowed to be overwritten. Default is False.
+        :return: preprocessed dataframe with preprocessed paragraphs, which is result of method _get_preprocessed_df
+        """
         return self._get_preprocessed_df("paragraphs", df_articles, DocumentType.PARAGRAPH, overwrite)
 
     def get_titles(self, df_articles: DataFrame, overwrite: bool = False) -> DataFrame:
+        """
+        Helper function to get a preprocessed dataframe with the titles of the articles.
+        :param df_articles: dataframe with the text to preprocess
+        :param overwrite: determines if the previous data is allowed to be overwritten. Default is False.
+        :return: preprocessed dataframe, which is result of method _get_preprocessed_df
+        """
         return self._get_preprocessed_df("titles", df_articles, DocumentType.TITLE, overwrite)
 
     def _get_preprocessed_df(
-        self, preprocessed_filename: str, articles: DataFrame, document_type: DocumentType, overwrite: bool
+        self, preprocessed_filename: str, df_articles: DataFrame, document_type: DocumentType, overwrite: bool
     ) -> DataFrame:
         """
         Helper function to get the preprocessed pandas dataframe. If the preprocessing already was done ones (JSON files
-        exist) the tagging is not done again but the json files with the perprocessing are read into a pandas data frame.
-        If preprocessing is proceeded, the result will be stored in a json file.
-
-        Arguments:
-        - preprocessed_json_file: Name of json file to store/ read the results of preprocessing.
-        - df_to_preprocess: data frame with the text to preprocess, if the data still needs to be preprocessed
-
-        Return:
-        - df_preprocessed: Pandas data frame of the preprocessed input
+        exist) the tagging is not done again but the json files with the perprocessing are read into a pandas dataframe.
+        If preprocessing is proceeded, the result will be stored in a json file. According to the document type, a
+        different preprocessing is done.
+        :param preprocessed_filename: Name of json file to store/ read the results of preprocessing.
+        :param df_articles: Dataframe with the text to preprocess, if the data still needs to be preprocessed.
+        :param document_type: Type of the document that is going to be preprocessed.
+        :param overwrite: Determines if the previous data is allowed to be overwritten.
+        :return: df_preprocessed: Pandas dataframe of the preprocessed input.
         """
         json_path = "src/output/" + preprocessed_filename + ".json"
 
@@ -96,17 +114,26 @@ class Preprocessing:
             return Reader.read_json_to_df_default(json_path)
 
         if document_type.value == DocumentType.ARTICLE.value:
-            df_preprocessed = self._apply_preprocessing(articles)
+            df_preprocessed = self._apply_preprocessing(df_articles, FilterType.PARTIES)
         elif document_type.value == DocumentType.PARAGRAPH.value:
-            df_preprocessed = self._preprocess_paragraphs(articles)
+            df_preprocessed = self._preprocess_paragraphs(df_articles)
         else:
-            articles = articles[["title", "media"]].rename(columns={"title": "text"})
-            df_preprocessed = self._apply_preprocessing(articles, False)
+            df_articles = df_articles[["title", "media"]].rename(columns={"title": "text"})
+            df_preprocessed = self._apply_preprocessing(df_articles, FilterType.NONE)
 
-        Writer.write_articles(df_preprocessed, preprocessed_filename)
+        Writer.write_dataframe(df_preprocessed, preprocessed_filename)
         return df_preprocessed
 
-    def _apply_preprocessing(self, dataframe: DataFrame, remove_rows_without_parties: bool = True) -> DataFrame:
+    def _apply_preprocessing(
+        self, dataframe: DataFrame, document_type: DocumentType, filter_type: FilterType
+    ) -> DataFrame:
+        """
+        Helper function responsible for applying preprocessing steps in correct order.
+        :param dataframe: data that needs to be preprocessed.
+        :param document_type: Type of the document that is going to be preprocessed.
+        :param filter_type: Specifies if documents with no parties or multiple parties should be removed.
+        :return: Preprocessed dataframe.
+        """
         print("Start of preprocessing")
         start_time = time.time()
 
@@ -115,15 +142,15 @@ class Preprocessing:
 
         # Convert string date into datetime
         if "date" in df_preprocessed:
+            df_preprocessed["date"] = df_preprocessed["date"].apply(lambda date: date.split("T")[0])
+            df_preprocessed["date"] = df_preprocessed["date"].replace(r"^\s*$", np.nan, regex=True)
             df_preprocessed["date"].astype("datetime64[ns]")
 
         df_preprocessed["original_text"] = df_preprocessed["text"]
 
-        # Remove direct quotiations
-        df_preprocessed["text"] = self._remove_direct_quotations(df_preprocessed["text"])
-
-        # Remove rows with quotations
-        df_preprocessed = self._remove_quotations_rows(df_preprocessed)
+        # Remove rows with quotations if document is a paragraph
+        if document_type.value == DocumentType.PARAGRAPH.value:
+            df_preprocessed = self._remove_quotations_rows(df_preprocessed)
 
         # Remove special characters
         df_preprocessed["text"] = self._remove_special_characters(df_preprocessed["text"])
@@ -144,8 +171,11 @@ class Preprocessing:
         df_preprocessed["parties"] = self._get_parties(df_preprocessed["organizations"])
 
         # Remove rows with no parties
-        if remove_rows_without_parties:
-            # df_preprocessed = self._remove_rows_without_parties(df_preprocessed)
+        if filter_type.value == FilterType.PARTIES.value:
+            df_preprocessed = self._remove_rows_without_parties(df_preprocessed)
+
+        # Remove rows with no parties or more than one party
+        if filter_type.value == FilterType.SINGLE_PARTY.value:
             df_preprocessed = self._keep_rows_with_one_party(df_preprocessed)
 
         # Sentiment polarity sentiws
@@ -169,12 +199,18 @@ class Preprocessing:
         end_time = time.time()
         print("End of preprocessing after {} seconds".format(end_time - start_time))
 
-        if remove_rows_without_parties:
+        if filter_type.value != FilterType.NONE.value:
             print("Number of documents after filtering: {}".format(len(df_preprocessed)))
 
         return df_preprocessed
 
     def _preprocess_paragraphs(self, df_articles: DataFrame) -> DataFrame:
+        """
+        Helper function that splits up paragraphs and stores them with the original article in a dataframe. After that
+        the original preprocessing is done.
+        :param df_articles: dataframe with articles that need to be split up in paragraphs.
+        :return: dataframe with preprocessed articles, split up by paragraph.
+        """
         # Split articles into paragraphs by splitting at newlines
         paragraphs = list(map(lambda text: text.replace("\n+", "\n").split("\n"), df_articles["text"]))
         flat_list = [(index, item) for index, sublist in enumerate(paragraphs) for item in sublist]
@@ -187,16 +223,14 @@ class Preprocessing:
         dataframe["text"] = texts
         dataframe["media"] = dataframe["article_index"].apply(lambda index: df_articles["media"][index])
         dataframe["date"] = dataframe["article_index"].apply(lambda index: df_articles["date"][index])
-        dataframe["date"] = dataframe["date"].apply(lambda date: date.split("T")[0])
-        dataframe["date"] = dataframe["date"].replace(r"^\s*$", np.nan, regex=True)
 
-        return self._apply_preprocessing(dataframe)
+        return self._apply_preprocessing(dataframe, FilterType.PARTIES)
 
     def _remove_direct_quotations(self, text_series: Series) -> Series:
-        return text_series.str.replace(r'"(.*?)"', " ", regex=True)
+        return text_series.str.replace(r'"(.*?)"', "", regex=True).str.strip()
 
     def _remove_quotations_rows(self, dataframe: DataFrame) -> DataFrame:
-        return dataframe.loc[dataframe["text"].str.contains(r'["„“]')]
+        return dataframe.loc[dataframe["text"].str.contains(r'["„“]') is False]
 
     def _remove_special_characters(self, text_series: Series) -> Series:
         return (
@@ -266,6 +300,12 @@ class Preprocessing:
         return token_series.progress_apply(lambda doc: TextBlobDE(doc).sentiment)
 
     def negation_handling(self, df_preprocessed: DataFrame) -> DataFrame:
+        """
+        Checks if 4 tokens before or after sentiws assigned a polarity score a negation word can be found. If this is the
+        case, the polarity is inverted.
+        :param df_preprocessed: Dataframe containing scores from sentiws for each word.
+        :return: Dataframe with inverted scores if a negation word could be found.
+        """
         polarity_array = df_preprocessed["sentiment_sentiws"].to_numpy()
         word_array = df_preprocessed["text"].to_numpy()
 
