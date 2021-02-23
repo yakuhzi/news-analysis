@@ -16,7 +16,7 @@ class Visualization:
 
     @staticmethod
     def get_pie_charts(
-        df_paragraphs: DataFrame, by_party: bool = True, parties: list = None, media: list = None
+        df_paragraphs: DataFrame, by_party: bool = True, parties: List[str] = None, media: List[str] = None
     ) -> List[Figure]:
         """
         Get figures of pie charts for the sentiment either grouped by party or by media outlet.
@@ -110,7 +110,7 @@ class Visualization:
 
     @staticmethod
     def get_statistics(
-        df_paragraphs: DataFrame, by_party: bool, parties: list, media: list
+        df_paragraphs: DataFrame, by_party: bool, parties: List[str], media: List[str]
     ) -> Dict[str, Dict[str, Tuple[int, int, int]]]:
         """
         Get statistics for the sentiment either grouped by party or by media outlet.

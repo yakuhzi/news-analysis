@@ -94,7 +94,7 @@ class Preprocessing:
         return self._get_preprocessed_df("titles", df_articles, DocumentType.TITLE, overwrite)
 
     def _get_preprocessed_df(
-        self, preprocessed_filename: str, articles: DataFrame, document_type: DocumentType, overwrite: bool
+        self, preprocessed_filename: str, df_articles: DataFrame, document_type: DocumentType, overwrite: bool
     ) -> DataFrame:
         """
         Helper function to get the preprocessed pandas dataframe. If the preprocessing already was done ones (JSON files
@@ -102,10 +102,10 @@ class Preprocessing:
         If preprocessing is proceeded, the result will be stored in a json file. According to the document type, a
         different preprocessing is done.
         :param preprocessed_filename: Name of json file to store/ read the results of preprocessing.
-        :param articles: dataframe with the text to preprocess, if the data still needs to be preprocessed.
-        :param document_type: type of the document that is going to be preprocessed.
-        :param overwrite: determines if the previous data is allowed to be overwritten.
-        :return: df_preprocessed: Pandas data frame of the preprocessed input.
+        :param df_articles: Dataframe with the text to preprocess, if the data still needs to be preprocessed.
+        :param document_type: Type of the document that is going to be preprocessed.
+        :param overwrite: Determines if the previous data is allowed to be overwritten.
+        :return: df_preprocessed: Pandas dataframe of the preprocessed input.
         """
         json_path = "src/output/" + preprocessed_filename + ".json"
 
@@ -113,22 +113,25 @@ class Preprocessing:
             return Reader.read_json_to_df_default(json_path)
 
         if document_type.value == DocumentType.ARTICLE.value:
-            df_preprocessed = self._apply_preprocessing(articles, FilterType.PARTIES)
+            df_preprocessed = self._apply_preprocessing(df_articles, FilterType.PARTIES)
         elif document_type.value == DocumentType.PARAGRAPH.value:
-            df_preprocessed = self._preprocess_paragraphs(articles)
+            df_preprocessed = self._preprocess_paragraphs(df_articles)
         else:
-            articles = articles[["title", "media"]].rename(columns={"title": "text"})
-            df_preprocessed = self._apply_preprocessing(articles, FilterType.NONE)
+            df_articles = df_articles[["title", "media"]].rename(columns={"title": "text"})
+            df_preprocessed = self._apply_preprocessing(df_articles, FilterType.NONE)
 
         Writer.write_dataframe(df_preprocessed, preprocessed_filename)
         return df_preprocessed
 
-    def _apply_preprocessing(self, dataframe: DataFrame, filter_type: FilterType) -> DataFrame:
+    def _apply_preprocessing(
+        self, dataframe: DataFrame, document_type: DocumentType, filter_type: FilterType
+    ) -> DataFrame:
         """
         Helper function responsible for applying preprocessing steps in correct order.
         :param dataframe: data that needs to be preprocessed.
-        :param remove_rows_without_parties: determines if rows, that do not contain information about parties are deleted.
-        :return: preprcessed dataframe.
+        :param document_type: Type of the document that is going to be preprocessed.
+        :param filter_type: Specifies if documents with no parties or multiple parties should be removed.
+        :return: Preprocessed dataframe.
         """
         print("Start of preprocessing")
         start_time = time.time()
@@ -144,8 +147,9 @@ class Preprocessing:
 
         df_preprocessed["original_text"] = df_preprocessed["text"]
 
-        # Remove rows with quotations
-        df_preprocessed = self._remove_quotations_rows(df_preprocessed)
+        # Remove rows with quotations if document is a paragraph
+        if document_type.value == DocumentType.PARAGRAPH.value:
+            df_preprocessed = self._remove_quotations_rows(df_preprocessed)
 
         # Remove special characters
         df_preprocessed["text"] = self._remove_special_characters(df_preprocessed["text"])
