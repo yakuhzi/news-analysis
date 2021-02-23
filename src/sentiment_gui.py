@@ -1,3 +1,4 @@
+import datetime
 import tkinter
 import webbrowser
 from typing import List
@@ -10,6 +11,7 @@ from pandas import DataFrame
 
 from keyword_extraction import KeywordExtraction
 from time_course import TimeCourse
+from model.plot_type import PlotType
 from utils.visualization import Visualization
 
 
@@ -29,12 +31,39 @@ class SentimentGUI:
         self.plots = []
         self.current_plot = None
         self.current_plot_index = 0
-        self.current_help_message = ""
+        self.help_messages = {
+            PlotType.SENTIMENT_PARTY: "These are piecharts showing the sentiment towards a certain party\n of the "
+            "selected media. This can be either positive, negative or neutral\n "
+            '(see legend). With a click on "Show next" or "Show previous"\n you can '
+            "see the sentiment for other parties.",
+            PlotType.SENTIMENT_OUTLET: "These are piecharts showing the sentiment of a certain media\n towards the "
+            "selected parties. This can be either positive, negative or neutral\n "
+            '(see legend). With a click on "Show next" or "Show previous"\n you can '
+            "see the sentiment for other media.",
+            PlotType.TOPICS_PARTY: "This is a bipartite graph showing the most important topics for the selected "
+            "parties.\n On the left side you can see the parties and on the right side the "
+            "the corresponding terms.\n The thickness of the connecting lines are the term "
+            "counts\n how often the term appears for each party.",
+            PlotType.TOPICS_MEDIA: "This is a bipartite graph showing the most important topics for the selected "
+            "media.\n On the left side you can see the media and on the right side the "
+            "the corresponding terms.\n The thickness of the connecting lines are the term "
+            "counts\n how often the term appears for each media.",
+            PlotType.TOPICS_PARTY_MEDIA: "This is a tripartite graph showing the most important topics for the "
+            "selected parties and media.\n On the left side you can see the parties,\n in the "
+            "middle the important terms and on the right side the media.\n"
+            "The thickness of the connecting lines are the term "
+            "counts\n how often the term appears for each party or media.",
+            PlotType.TIME_COURSE: "This is a line graph showing the importance of a certain term in the selected "
+            'media.\n With a click on "Show next" or "Show previous"\n'
+            "you can see the importance of another term.",
+        }
+        self.current_plot_type = None
         self.gui = None
         self.next_button = None
         self.previous_button = None
         self.help_button = None
         self.date_check = None
+        self.check_filter_date = None
         self.cdu_check = None
         self.csu_check = None
         self.spd_check = None
@@ -46,6 +75,8 @@ class SentimentGUI:
         self.bild_check = None
         self.entry_date_from = None
         self.entry_date_to = None
+        self.label_number_topics = None
+        self.entry_number_topics = None
         self.word = None
         pass
 
@@ -68,7 +99,13 @@ class SentimentGUI:
         if min_date and max_date:
             self.df_paragraphs_configured = self.df_paragraphs_configured[
                 (self.df_paragraphs_configured["date"] > min_date) & (self.df_paragraphs_configured["date"] < max_date)
-                ]
+            ]
+        else:
+            # filter noise articles before october 2019 -> only few articles which have no influence on results but
+            # slow down computation time
+            self.df_paragraphs_configured = self.df_paragraphs_configured[
+                self.df_paragraphs_configured["date"] > "2019-10-01"
+            ]
 
     def clear_plots(self, clear_plot_array: bool = False) -> None:
         """
@@ -78,6 +115,10 @@ class SentimentGUI:
                 e.g. from sentiment to topics that only plots from current category are in plot array)
         """
         self.help_button["state"] = "disabled"
+        if self.label_number_topics:
+            self.label_number_topics.grid_remove()
+        if self.entry_number_topics:
+            self.entry_number_topics.grid_remove()
         if self.current_plot is not None:
             self.current_plot.get_tk_widget()["command"] = self.current_plot.get_tk_widget().grid_forget()
         if clear_plot_array:
@@ -115,7 +156,7 @@ class SentimentGUI:
         self.help_button["state"] = "normal"
         # set current plot
         self.current_plot = self.plots[self.current_plot_index]
-        self.current_plot.get_tk_widget().grid(row=4, column=0, columnspan=6)
+        self.current_plot.get_tk_widget().grid(row=5, column=0, columnspan=6, rowspan=8)
 
     def get_parties(self) -> List[str]:
         """
@@ -161,19 +202,9 @@ class SentimentGUI:
         plt.close("all")
         self.clear_plots(clear_plot_array=True)
         if by_party:
-            self.current_help_message = (
-                "These are piecharts showing the sentiment towards a certain party\n of the "
-                "selected media. This can be either positive, negative or neutral\n "
-                '(see legend). With a click on "Show next" or "Show previous"\n you can '
-                "see the sentiment for other parties."
-            )
+            self.current_plot_type = PlotType.SENTIMENT_PARTY
         else:
-            self.current_help_message = (
-                "These are piecharts showing the sentiment of a certain media\n towards the "
-                "selected parties. This can be either positive, negative or neutral\n "
-                '(see legend). With a click on "Show next" or "Show previous"\n you can '
-                "see the sentiment for other media."
-            )
+            self.current_plot_type = PlotType.SENTIMENT_OUTLET
         self.current_plot_index = 0
         # get currently enabled parties and media
         party_list = self.get_parties()
@@ -192,22 +223,17 @@ class SentimentGUI:
         self.show_diagram(first_image=True)
         self.next_button["state"] = "normal"
 
-    def show_topics(self) -> None:
+    def _topic_setup(self) -> (List[str], List[str]):
         """
-        shows a bipartite graph with the important topics/keywords for each party
+        helper function to set up everything needed for displaying topics (bipartite/tripartite graphs and time course)
+        :return: party_list: list of currently enabled parties, media_list: list of currently enabled media
         """
         # disable previous and next button as it is only one figure to show
         self.next_button["state"] = "disabled"
         self.previous_button["state"] = "disabled"
         self.clear_plots(clear_plot_array=True)
-        # set help text
+        # enable help button
         self.help_button["state"] = "normal"
-        self.current_help_message = (
-            "This is a bipartite graph showing the most important topics for the selected "
-            "parties.\n On the left side you can see the parties and on the right side the "
-            "the corresponding terms.\n The thickness of the connecting lines are the term "
-            "counts\n how often the term appears for each party."
-        )
         # filter time
         self.configure_dataframe()
         # set the filtered dataframe for the keyword extraction to only include filtered articles
@@ -217,27 +243,83 @@ class SentimentGUI:
         media_list = self.get_media()
         # get keywords/ graph for media and parties
         self.keyword_extraction.set_active_media(media_list)
-        df_term_weights = self.keyword_extraction.get_term_weight_tuples(by_party=True, parties=party_list)
-        fig = self.keyword_extraction.get_graph(df_term_weights)
+        return party_list, media_list
+
+    def show_topics(self, by_party: bool) -> None:
+        """
+        shows a bipartite graph with the important topics/keywords for each party or media
+        :param by_party: if true, important topics of the parties are shown, otherwise of the media
+        """
+        if by_party:
+            self.current_plot_type = PlotType.TOPICS_PARTY
+        else:
+            self.current_plot_type = PlotType.TOPICS_MEDIA
+        party_list, media_list = self._topic_setup()
+        # get number of topic per party/media
+        if self.entry_number_topics is not None:
+            number_topics_entered = self.entry_number_topics.get()
+            ntopics = (
+                int(number_topics_entered)
+                if number_topics_entered.isdigit() and int(number_topics_entered) <= 10
+                else 3
+            )
+        else:
+            ntopics = 3
+        df_term_weights = self.keyword_extraction.get_term_weight_tuples(
+            by_party=by_party, parties=party_list, media=media_list, topn=ntopics
+        )
+        fig = self.keyword_extraction.get_bipartite_graph(df_term_weights)
         # show the plot in GUI
         self.current_plot = FigureCanvasTkAgg(fig, self.gui)
-        self.current_plot.get_tk_widget().grid(row=4, column=0, columnspan=6)
+        self.current_plot.get_tk_widget().grid(row=5, column=0, columnspan=6, rowspan=8)
+        # user can decide how many topics per party/media should be shown
+        self.label_number_topics = tkinter.Label(
+            self.gui, text="How many topics per {} to show (Max 10)".format("party" if by_party else "media")
+        )
+        self.label_number_topics.grid(row=8, column=6)
+        self.entry_number_topics = tkinter.Entry(self.gui, bd=5)
+        self.entry_number_topics.insert(tkinter.END, str(ntopics))
+        self.entry_number_topics.grid(row=9, column=6)
+
+    def show_topics_party_media(self) -> None:
+        """
+        shows a tripartite graph with the important topics/keywords for each party and media
+        """
+        self.current_plot_type = PlotType.TOPICS_PARTY_MEDIA
+        party_list, media_list = self._topic_setup()
+        if self.entry_number_topics is not None:
+            number_topics_entered = self.entry_number_topics.get()
+            ntopics = (
+                int(number_topics_entered)
+                if number_topics_entered.isdigit() and int(number_topics_entered) <= 10
+                else 3
+            )
+        else:
+            ntopics = 3
+        df_term_weights_party = self.keyword_extraction.get_term_weight_tuples(
+            by_party=True, all_terms=True, parties=party_list, media=media_list, topn=ntopics
+        )
+        df_term_weights_media = self.keyword_extraction.get_term_weight_tuples(
+            by_party=False, all_terms=True, parties=party_list, media=media_list, topn=ntopics
+        )
+        fig = self.keyword_extraction.get_tripartite_graph(
+            df_party_weights=df_term_weights_party, df_media_weights=df_term_weights_media
+        )
+        # show the plot in GUI
+        self.current_plot = FigureCanvasTkAgg(fig, self.gui)
+        self.current_plot.get_tk_widget().grid(row=5, column=0, columnspan=6, rowspan=8)
+        self.label_number_topics = tkinter.Label(self.gui, text="How many topics per party& media to show (Max 10)")
+        self.label_number_topics.grid(row=8, column=6)
+        self.entry_number_topics = tkinter.Entry(self.gui, bd=5)
+        self.entry_number_topics.insert(tkinter.END, str(ntopics))
+        self.entry_number_topics.grid(row=9, column=6)
 
     def show_time_course(self):
-        self.next_button["state"] = "normal"
-        self.previous_button["state"] = "normal"
-        self.clear_plots(clear_plot_array=True)
-        self.help_button["state"] = "normal"
-        self.current_help_message = (
-            "This is a line graph showing the importance of a certain term in the selected "
-            'media.\n With a click on "Show next" or "Show previous"\n'
-            "you can see the importance of another term."
-        )
-        self.configure_dataframe()
-        self.keyword_extraction.set_data(self.df_paragraphs_configured)
-        party_list = self.get_parties()
-        media_list = self.get_media()
-        self.keyword_extraction.set_active_media(media_list)
+        self.current_plot_type = PlotType.TIME_COURSE
+        if self.date_check.get() == 0:
+            self.check_filter_date.toggle()
+            self.enable_date_setting()
+        party_list, media_list = self._topic_setup()
         df_top_terms = self.keyword_extraction.get_top_terms_for_party(parties=party_list)
         initial_start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
         initial_end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
@@ -292,18 +374,42 @@ class SentimentGUI:
             self.entry_date_from.delete(0, "end")
             self.entry_date_to.delete(0, "end")
 
-    def popupmsg(self):
+    def popupmsg(self) -> None:
+        """
+        Shows a pop up message with help text for current plot
+        """
         popup = tkinter.Tk()
         popup.geometry("500x200")
         popup.wm_title("Description")
-        label = tkinter.Label(popup, text=self.current_help_message)
+        label = tkinter.Label(popup, text=self.help_messages[self.current_plot_type])
         label.pack(side="top", fill="x", pady=10)
         button = tkinter.Button(popup, text="Okay", command=popup.destroy)
         button.pack()
         popup.mainloop()
 
-    def open_browser(self, url):
+    def open_browser(self, url) -> None:
+        """
+        Opens the browser with given url (used to link to GitHub repository)
+        :param url: the url to open
+        """
         webbrowser.open_new(url)
+
+    def update_gui(self) -> None:
+        """
+        updates the gui in case a filter criteria has been changed
+        """
+        if self.current_plot_type == PlotType.SENTIMENT_PARTY:
+            self.show_sentiment(by_party=True)
+        elif self.current_plot_type == PlotType.SENTIMENT_OUTLET:
+            self.show_sentiment(by_party=False)
+        elif self.current_plot_type == PlotType.TOPICS_PARTY:
+            self.show_topics(by_party=True)
+        elif self.current_plot_type == PlotType.TOPICS_MEDIA:
+            self.show_topics(by_party=False)
+        elif self.current_plot_type == PlotType.TOPICS_PARTY_MEDIA:
+            self.show_topics_party_media()
+        elif self.current_plot_type == PlotType.TIME_COURSE:
+            self.show_time_course()
 
     def show_gui(self) -> None:
         """
@@ -312,6 +418,7 @@ class SentimentGUI:
         self.gui = tkinter.Tk()
         # initial size of window
         self.gui.geometry("1500x1200")
+        self.gui.wm_title("News Analysis")
         # initial checkbox value for date filtering (initially disabled)
         self.date_check = tkinter.IntVar(value=0)
         # initial checkbox values to enable/disable parties (initially all enabled)
@@ -338,26 +445,40 @@ class SentimentGUI:
         )
         button_by_outlet.grid(row=0, column=1)
 
-        # button to show topics
-        button_topic = tkinter.Button(self.gui, text="Show Topics", command=self.show_topics)
-        button_topic.grid(row=0, column=2)
+        # button to show topics of parties
+        button_topic_party = tkinter.Button(
+            self.gui, text="Show Topics of Parties", command=lambda: self.show_topics(by_party=True)
+        )
+        button_topic_party.grid(row=0, column=2)
+
+        # button to show topics of media
+        button_topic_media = tkinter.Button(
+            self.gui, text="Show Topics of Media", command=lambda: self.show_topics(by_party=False)
+        )
+        button_topic_media.grid(row=0, column=3)
+
+        # button to show topics of parties and media
+        button_topic_media = tkinter.Button(
+            self.gui, text="Show Topics of Parties and Media", command=lambda: self.show_topics_party_media()
+        )
+        button_topic_media.grid(row=0, column=4)
 
         # button to show time course
         button_time_course = tkinter.Button(self.gui, text="Show Time Course", command=self.show_time_course)
-        button_time_course.grid(row=0, column=3)
+        button_time_course.grid(row=0, column=5)
 
         # textbox for custom word
         self.word = tkinter.StringVar()
         textbox_custom_word = tkinter.Entry(self.gui, width=15, textvariable=self.word)
-        textbox_custom_word.grid(row=0, column=4)
+        textbox_custom_word.grid(row=0, column=6)
 
         # button for custom word
         button_custom_word = tkinter.Button(self.gui, text="Show Time Course for Word",
                                             command=self.show_time_course_for_custom_word)
-        button_custom_word.grid(row=0, column=5)
+        button_custom_word.grid(row=0, column=7)
 
         # checkbox anf text fields to filter dates
-        check_filter_date = tkinter.Checkbutton(
+        self.check_filter_date = tkinter.Checkbutton(
             self.gui,
             text="Filter dates",
             variable=self.date_check,
@@ -365,7 +486,7 @@ class SentimentGUI:
             offvalue=0,
             command=self.enable_date_setting,
         )
-        check_filter_date.grid(row=1, column=0)
+        self.check_filter_date.grid(row=1, column=0)
         label_date_from = tkinter.Label(self.gui, text="Date: From ")
         label_date_from.grid(row=1, column=1)
         self.entry_date_from = tkinter.Entry(self.gui, bd=5)
@@ -400,21 +521,26 @@ class SentimentGUI:
         check_bild = tkinter.Checkbutton(self.gui, text="Bild", variable=self.bild_check, onvalue=1, offvalue=0)
         check_bild.grid(row=3, column=2)
 
+        update_button = self.next_button = tkinter.Button(
+            self.gui, text="Update filter criteria", command=self.update_gui
+        )
+        update_button.grid(row=4, column=0, columnspan=5)
+
         # button to show next plot of currently available plots (in plots list)
         self.next_button = tkinter.Button(self.gui, text="Show next", command=lambda: self.show_diagram(increase=True))
         self.next_button["state"] = "disabled"
-        self.next_button.grid(row=5, column=2)
+        self.next_button.grid(row=13, column=2)
 
         # button to previous next plot of currently available plots (in plots list)
         self.previous_button = tkinter.Button(
             self.gui, text="Show previous", command=lambda: self.show_diagram(increase=False)
         )
         self.previous_button["state"] = "disabled"
-        self.previous_button.grid(row=5, column=0)
+        self.previous_button.grid(row=13, column=0)
 
         self.help_button = tkinter.Button(self.gui, text="What does this graph show?", command=lambda: self.popupmsg())
         self.help_button["state"] = "disabled"
-        self.help_button.grid(row=5, column=4)
+        self.help_button.grid(row=13, column=4)
 
         github_link = tkinter.Label(
             self.gui,
@@ -423,11 +549,7 @@ class SentimentGUI:
             cursor="hand2",
         )
         github_link.bind("<Button-1>", lambda e: self.open_browser("https://github.com/yakuhzi/news-analysis"))
-        github_link.grid(row=6, column=0, columnspan=6)
-
-        # "Hack" for displaying topics correctly, otherwise they sometimes appear in pie charts
-        self.show_topics()
-        self.clear_plots()
+        github_link.grid(row=14, column=0, columnspan=6)
 
         # show GUI
         self.gui.mainloop()

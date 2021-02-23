@@ -7,8 +7,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
 
 import unittest
 
+import nltk
 import spacy
 from pandas import DataFrame, Series
+from spacy_sentiws import spaCySentiWS
 
 from src.preprocessing import Preprocessing
 
@@ -18,6 +20,11 @@ class NERTaggerTest(unittest.TestCase):
     def setUpClass(cls):
         cls.nlp = spacy.load("de_core_news_lg", disable=["parser"])
         cls.preprocessing = Preprocessing()
+        cls.preprocessing.nlp = spacy.load("de_core_news_lg", disable=["parser"])
+        cls.preprocessing.sentiws = spaCySentiWS(sentiws_path="src/data/sentiws/")
+        cls.preprocessing.nlp.add_pipe(cls.preprocessing.sentiws)
+
+        nltk.download("punkt")
 
     def test_remove_quotations(self):
         text = 'Das ist ein Text mit direkter "Rede"'
@@ -153,18 +160,26 @@ class NERTaggerTest(unittest.TestCase):
         party_row_string = " ".join([token.text for token in dataframe["text"][0]])
         self.assertEqual(party_row_string, "In dieser Reihe kommt die CDU vor , sie sollte nicht gefiltert werden")
 
-    def test_determine_sentiment_polarity(self):
-        text = "Heute ist ein schöner Tag"
-        series = Series([text])
+    def test_determine_polarity_sentiws(self):
+        series = Series(["Heute ist ein schöner Tag", "Heute ist ein schlechter Tag"])
         tokens = self.preprocessing._tokenization(series)
-        polarity = self.preprocessing.determine_sentiment_polarity(tokens)[0]
-        self.assertGreater(polarity[3], 0)
-        self.assertIsNone(polarity[0])
+        polarity = self.preprocessing.determine_polarity_sentiws(tokens)
+
+        self.assertGreater(polarity[0][3], 0)
+        self.assertLess(polarity[1][3], 0)
+        self.assertIsNone(polarity[0][0])
+
+    def test_determine_polarity_textblob(self):
+        series = Series(["Heute ist ein schöner Tag", "Heute ist ein schlechter Tag"])
+        polarity = self.preprocessing.determine_polarity_textblob(series)
+
+        self.assertGreater(polarity[0], 0)
+        self.assertLess(polarity[1], 0)
 
     def test_negation_handling(self):
         dataframe = DataFrame(data={"text": ["Heute ist kein schöner Tag"]})
         dataframe["text"] = self.preprocessing._tokenization(dataframe["text"])
-        dataframe["polarity"] = self.preprocessing.determine_sentiment_polarity(dataframe["text"])
+        dataframe["polarity"] = self.preprocessing.determine_polarity_sentiws(dataframe["text"])
         dataframe = self.preprocessing.negation_handling(dataframe)
         polarity = dataframe["polarity"][0]
         self.assertLess(polarity[3], 0)

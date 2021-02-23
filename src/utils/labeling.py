@@ -65,7 +65,7 @@ class Labeling:
             self.get_polarity_input(dataframe, index)
             self.get_subjectivity_input(dataframe, index)
 
-            Writer.write_articles(dataframe, "labeled_paragraphs")
+            Writer.write_dataframe(dataframe, "labeled_paragraphs")
 
     def get_polarity_input(self, dataframe, index):
         while True:
