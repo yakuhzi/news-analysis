@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 import pandas as pd
 from pandas import DataFrame
@@ -10,7 +11,7 @@ class Reader:
     """
 
     @staticmethod
-    def read_articles(number_of_samples: int = None) -> DataFrame:
+    def read_articles(number_of_samples: Optional[int] = None) -> DataFrame:
         """
         Reads the news article for every news agency and returns them.
 
