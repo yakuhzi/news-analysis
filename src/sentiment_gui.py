@@ -97,6 +97,12 @@ class SentimentGUI:
             self.df_paragraphs_configured = self.df_paragraphs_configured[
                 (self.df_paragraphs_configured["date"] > min_date) & (self.df_paragraphs_configured["date"] < max_date)
             ]
+        else:
+            # filter noise articles before october 2019 -> only few articles which have no influence on results but
+            # slow down computation time
+            self.df_paragraphs_configured = self.df_paragraphs_configured[
+                self.df_paragraphs_configured["date"] > "2019-10-01"
+            ]
 
     def configure_dataframe_for_time_course(self, start_date, end_date, media):
         df_paragraphs_time_interval = self.df_paragraphs_configured[self.df_paragraphs_configured["date"].notna()]
@@ -377,7 +383,10 @@ class SentimentGUI:
             self.entry_date_from.delete(0, "end")
             self.entry_date_to.delete(0, "end")
 
-    def popupmsg(self):
+    def popupmsg(self) -> None:
+        """
+        Shows a pop up message with help text for current plot
+        """
         popup = tkinter.Tk()
         popup.geometry("500x200")
         popup.wm_title("Description")
@@ -387,7 +396,11 @@ class SentimentGUI:
         button.pack()
         popup.mainloop()
 
-    def open_browser(self, url):
+    def open_browser(self, url) -> None:
+        """
+        Opens the browser with given url (used to link to GitHub repository)
+        :param url: the url to open
+        """
         webbrowser.open_new(url)
 
     def update_gui(self) -> None:
