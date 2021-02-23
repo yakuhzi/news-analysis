@@ -6,6 +6,7 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
+import matplotlib.ticker as mticker
 from pandas import DataFrame
 
 
@@ -106,6 +107,34 @@ class Visualization:
                     axs.set_ylabel("Frequency of Usage")
                     axs.legend(loc="best", title="Outlet", frameon=False)
             figures.append(fig)
+        return figures
+
+    @staticmethod
+    def get_plots_custom_word(df_time_course: DataFrame):
+        figures = []
+        colors = {"Tagesschau": "#2ca02c", "TAZ": "#ff7f0e", "Bild": "#1f77b4"}
+
+        # Define terms for grouping
+        different_media = df_time_course.media.unique()
+        word = df_time_course["word"][0]
+
+        fig, axs = plt.subplots(1, 1)
+        fig.suptitle("Usage of term {0}".format(word))
+        # lines to draw
+        for media in different_media:
+            df_plot = df_time_course[df_time_course["media"] == media]
+            if not df_plot.empty:
+                weights = df_plot["weight"]
+                weights_array = np.asarray(weights)[0]
+                # get right color for media
+                line_color = colors[media]
+                dates = df_plot["dates"]
+                dates_array = np.asarray(dates)[0]
+                axs.plot(dates_array, weights_array, color=line_color, label=media)
+                axs.set_xlabel("Months")
+                axs.set_ylabel("Frequency of Usage")
+                axs.legend(loc="best", title="Outlet", frameon=False)
+        figures.append(fig)
         return figures
 
     @staticmethod

@@ -46,6 +46,7 @@ class SentimentGUI:
         self.bild_check = None
         self.entry_date_from = None
         self.entry_date_to = None
+        self.word = None
         pass
 
     def configure_dataframe(self) -> None:
@@ -67,7 +68,7 @@ class SentimentGUI:
         if min_date and max_date:
             self.df_paragraphs_configured = self.df_paragraphs_configured[
                 (self.df_paragraphs_configured["date"] > min_date) & (self.df_paragraphs_configured["date"] < max_date)
-            ]
+                ]
 
     def clear_plots(self, clear_plot_array: bool = False) -> None:
         """
@@ -249,6 +250,29 @@ class SentimentGUI:
             self.plots.append(bar1)
         self.show_diagram(first_image=True)
 
+    def show_time_course_for_custom_word(self):
+        self.next_button["state"] = "normal"
+        self.previous_button["state"] = "normal"
+        self.clear_plots(clear_plot_array=True)
+        self.help_button["state"] = "normal"
+        self.current_help_message = (
+            "This is a line graph showing the importance of the term you entered in the search bar"
+            'in the selected media.\n With a click on "Show next" or "Show previous"\n'
+            "you can see the importance of another term."
+        )
+        self.configure_dataframe()
+        media_list = self.get_media()
+        initial_start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
+        initial_end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
+        df_image = self.time_course.get_time_course_custom_word(media_list, self.word.get(), initial_start_date,
+                                                                initial_end_date, self.df_paragraphs_configured)
+
+        figures = Visualization.get_plots_custom_word(df_image)
+        for fig in figures:
+            bar1 = FigureCanvasTkAgg(fig, self.gui)
+            self.plots.append(bar1)
+        self.show_diagram(first_image=True)
+
     def iterate_plot(self):
         self.show_diagram()
 
@@ -321,6 +345,16 @@ class SentimentGUI:
         # button to show time course
         button_time_course = tkinter.Button(self.gui, text="Show Time Course", command=self.show_time_course)
         button_time_course.grid(row=0, column=3)
+
+        # textbox for custom word
+        self.word = tkinter.StringVar()
+        textbox_custom_word = tkinter.Entry(self.gui, width=15, textvariable=self.word)
+        textbox_custom_word.grid(row=0, column=4)
+
+        # button for custom word
+        button_custom_word = tkinter.Button(self.gui, text="Show Time Course for Word",
+                                            command=self.show_time_course_for_custom_word)
+        button_custom_word.grid(row=0, column=5)
 
         # checkbox anf text fields to filter dates
         check_filter_date = tkinter.Checkbutton(
