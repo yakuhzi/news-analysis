@@ -1,6 +1,6 @@
 import re
 import warnings
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import networkx as nx
 import numpy as np
@@ -65,23 +65,25 @@ class KeywordExtraction:
         # Generate tf-idf for the given document
         transformer.fit(count_vectorized)
 
-        if by_party and parties is None or all_terms:
+        if parties is None:
             parties = ["CDU", "CSU", "SPD", "FDP", "AfD", "Grüne", "Linke"]
 
-        if not by_party and media is None or all_terms:
+        if media is None:
             media = ["Bild", "Tagesschau", "TAZ"]
 
-        terms = []
+        terms: List[str] = []
 
         # Get top words by TF-IDF weight
-        for party in [] if parties is None else parties:
-            terms += self._get_top_words(True, party, vectorizer, transformer, topn)
+        if by_party or all_terms:
+            for party in [] if parties is None else parties:
+                terms += self._get_top_words(True, party, vectorizer, transformer, topn)
 
-        for m in [] if media is None else media:
-            terms += self._get_top_words(False, m, vectorizer, transformer, topn)
+        if not by_party or all_terms:
+            for m in [] if media is None else media:
+                terms += self._get_top_words(False, m, vectorizer, transformer, topn)
 
         terms = list(set(terms))
-        tuples = []
+        tuples: List[Tuple[str, str, int]] = []
 
         # Count appearance of term for party or media to determine weight for bipartite graph
         for party_or_media in parties if by_party else media:
