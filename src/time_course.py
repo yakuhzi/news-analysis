@@ -11,8 +11,9 @@ class TimeCourse:
         self.df_paragraphs = None
 
     def get_time_course(self, party_list: list, media_list: list, df_top_terms: DataFrame,
-                        keyword_extraction: KeywordExtraction, initial_start_date: datetime, initial_end_date: datetime,
+                        initial_start_date: datetime, initial_end_date: datetime,
                         df_paragraph: DataFrame):
+        keyword_extraction = KeywordExtraction(df_paragraph)
         self.df_paragraphs = df_paragraph
         df_image = pd.DataFrame(columns=["party", "media", "term", "weight"])
         for party in party_list:

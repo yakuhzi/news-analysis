@@ -240,8 +240,8 @@ class SentimentGUI:
         df_top_terms = self.keyword_extraction.get_top_terms_for_party(parties=party_list)
         initial_start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
         initial_end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
-        df_image = self.time_course.get_time_course(party_list, media_list, df_top_terms, self.keyword_extraction,
-                                                    initial_start_date, initial_end_date, self.df_paragraphs_configured)
+        df_image = self.time_course.get_time_course(party_list, media_list, df_top_terms, initial_start_date,
+                                                    initial_end_date, self.df_paragraphs_configured)
         # draw plot for time window
         figures = Visualization.get_plots(df_image)
         for fig in figures:
