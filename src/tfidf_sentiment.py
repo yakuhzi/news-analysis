@@ -1,8 +1,6 @@
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
-from utils.writer import Writer
-
 
 class TfidfSentiment:
     """
@@ -12,7 +10,7 @@ class TfidfSentiment:
     def __init__(self, df_paragraphs):
         self.df_paragraphs = df_paragraphs
 
-    def add_sentiment(self, overwrite: bool = False) -> None:
+    def calculate_sentiment_score(self, overwrite: bool = False) -> None:
         """
         Calculate sentiment score for each row in the dataframe and add it into the column "sentiment_score".
 
@@ -52,41 +50,34 @@ class TfidfSentiment:
         )
 
         # Replace nan polarity values with 0
-        self.df_paragraphs["sentiment_sentiws"] = self.df_paragraphs["sentiment_sentiws"].apply(
+        self.df_paragraphs["polarity"] = self.df_paragraphs["polarity"].apply(
             lambda row: [0 if x is None else x for x in row]
         )
 
-        # Calculate sentiment from dot product of polarity and tfidf
+        # Calculate sentiment score from dot product of polarity and tfidf
         self.df_paragraphs["sentiment_score"] = self.df_paragraphs.apply(
-            lambda row: np.dot(row["sentiment_sentiws"], row["tfidf"]), axis=1
+            lambda row: np.dot(row["polarity"], row["tfidf"]), axis=1
         )
-
-        # Save paragraphs to disk
-        Writer.write_dataframe(self.df_paragraphs, "paragraphs")
 
     def map_sentiment(self, overwrite: bool = False) -> None:
         """
-        Maps the sentiment_score to "Positive", "Negative" or "Neutral" for all paragraphs.
+        Maps the polarity of SentiWs and TextBlob to "Positive", "Negative" or "Neutral" for all paragraphs.
 
         :param overwrite: If True, overwrites the current sentiment.
         """
 
         # Sentiment already mapped
-        if "sentiment" in self.df_paragraphs and not overwrite:
-            return
+        if "sentiment" not in self.df_paragraphs or overwrite:
+            # Map sentiment score to "Positive", "Negative" or "Neutral"
+            self.df_paragraphs["sentiment"] = self.df_paragraphs["sentiment_score"].apply(
+                lambda score: self._map_sentiment(score)
+            )
 
-        # Map sentiment values to "Positive", "Negative" or "Neutral"
-        self.df_paragraphs["sentiment"] = self.df_paragraphs["sentiment_score"].apply(
-            lambda score: self._map_sentiment(score)
-        )
-
-        self.df_paragraphs["polarity_textBlob"] = self.df_paragraphs["polarity_textBlob"].apply(lambda x: x[0])
-        self.df_paragraphs["sentiment_textBlob"] = self.df_paragraphs["polarity_textBlob"].apply(
-            lambda score: self._map_sentiment(score)
-        )
-
-        # Save paragraphs to disk
-        Writer.write_dataframe(self.df_paragraphs, "paragraphs")
+        if "sentiment_textblob" not in self.df_paragraphs or overwrite:
+            # Map sentiment score to "Positive", "Negative" or "Neutral"
+            self.df_paragraphs["sentiment_textblob"] = self.df_paragraphs["polarity_textblob"].apply(
+                lambda score: self._map_sentiment(score)
+            )
 
     def _map_sentiment(self, score: str) -> str:
         """

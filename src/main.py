@@ -2,6 +2,7 @@ from preprocessing import Preprocessing
 from sentiment_gui import SentimentGUI
 from tfidf_sentiment import TfidfSentiment
 from utils.reader import Reader
+from utils.writer import Writer
 
 if __name__ == "__main__":
     # Read articles from json
@@ -13,8 +14,11 @@ if __name__ == "__main__":
 
     # Calculate sentiment of paragraphs
     tfidf_sentiment = TfidfSentiment(df_paragraphs)
-    tfidf_sentiment.add_sentiment(overwrite=False)
+    tfidf_sentiment.calculate_sentiment_score(overwrite=False)
     tfidf_sentiment.map_sentiment(overwrite=False)
+
+    # Save paragraphs to disk
+    Writer.write_dataframe(tfidf_sentiment.df_paragraphs, "paragraphs")
 
     # Show GUI
     gui = SentimentGUI(df_paragraphs)

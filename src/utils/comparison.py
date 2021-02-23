@@ -11,17 +11,17 @@ class Comparison:
     def polarity(self):
         unlabeled_series = self.dataframe["sentiment"]
         labeled_series = self.dataframe["labeled_sentiment"]
-        unlabeled_series_textBlob = self.dataframe["sentiment_textBlob"]
+        unlabeled_series_textblob = self.dataframe["sentiment_textblob"]
 
-        # sentiws
+        # sentiWS
         comparison = np.where((unlabeled_series == labeled_series), True, False)
         number_of_equal = np.count_nonzero(comparison)
 
-        # textBlob
-        comparison_textBlob = np.where((unlabeled_series_textBlob == labeled_series), True, False)
-        number_of_equal_textBlob = np.count_nonzero(comparison_textBlob)
+        # TextBlob
+        comparison_textblob = np.where((unlabeled_series_textblob == labeled_series), True, False)
+        number_of_equal_textblob = np.count_nonzero(comparison_textblob)
 
-        # sentiws
+        # SentiWS
         comparison_neutral = np.where(
             ((unlabeled_series == labeled_series) & (unlabeled_series == "Neutral")), True, False
         )
@@ -29,15 +29,15 @@ class Comparison:
         neutral = np.where(labeled_series == "Neutral", True, False)
         number_of_neutrals = np.count_nonzero(neutral)
 
-        # textBlob
-        comparison_neutral_textBlob = np.where(
-            ((unlabeled_series_textBlob == labeled_series) & (unlabeled_series_textBlob == "Neutral")), True, False
+        # TextBlob
+        comparison_neutral_textblob = np.where(
+            ((unlabeled_series_textblob == labeled_series) & (unlabeled_series_textblob == "Neutral")), True, False
         )
-        number_of_equal_neutral_textBlob = np.count_nonzero(comparison_neutral_textBlob)
-        neutral_textBlob = np.where(labeled_series == "Neutral", True, False)
-        number_of_neutrals_textBlob = np.count_nonzero(neutral_textBlob)
+        number_of_equal_neutral_textblob = np.count_nonzero(comparison_neutral_textblob)
+        neutral_textblob = np.where(labeled_series == "Neutral", True, False)
+        number_of_neutrals_textblob = np.count_nonzero(neutral_textblob)
 
-        # sentiws
+        # SentiWS
         comparison_positive = np.where(
             ((unlabeled_series == labeled_series) & (unlabeled_series == "Positive")), True, False
         )
@@ -45,15 +45,15 @@ class Comparison:
         positive = np.where(labeled_series == "Positive", True, False)
         number_of_positives = np.count_nonzero(positive)
 
-        # textBlob
-        comparison_positive_textBlob = np.where(
-            ((unlabeled_series_textBlob == labeled_series) & (unlabeled_series_textBlob == "Positive")), True, False
+        # TextBlob
+        comparison_positive_textblob = np.where(
+            ((unlabeled_series_textblob == labeled_series) & (unlabeled_series_textblob == "Positive")), True, False
         )
-        number_of_equal_positives_textBlob = np.count_nonzero(comparison_positive_textBlob)
-        positive_textBlob = np.where(labeled_series == "Positive", True, False)
-        number_of_positives_textBlob = np.count_nonzero(positive_textBlob)
+        number_of_equal_positives_textblob = np.count_nonzero(comparison_positive_textblob)
+        positive_textblob = np.where(labeled_series == "Positive", True, False)
+        number_of_positives_textblob = np.count_nonzero(positive_textblob)
 
-        # sentiws
+        # SentiWS
         comparison_negative = np.where(
             ((unlabeled_series == labeled_series) & (unlabeled_series == "Negative")), True, False
         )
@@ -61,13 +61,13 @@ class Comparison:
         negative = np.where(labeled_series == "Negative", True, False)
         number_of_negatives = np.count_nonzero(negative)
 
-        # textBlob
-        comparison_negative_textBlob = np.where(
-            ((unlabeled_series_textBlob == labeled_series) & (unlabeled_series_textBlob == "Negative")), True, False
+        # TextBlob
+        comparison_negative_textblob = np.where(
+            ((unlabeled_series_textblob == labeled_series) & (unlabeled_series_textblob == "Negative")), True, False
         )
-        number_of_equal_negatives_textBlob = np.count_nonzero(comparison_negative_textBlob)
-        negative_textBlob = np.where(labeled_series == "Negative", True, False)
-        number_of_negatives_textBlob = np.count_nonzero(negative_textBlob)
+        number_of_equal_negatives_textblob = np.count_nonzero(comparison_negative_textblob)
+        negative_textblob = np.where(labeled_series == "Negative", True, False)
+        number_of_negatives_textblob = np.count_nonzero(negative_textblob)
 
         print("Polarity matched with labeled data: {} out of {} times".format(number_of_equal, len(comparison)))
         print("Neutral polarity matched: {} out of {} times".format(number_of_equal_neutral, number_of_neutrals))
@@ -83,11 +83,29 @@ class Comparison:
         print("Labeled {}: {}".format(labeled_series.value_counts().keys()[2], labeled_series.value_counts()[2]))
 
         # compare textblob
-        print("==============================TextBlob================================Comparison==========================")
-        print("Polarity of Textblob matched with labeled data: {} out of {} times".format(number_of_equal_textBlob, len(comparison_textBlob)))
-        print("Neutral polarity matched: {} out of {} times".format(number_of_equal_neutral_textBlob, number_of_neutrals_textBlob))
-        print("Positive polarity matched: {} out of {} times".format(number_of_equal_positives_textBlob, number_of_positives_textBlob))
-        print("Negative polarity matched: {} out of {} times".format(number_of_equal_negatives_textBlob, number_of_negatives_textBlob))
+        print(
+            "==============================TextBlob================================Comparison=========================="
+        )
+        print(
+            "Polarity of Textblob matched with labeled data: {} out of {} times".format(
+                number_of_equal_textblob, len(comparison_textblob)
+            )
+        )
+        print(
+            "Neutral polarity matched: {} out of {} times".format(
+                number_of_equal_neutral_textblob, number_of_neutrals_textblob
+            )
+        )
+        print(
+            "Positive polarity matched: {} out of {} times".format(
+                number_of_equal_positives_textblob, number_of_positives_textblob
+            )
+        )
+        print(
+            "Negative polarity matched: {} out of {} times".format(
+                number_of_equal_negatives_textblob, number_of_negatives_textblob
+            )
+        )
 
     def polarity_to_subjectivity(self):
         polarity_series = self.dataframe["labeled_sentiment"]

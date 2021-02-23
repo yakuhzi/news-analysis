@@ -3,6 +3,7 @@ import time
 import warnings
 from pathlib import Path
 
+import nltk
 import numpy as np
 import pandas as pd
 import spacy
@@ -16,7 +17,6 @@ from tqdm import tqdm
 from model.document_type import DocumentType
 from model.filter_type import FilterType
 from utils.reader import Reader
-from utils.writer import Writer
 
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
@@ -27,9 +27,8 @@ class Preprocessing:
 
         # de_core_news_lg had the best score for entity recognition and syntax accuracy in german according to spacy.
         # for more information, see https://spacy.io/models/de#de_core_news_lg
-        self.nlp = spacy.load("de_core_news_lg", disable=["parser"])
-        self.sentiws = spaCySentiWS(sentiws_path="src/data/sentiws/")
-        self.nlp.add_pipe(self.sentiws)
+        self.nlp = None
+        self.sentiws = None
 
         self.parties = {
             "CDU": ["cdu", "union"],
@@ -114,14 +113,13 @@ class Preprocessing:
             return Reader.read_json_to_df_default(json_path)
 
         if document_type.value == DocumentType.ARTICLE.value:
-            df_preprocessed = self._apply_preprocessing(df_articles, FilterType.PARTIES)
+            df_preprocessed = self._apply_preprocessing(df_articles, document_type, FilterType.PARTIES)
         elif document_type.value == DocumentType.PARAGRAPH.value:
             df_preprocessed = self._preprocess_paragraphs(df_articles)
         else:
             df_articles = df_articles[["title", "media"]].rename(columns={"title": "text"})
-            df_preprocessed = self._apply_preprocessing(df_articles, FilterType.NONE)
+            df_preprocessed = self._apply_preprocessing(df_articles, document_type, FilterType.NONE)
 
-        Writer.write_dataframe(df_preprocessed, preprocessed_filename)
         return df_preprocessed
 
     def _apply_preprocessing(
@@ -134,6 +132,12 @@ class Preprocessing:
         :param filter_type: Specifies if documents with no parties or multiple parties should be removed.
         :return: Preprocessed dataframe.
         """
+        self.nlp = spacy.load("de_core_news_lg", disable=["parser"])
+        self.sentiws = spaCySentiWS(sentiws_path="src/data/sentiws/")
+        self.nlp.add_pipe(self.sentiws)
+
+        nltk.download("punkt")
+
         print("Start of preprocessing")
         start_time = time.time()
 
@@ -179,10 +183,10 @@ class Preprocessing:
             df_preprocessed = self._keep_rows_with_one_party(df_preprocessed)
 
         # Sentiment polarity sentiws
-        df_preprocessed["sentiment_sentiws"] = self.determine_sentiment_polarity(df_preprocessed["text"])
+        df_preprocessed["polarity"] = self.determine_polarity_sentiws(df_preprocessed["text"])
 
         # Sentiment polarity TextBlob
-        df_preprocessed["polarity_textBlob"] = self.determine_sentiment_polarity_TextBlob(df_preprocessed["original_text"])
+        df_preprocessed["polarity_textblob"] = self.determine_polarity_textblob(df_preprocessed["original_text"])
 
         # POS tagging
         df_preprocessed["pos_tags"] = self._pos_tagging(df_preprocessed["text"])
@@ -224,13 +228,13 @@ class Preprocessing:
         dataframe["media"] = dataframe["article_index"].apply(lambda index: df_articles["media"][index])
         dataframe["date"] = dataframe["article_index"].apply(lambda index: df_articles["date"][index])
 
-        return self._apply_preprocessing(dataframe, FilterType.PARTIES)
+        return self._apply_preprocessing(dataframe, DocumentType.PARAGRAPH, FilterType.PARTIES)
 
     def _remove_direct_quotations(self, text_series: Series) -> Series:
         return text_series.str.replace(r'"(.*?)"', "", regex=True).str.strip()
 
     def _remove_quotations_rows(self, dataframe: DataFrame) -> DataFrame:
-        return dataframe.loc[dataframe["text"].str.contains(r'["„“]') is False]
+        return dataframe.loc[dataframe["text"].str.contains(r'["„“]') == 0]
 
     def _remove_special_characters(self, text_series: Series) -> Series:
         return (
@@ -291,13 +295,13 @@ class Preprocessing:
     def _keep_rows_with_one_party(self, dataframe: DataFrame) -> DataFrame:
         return dataframe.loc[np.array(list(map(len, dataframe.parties.values))) == 1]
 
-    def determine_sentiment_polarity(self, token_series: Series) -> Series:
-        tqdm.pandas(desc="Determine sentiment polarity")
+    def determine_polarity_sentiws(self, token_series: Series) -> Series:
+        tqdm.pandas(desc="Determine sentiment polarity with SentiWS")
         return token_series.progress_apply(lambda doc: [token._.sentiws for token in doc])
 
-    def determine_sentiment_polarity_TextBlob(self, token_series: Series) -> Series:
-        tqdm.pandas(desc="Determine sentiment polarity")
-        return token_series.progress_apply(lambda doc: TextBlobDE(doc).sentiment)
+    def determine_polarity_textblob(self, token_series: Series) -> Series:
+        tqdm.pandas(desc="Determine sentiment polarity with TextBlob")
+        return token_series.progress_apply(lambda doc: TextBlobDE(doc).sentiment[0])
 
     def negation_handling(self, df_preprocessed: DataFrame) -> DataFrame:
         """
@@ -306,7 +310,7 @@ class Preprocessing:
         :param df_preprocessed: Dataframe containing scores from sentiws for each word.
         :return: Dataframe with inverted scores if a negation word could be found.
         """
-        polarity_array = df_preprocessed["sentiment_sentiws"].to_numpy()
+        polarity_array = df_preprocessed["polarity"].to_numpy()
         word_array = df_preprocessed["text"].to_numpy()
 
         for entry in range(len(polarity_array)):
@@ -329,8 +333,8 @@ class Preprocessing:
                         elif polarity_array[entry][i] > 0:
                             polarity_array[entry][i] = -polarity_array[entry][i]
 
-        df_preprocessed.drop("sentiment_sentiws", inplace=True, axis=1)
-        polarity_data = DataFrame(data=polarity_array, columns=["sentiment_sentiws"])
+        df_preprocessed.drop("polarity", inplace=True, axis=1)
+        polarity_data = DataFrame(data=polarity_array, columns=["polarity"])
         df_preprocessed.reset_index(drop=True, inplace=True)
         polarity_data.reset_index(drop=True, inplace=True)
         result = pd.concat([df_preprocessed, polarity_data], axis=1)
