@@ -7,11 +7,17 @@ from keyword_extraction import KeywordExtraction
 
 
 def get_term_count_nouns(df_interval_paragraphs, term):
-    return df_interval_paragraphs["nouns"].apply(lambda row: row.count(term)).sum()
+    count = df_interval_paragraphs["nouns"].apply(lambda row: row.count(term)).sum()
+    if len(df_interval_paragraphs.index) == 0:
+        return count
+    return count / len(df_interval_paragraphs.index)
 
 
 def get_term_count_overall(df_interval_paragraphs, term):
-    return df_interval_paragraphs["text"].apply(lambda row: row.count(term)).sum()
+    count =  df_interval_paragraphs["text"].apply(lambda row: row.count(term)).sum()
+    if len(df_interval_paragraphs.index) == 0:
+        return count
+    return count / len(df_interval_paragraphs.index)
 
 
 class TimeCourse:
