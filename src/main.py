@@ -6,7 +6,7 @@ from utils.writer import Writer
 
 if __name__ == "__main__":
     # Read articles from json
-    df_articles = Reader.read_articles()
+    df_articles = Reader.read_articles(1000)
 
     # Apply preprocessing
     preprocessing = Preprocessing()
