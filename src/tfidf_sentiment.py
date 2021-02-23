@@ -52,13 +52,13 @@ class TfidfSentiment:
         )
 
         # Replace nan polarity values with 0
-        self.df_paragraphs["polarity"] = self.df_paragraphs["polarity"].apply(
+        self.df_paragraphs["sentiment_sentiws"] = self.df_paragraphs["sentiment_sentiws"].apply(
             lambda row: [0 if x is None else x for x in row]
         )
 
         # Calculate sentiment from dot product of polarity and tfidf
         self.df_paragraphs["sentiment_score"] = self.df_paragraphs.apply(
-            lambda row: np.dot(row["polarity"], row["tfidf"]), axis=1
+            lambda row: np.dot(row["sentiment_sentiws"], row["tfidf"]), axis=1
         )
 
         # Save paragraphs to disk
@@ -77,6 +77,11 @@ class TfidfSentiment:
 
         # Map sentiment values to "Positive", "Negative" or "Neutral"
         self.df_paragraphs["sentiment"] = self.df_paragraphs["sentiment_score"].apply(
+            lambda score: self._map_sentiment(score)
+        )
+
+        self.df_paragraphs["polarity_textBlob"] = self.df_paragraphs["polarity_textBlob"].apply(lambda x: x[0])
+        self.df_paragraphs["sentiment_textBlob"] = self.df_paragraphs["polarity_textBlob"].apply(
             lambda score: self._map_sentiment(score)
         )
 

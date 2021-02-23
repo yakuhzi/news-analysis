@@ -10,6 +10,7 @@ from pandas import DataFrame, Series
 from pandas.core.common import SettingWithCopyWarning
 from spacy.lang.de.stop_words import STOP_WORDS
 from spacy_sentiws import spaCySentiWS
+from textblob_de import TextBlobDE
 from tqdm import tqdm
 
 from model.document_type import DocumentType
@@ -177,8 +178,11 @@ class Preprocessing:
         if filter_type.value == FilterType.SINGLE_PARTY.value:
             df_preprocessed = self._keep_rows_with_one_party(df_preprocessed)
 
-        # Sentiment polarity
-        df_preprocessed["polarity"] = self.determine_sentiment_polarity(df_preprocessed["text"])
+        # Sentiment polarity sentiws
+        df_preprocessed["sentiment_sentiws"] = self.determine_sentiment_polarity(df_preprocessed["text"])
+
+        # Sentiment polarity TextBlob
+        df_preprocessed["polarity_textBlob"] = self.determine_sentiment_polarity_TextBlob(df_preprocessed["original_text"])
 
         # POS tagging
         df_preprocessed["pos_tags"] = self._pos_tagging(df_preprocessed["text"])
@@ -291,6 +295,10 @@ class Preprocessing:
         tqdm.pandas(desc="Determine sentiment polarity")
         return token_series.progress_apply(lambda doc: [token._.sentiws for token in doc])
 
+    def determine_sentiment_polarity_TextBlob(self, token_series: Series) -> Series:
+        tqdm.pandas(desc="Determine sentiment polarity")
+        return token_series.progress_apply(lambda doc: TextBlobDE(doc).sentiment)
+
     def negation_handling(self, df_preprocessed: DataFrame) -> DataFrame:
         """
         Checks if 4 tokens before or after sentiws assigned a polarity score a negation word can be found. If this is the
@@ -298,7 +306,7 @@ class Preprocessing:
         :param df_preprocessed: Dataframe containing scores from sentiws for each word.
         :return: Dataframe with inverted scores if a negation word could be found.
         """
-        polarity_array = df_preprocessed["polarity"].to_numpy()
+        polarity_array = df_preprocessed["sentiment_sentiws"].to_numpy()
         word_array = df_preprocessed["text"].to_numpy()
 
         for entry in range(len(polarity_array)):
@@ -321,8 +329,8 @@ class Preprocessing:
                         elif polarity_array[entry][i] > 0:
                             polarity_array[entry][i] = -polarity_array[entry][i]
 
-        df_preprocessed.drop("polarity", inplace=True, axis=1)
-        polarity_data = DataFrame(data=polarity_array, columns=["polarity"])
+        df_preprocessed.drop("sentiment_sentiws", inplace=True, axis=1)
+        polarity_data = DataFrame(data=polarity_array, columns=["sentiment_sentiws"])
         df_preprocessed.reset_index(drop=True, inplace=True)
         polarity_data.reset_index(drop=True, inplace=True)
         result = pd.concat([df_preprocessed, polarity_data], axis=1)
