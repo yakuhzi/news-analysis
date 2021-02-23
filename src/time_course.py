@@ -5,15 +5,22 @@ from dateutil.relativedelta import relativedelta
 
 from keyword_extraction import KeywordExtraction
 
+
+def get_term_count_overall(df_interval_paragraphs, term):
+    return df_interval_paragraphs["nouns"].apply(lambda row: row.count(term)).sum()
+
+
 class TimeCourse:
 
     def __init__(self):
         self.df_paragraphs = None
 
+    def set_paragraph(self, df_paragraph):
+        self.df_paragraphs = df_paragraph
+
     def get_time_course(self, party_list: list, media_list: list, df_top_terms: DataFrame,
                         initial_start_date: datetime, initial_end_date: datetime,
                         df_paragraph: DataFrame):
-        keyword_extraction = KeywordExtraction(df_paragraph)
         self.df_paragraphs = df_paragraph
         df_image = pd.DataFrame(columns=["party", "media", "term", "weight"])
         for party in party_list:
@@ -32,7 +39,7 @@ class TimeCourse:
                         df_interval_paragraphs = self.configure_dataframe_for_time_course(
                             start_date, next_end_date, media
                         )
-                        weight = keyword_extraction.get_term_count(df_interval_paragraphs, True, party, term)
+                        weight = get_term_count_overall(df_interval_paragraphs, term)
                         dates.append(start_date)
                         weight_list.append(weight)
                         start_date = next_end_date
