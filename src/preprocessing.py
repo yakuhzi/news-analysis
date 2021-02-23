@@ -82,7 +82,7 @@ class Preprocessing:
         :param overwrite: determines if the previous data is allowed to be overwritten. Default is False.
         :return: preprocessed dataframe with preprocessed paragraphs, which is result of method _get_preprocessed_df
         """
-        return self._get_preprocessed_df("labeled_paragraphs_textBlob", df_articles, DocumentType.PARAGRAPH, overwrite)
+        return self._get_preprocessed_df("labeled_paragraphs", df_articles, DocumentType.PARAGRAPH, overwrite)
 
     def get_titles(self, df_articles: DataFrame, overwrite: bool = False) -> DataFrame:
         """

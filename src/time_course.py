@@ -6,8 +6,12 @@ from dateutil.relativedelta import relativedelta
 from keyword_extraction import KeywordExtraction
 
 
-def get_term_count_overall(df_interval_paragraphs, term):
+def get_term_count_nouns(df_interval_paragraphs, term):
     return df_interval_paragraphs["nouns"].apply(lambda row: row.count(term)).sum()
+
+
+def get_term_count_overall(df_interval_paragraphs, term):
+    return df_interval_paragraphs["text"].apply(lambda row: row.count(term)).sum()
 
 
 class TimeCourse:
@@ -39,7 +43,7 @@ class TimeCourse:
                         df_interval_paragraphs = self.configure_dataframe_for_time_course(
                             start_date, next_end_date, media, df_paragraph
                         )
-                        weight = get_term_count_overall(df_interval_paragraphs, term)
+                        weight = get_term_count_nouns(df_interval_paragraphs, term)
                         dates.append(start_date)
                         weight_list.append(weight)
                         start_date = next_end_date
@@ -50,7 +54,8 @@ class TimeCourse:
                     )
         return df_image
 
-    def get_time_course_custom_word(self, media_list: list, word: str, initial_start_date: datetime, initial_end_date: datetime,
+    def get_time_course_custom_word(self, media_list: list, word: str, initial_start_date: datetime,
+                                    initial_end_date: datetime,
                                     df_paragraphs: DataFrame):
         df_image = pd.DataFrame(columns=["media", "word", "weight"])
         for media in media_list:
@@ -60,7 +65,8 @@ class TimeCourse:
             weight_list = []
             dates = []
             while next_end_date < initial_end_date:
-                df_interval_paragraphs = self.configure_dataframe_for_time_course(start_date, next_end_date, media, df_term)
+                df_interval_paragraphs = self.configure_dataframe_for_time_course(start_date, next_end_date, media,
+                                                                                  df_term)
                 weight = get_term_count_overall(df_interval_paragraphs, word)
                 weight_list.append(weight)
                 dates.append(start_date)
