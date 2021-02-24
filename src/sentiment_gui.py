@@ -78,6 +78,7 @@ class SentimentGUI:
         self.label_number_topics = None
         self.entry_number_topics = None
         self.word = None
+        self.filter_criteria = None
         pass
 
     def configure_dataframe(self) -> None:
@@ -343,13 +344,16 @@ class SentimentGUI:
             "you can see the importance of another term."
         )
         self.configure_dataframe()
-        media_list = self.get_media()
+        if self.filter_criteria.get() == "media":
+            filter_list = self.get_media()
+        else:
+            filter_list = self.get_parties()
         initial_start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
         initial_end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
-        df_image = self.time_course.get_time_course_custom_word(media_list, self.word.get(), initial_start_date,
-                                                                initial_end_date, self.df_paragraphs_configured)
+        df_image = self.time_course.get_time_course_custom_word(filter_list, self.word.get(), self.filter_criteria.get(),
+                                                                initial_start_date,initial_end_date, self.df_paragraphs_configured)
 
-        figures = Visualization.get_plots_custom_word(df_image)
+        figures = Visualization.get_plots_custom_word(df_image, self.filter_criteria.get())
         for fig in figures:
             bar1 = FigureCanvasTkAgg(fig, self.gui)
             self.plots.append(bar1)
@@ -476,6 +480,18 @@ class SentimentGUI:
         button_custom_word = tkinter.Button(self.gui, text="Show Time Course for Word",
                                             command=self.show_time_course_for_custom_word)
         button_custom_word.grid(row=0, column=7)
+
+        # radio buttons to choose filter critera
+        self.filter_criteria = tkinter.StringVar()
+        self.filter_criteria.set("party")
+        label_filter_criteria = tkinter.Label(self.gui, text="Select filter criteria for time course: ")
+        label_filter_criteria.grid(row=1, column=5)
+
+        radiobutton_media = tkinter.Radiobutton(self.gui, text="media", variable=self.filter_criteria, value="media")
+        radiobutton_media.grid(row=1, column=6)
+
+        radiobutton_party = tkinter.Radiobutton(self.gui, text="party", variable=self.filter_criteria, value="party")
+        radiobutton_party.grid(row=1, column=7)
 
         # checkbox anf text fields to filter dates
         self.check_filter_date = tkinter.Checkbutton(

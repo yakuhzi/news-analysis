@@ -110,27 +110,28 @@ class Visualization:
         return figures
 
     @staticmethod
-    def get_plots_custom_word(df_time_course: DataFrame):
+    def get_plots_custom_word(df_time_course: DataFrame, filter_name: str):
         figures = []
-        colors = {"Tagesschau": "#2ca02c", "TAZ": "#ff7f0e", "Bild": "#1f77b4"}
+        colors = {"Tagesschau": "#2ca02c", "TAZ": "#ff7f0e", "Bild": "#1f77b4", "Linke": "#c70039", "Grüne": "#0ad741",
+                  "SPD": "#a517f0", "CDU": "#f3be0c", "CSU": "#0caff3", "FDP": "##f30cd0", "AfD": "#0c15f3"}
 
         # Define terms for grouping
-        different_media = df_time_course.media.unique()
+        different_filter = df_time_course.filter_criteria.unique()
         word = df_time_course["word"][0]
 
         fig, axs = plt.subplots(1, 1)
         fig.suptitle("Usage of term {0}".format(word))
         # lines to draw
-        for media in different_media:
-            df_plot = df_time_course[df_time_course["media"] == media]
+        for filter_criteria in different_filter:
+            df_plot = df_time_course[df_time_course["filter_criteria"] == filter_criteria]
             if not df_plot.empty:
                 weights = df_plot["weight"]
                 weights_array = np.asarray(weights)[0]
                 # get right color for media
-                line_color = colors[media]
+                line_color = colors[filter_criteria]
                 dates = df_plot["dates"]
                 dates_array = np.asarray(dates)[0]
-                axs.plot(dates_array, weights_array, color=line_color, label=media)
+                axs.plot(dates_array, weights_array, color=line_color, label=filter_criteria)
                 axs.set_xlabel("Months")
                 axs.set_ylabel("Frequency of Usage")
                 axs.legend(loc="best", title="Outlet", frameon=False)
