@@ -1,12 +1,75 @@
+from typing import Tuple
+
 import numpy as np
 from pandas import Series
+from sklearn import metrics
 
+from tfidf_sentiment import TfidfSentiment
 from utils.reader import Reader
 
 
 class Comparison:
     def __init__(self, filename: str):
         self.dataframe = Reader.read_json_to_df_default("src/output/" + filename + ".json")
+
+    def train_threshold(self):
+        tfidf_sentiment = TfidfSentiment(self.dataframe)
+        t = 0
+        best_threshold = 0
+        best_score = 0
+
+        while t <= 0.1:
+            tfidf_sentiment.map_sentiment(threshold=t, overwrite=True)
+            self.dataframe = tfidf_sentiment.df_paragraphs
+
+            f1_sentiws, _ = self.f1_score()
+            f1_postive_negative = f1_sentiws[0] + f1_sentiws[1] + f1_sentiws[2]
+
+            if f1_postive_negative > best_score:
+                best_score = f1_postive_negative
+                best_threshold = t
+
+            t += 0.00001
+
+        tfidf_sentiment.map_sentiment(threshold=best_threshold, overwrite=True)
+        return best_threshold, best_score
+
+    def precision(self) -> Tuple[float, float]:
+        labels = ["Positive", "Negative", "Neutral"]
+        precision_sentiws = metrics.precision_score(
+            self.dataframe["labeled_sentiment"], self.dataframe["sentiment"], labels=labels, average=None
+        )
+        precision_textblob = metrics.precision_score(
+            self.dataframe["labeled_sentiment"], self.dataframe["sentiment_textblob"], labels=labels, average=None
+        )
+        return precision_sentiws, precision_textblob
+
+    def recall(self):
+        labels = ["Positive", "Negative", "Neutral"]
+        recall_sentiws = metrics.recall_score(
+            self.dataframe["labeled_sentiment"], self.dataframe["sentiment"], labels=labels, average=None
+        )
+        recall_textblob = metrics.recall_score(
+            self.dataframe["labeled_sentiment"], self.dataframe["sentiment_textblob"], labels=labels, average=None
+        )
+        return recall_sentiws, recall_textblob
+
+    def accuracy(self):
+        accuracy_sentiws = metrics.accuracy_score(self.dataframe["labeled_sentiment"], self.dataframe["sentiment"])
+        accuracy_textblob = metrics.accuracy_score(
+            self.dataframe["labeled_sentiment"], self.dataframe["sentiment_textblob"]
+        )
+        return accuracy_sentiws, accuracy_textblob
+
+    def f1_score(self):
+        labels = ["Positive", "Negative", "Neutral"]
+        f1_sentiws = metrics.f1_score(
+            self.dataframe["labeled_sentiment"], self.dataframe["sentiment"], labels=labels, average=None
+        )
+        f1_textblob = metrics.f1_score(
+            self.dataframe["labeled_sentiment"], self.dataframe["sentiment_textblob"], labels=labels, average=None
+        )
+        return f1_sentiws, f1_textblob
 
     def polarity(self):
         unlabeled_series = self.dataframe["sentiment"]

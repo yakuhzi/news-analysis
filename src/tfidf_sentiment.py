@@ -59,7 +59,7 @@ class TfidfSentiment:
             lambda row: np.dot(row["polarity"], row["tfidf"]), axis=1
         )
 
-    def map_sentiment(self, overwrite: bool = False) -> None:
+    def map_sentiment(self, threshold: float = 9e-05, overwrite: bool = False) -> None:
         """
         Maps the polarity of SentiWs and TextBlob to "Positive", "Negative" or "Neutral" for all paragraphs.
 
@@ -70,16 +70,16 @@ class TfidfSentiment:
         if "sentiment" not in self.df_paragraphs or overwrite:
             # Map sentiment score to "Positive", "Negative" or "Neutral"
             self.df_paragraphs["sentiment"] = self.df_paragraphs["sentiment_score"].apply(
-                lambda score: self._map_sentiment(score)
+                lambda score: self._map_sentiment(score, threshold)
             )
 
         if "sentiment_textblob" not in self.df_paragraphs or overwrite:
             # Map sentiment score to "Positive", "Negative" or "Neutral"
             self.df_paragraphs["sentiment_textblob"] = self.df_paragraphs["polarity_textblob"].apply(
-                lambda score: self._map_sentiment(score)
+                lambda score: self._map_sentiment(score, threshold)
             )
 
-    def _map_sentiment(self, score: str) -> str:
+    def _map_sentiment(self, score: str, threshold: float) -> str:
         """
         Helper function that maps the sentiment_score to "Positive", "Negative" or "Neutral".
 
@@ -88,9 +88,9 @@ class TfidfSentiment:
         """
         score = float(score)
 
-        if score > 0.001:
+        if score > threshold:
             return "Positive"
-        elif score < -0.001:
+        elif score < -threshold:
             return "Negative"
         else:
             return "Neutral"
