@@ -56,6 +56,8 @@ class SentimentGUI:
             PlotType.TIME_COURSE: "This is a line graph showing the importance of a certain term in the selected "
             'media.\n With a click on "Show next" or "Show previous"\n'
             "you can see the importance of another term.",
+            PlotType.TIME_COURSE_CUSTOM: "This is a line graph showing the importance of a certain term in the selected "
+            "media.",
         }
         self.current_plot_type = None
         self.gui = None
@@ -70,6 +72,7 @@ class SentimentGUI:
         self.afd_check = None
         self.gruene_check = None
         self.linke_check = None
+        self.fdp_check = None
         self.tagesschau_check = None
         self.taz_check = None
         self.bild_check = None
@@ -78,6 +81,7 @@ class SentimentGUI:
         self.label_number_topics = None
         self.entry_number_topics = None
         self.word = None
+        self.filter_criteria = None
         pass
 
     def configure_dataframe(self) -> None:
@@ -176,6 +180,8 @@ class SentimentGUI:
             party_list.append("Grüne")
         if self.linke_check.get() == 1:
             party_list.append("Linke")
+        if self.fdp_check.get() == 1:
+            party_list.append("FDP")
         return party_list
 
     def get_media(self) -> List[str]:
@@ -368,21 +374,22 @@ class SentimentGUI:
         self.show_diagram(first_image=True)
 
     def show_time_course_for_custom_word(self):
-        self.next_button["state"] = "normal"
-        self.previous_button["state"] = "normal"
         self.clear_plots(clear_plot_array=True)
-        self.help_button["state"] = "normal"
-        self.current_help_message = (
-            "This is a line graph showing the importance of the term you entered in the search bar"
-            'in the selected media.\n With a click on "Show next" or "Show previous"\n'
-            "you can see the importance of another term."
-        )
+        self.current_plot_type = PlotType.TIME_COURSE_CUSTOM
         self.configure_dataframe()
-        media_list = self.get_media()
+        if self.filter_criteria.get() == "media":
+            filter_list = self.get_media()
+        else:
+            filter_list = self.get_parties()
         initial_start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
         initial_end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
         df_image = self.time_course.get_time_course_custom_word(
-            media_list, self.word.get(), initial_start_date, initial_end_date, self.df_paragraphs_configured
+            filter_list,
+            self.word.get(),
+            self.filter_criteria.get(),
+            initial_start_date,
+            initial_end_date,
+            self.df_paragraphs_configured,
         )
 
         figures = Visualization.get_time_course_plots_custom_word(df_image)
@@ -448,6 +455,8 @@ class SentimentGUI:
             self.show_topics_party_media()
         elif self.current_plot_type == PlotType.TIME_COURSE:
             self.show_time_course()
+        elif self.current_plot_type == PlotType.TIME_COURSE_CUSTOM:
+            self.show_time_course()
 
     def show_gui(self) -> None:
         """
@@ -466,6 +475,7 @@ class SentimentGUI:
         self.afd_check = tkinter.IntVar(value=1)
         self.gruene_check = tkinter.IntVar(value=1)
         self.linke_check = tkinter.IntVar(value=1)
+        self.fdp_check = tkinter.IntVar(value=1)
         # initial checkbox values to enable/disable media (initially all enabled)
         self.tagesschau_check = tkinter.IntVar(value=1)
         self.taz_check = tkinter.IntVar(value=1)
@@ -520,6 +530,18 @@ class SentimentGUI:
         )
         button_custom_word.grid(row=0, column=8)
 
+        # radio buttons to choose filter critera
+        self.filter_criteria = tkinter.StringVar()
+        self.filter_criteria.set("party")
+        label_filter_criteria = tkinter.Label(self.gui, text="Select filter criteria for time course: ")
+        label_filter_criteria.grid(row=1, column=5)
+
+        radiobutton_media = tkinter.Radiobutton(self.gui, text="media", variable=self.filter_criteria, value="media")
+        radiobutton_media.grid(row=1, column=6)
+
+        radiobutton_party = tkinter.Radiobutton(self.gui, text="party", variable=self.filter_criteria, value="party")
+        radiobutton_party.grid(row=1, column=7)
+
         # checkbox anf text fields to filter dates
         self.check_filter_date = tkinter.Checkbutton(
             self.gui,
@@ -553,6 +575,8 @@ class SentimentGUI:
         check_gruene.grid(row=2, column=4)
         check_linke = tkinter.Checkbutton(self.gui, text="Linke", variable=self.linke_check, onvalue=1, offvalue=0)
         check_linke.grid(row=2, column=5)
+        check_fdp = tkinter.Checkbutton(self.gui, text="FDP", variable=self.fdp_check, onvalue=1, offvalue=0)
+        check_fdp.grid(row=2, column=6)
 
         # checkbox to enable/disable media
         check_tagesschau = tkinter.Checkbutton(
