@@ -113,7 +113,7 @@ class Visualization:
     def get_plots_custom_word(df_time_course: DataFrame, filter_name: str):
         figures = []
         colors = {"Tagesschau": "#2ca02c", "TAZ": "#ff7f0e", "Bild": "#1f77b4", "Linke": "#c70039", "Grüne": "#0ad741",
-                  "SPD": "#a517f0", "CDU": "#f3be0c", "CSU": "#0caff3", "FDP": "##f30cd0", "AfD": "#0c15f3"}
+                  "SPD": "#a517f0", "CDU": "#f3be0c", "CSU": "#0caff3", "FDP": "#f30cd0", "AfD": "#0c15f3"}
 
         # Define terms for grouping
         different_filter = df_time_course.filter_criteria.unique()

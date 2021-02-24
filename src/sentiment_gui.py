@@ -70,6 +70,7 @@ class SentimentGUI:
         self.afd_check = None
         self.gruene_check = None
         self.linke_check = None
+        self.fdp_check = None
         self.tagesschau_check = None
         self.taz_check = None
         self.bild_check = None
@@ -177,6 +178,8 @@ class SentimentGUI:
             party_list.append("Grüne")
         if self.linke_check.get() == 1:
             party_list.append("Linke")
+        if self.fdp_check.get() == 1:
+            party_list.append("FDP")
         return party_list
 
     def get_media(self) -> List[str]:
@@ -432,6 +435,7 @@ class SentimentGUI:
         self.afd_check = tkinter.IntVar(value=1)
         self.gruene_check = tkinter.IntVar(value=1)
         self.linke_check = tkinter.IntVar(value=1)
+        self.fdp_check = tkinter.IntVar(value=1)
         # initial checkbox values to enable/disable media (initially all enabled)
         self.tagesschau_check = tkinter.IntVar(value=1)
         self.taz_check = tkinter.IntVar(value=1)
@@ -526,6 +530,8 @@ class SentimentGUI:
         check_gruene.grid(row=2, column=4)
         check_linke = tkinter.Checkbutton(self.gui, text="Linke", variable=self.linke_check, onvalue=1, offvalue=0)
         check_linke.grid(row=2, column=5)
+        check_fdp = tkinter.Checkbutton(self.gui, text="FDP", variable=self.fdp_check, onvalue=1, offvalue=0)
+        check_fdp.grid(row=2, column=6)
 
         # checkbox to enable/disable media
         check_tagesschau = tkinter.Checkbutton(
