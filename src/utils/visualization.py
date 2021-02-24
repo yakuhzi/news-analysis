@@ -103,9 +103,11 @@ class Visualization:
                     dates = df_plot["dates"]
                     dates_array = np.asarray(dates)[0]
                     axs.plot(dates_array, weights_array, color=line_color, label=media)
+                    axs.set_xticks(dates_array)
                     axs.set_xlabel("Months")
                     axs.set_ylabel("Frequency of Usage")
                     axs.legend(loc="best", title="Outlet", frameon=False)
+            plt.setp(axs.xaxis.get_majorticklabels(), rotation=25)
             figures.append(fig)
         return figures
 
@@ -132,9 +134,11 @@ class Visualization:
                 dates = df_plot["dates"]
                 dates_array = np.asarray(dates)[0]
                 axs.plot(dates_array, weights_array, color=line_color, label=filter_criteria)
+                axs.set_xticks(dates_array)
                 axs.set_xlabel("Months")
                 axs.set_ylabel("Frequency of Usage")
                 axs.legend(loc="best", title="Outlet", frameon=False)
+        plt.setp(axs.xaxis.get_majorticklabels(), rotation=25)
         figures.append(fig)
         return figures
 

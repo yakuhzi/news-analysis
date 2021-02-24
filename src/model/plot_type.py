@@ -8,3 +8,4 @@ class PlotType(Enum):
     TOPICS_MEDIA = 4
     TOPICS_PARTY_MEDIA = 5
     TIME_COURSE = 6
+    TIME_COURSE_CUSTOM = 7

@@ -56,6 +56,8 @@ class SentimentGUI:
             PlotType.TIME_COURSE: "This is a line graph showing the importance of a certain term in the selected "
             'media.\n With a click on "Show next" or "Show previous"\n'
             "you can see the importance of another term.",
+            PlotType.TIME_COURSE_CUSTOM: "This is a line graph showing the importance of a certain term in the selected "
+            'media.',
         }
         self.current_plot_type = None
         self.gui = None
@@ -338,15 +340,8 @@ class SentimentGUI:
         self.show_diagram(first_image=True)
 
     def show_time_course_for_custom_word(self):
-        self.next_button["state"] = "normal"
-        self.previous_button["state"] = "normal"
         self.clear_plots(clear_plot_array=True)
-        self.help_button["state"] = "normal"
-        self.current_help_message = (
-            "This is a line graph showing the importance of the term you entered in the search bar"
-            'in the selected media.\n With a click on "Show next" or "Show previous"\n'
-            "you can see the importance of another term."
-        )
+        self.current_plot_type = PlotType.TIME_COURSE_CUSTOM
         self.configure_dataframe()
         if self.filter_criteria.get() == "media":
             filter_list = self.get_media()
@@ -417,6 +412,8 @@ class SentimentGUI:
         elif self.current_plot_type == PlotType.TOPICS_PARTY_MEDIA:
             self.show_topics_party_media()
         elif self.current_plot_type == PlotType.TIME_COURSE:
+            self.show_time_course()
+        elif self.current_plot_type == PlotType.TIME_COURSE_CUSTOM:
             self.show_time_course()
 
     def show_gui(self) -> None:
