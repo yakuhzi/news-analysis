@@ -319,6 +319,7 @@ class SentimentGUI:
         self.entry_number_topics.grid(row=9, column=6)
 
     def show_time_course(self):
+        self.clear_plots(clear_plot_array=True)
         self.current_plot_type = PlotType.TIME_COURSE
         if self.date_check.get() == 0:
             self.check_filter_date.toggle()

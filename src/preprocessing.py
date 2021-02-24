@@ -183,10 +183,10 @@ class Preprocessing:
             df_preprocessed = self._keep_rows_with_one_party(df_preprocessed)
 
         # Sentiment polarity sentiws
-        df_preprocessed["polarity"] = self.determine_polarity_sentiws(df_preprocessed["text"])
+        df_preprocessed["polarity"] = self._determine_polarity_sentiws(df_preprocessed["text"])
 
         # Sentiment polarity TextBlob
-        df_preprocessed["polarity_textblob"] = self.determine_polarity_textblob(df_preprocessed["original_text"])
+        df_preprocessed["polarity_textblob"] = self._determine_polarity_textblob(df_preprocessed["original_text"])
 
         # POS tagging
         df_preprocessed["pos_tags"] = self._pos_tagging(df_preprocessed["text"])
@@ -198,7 +198,7 @@ class Preprocessing:
         df_preprocessed["text"] = self._lemmatizing(df_preprocessed["text"])
 
         # Negation handling
-        df_preprocessed = self.negation_handling(df_preprocessed)
+        df_preprocessed = self._negation_handling(df_preprocessed)
 
         end_time = time.time()
         print("End of preprocessing after {} seconds".format(end_time - start_time))
@@ -295,15 +295,15 @@ class Preprocessing:
     def _keep_rows_with_one_party(self, dataframe: DataFrame) -> DataFrame:
         return dataframe.loc[np.array(list(map(len, dataframe.parties.values))) == 1]
 
-    def determine_polarity_sentiws(self, token_series: Series) -> Series:
+    def _determine_polarity_sentiws(self, token_series: Series) -> Series:
         tqdm.pandas(desc="Determine sentiment polarity with SentiWS")
         return token_series.progress_apply(lambda doc: [token._.sentiws for token in doc])
 
-    def determine_polarity_textblob(self, token_series: Series) -> Series:
+    def _determine_polarity_textblob(self, token_series: Series) -> Series:
         tqdm.pandas(desc="Determine sentiment polarity with TextBlob")
         return token_series.progress_apply(lambda doc: TextBlobDE(doc).sentiment[0])
 
-    def negation_handling(self, df_preprocessed: DataFrame) -> DataFrame:
+    def _negation_handling(self, df_preprocessed: DataFrame) -> DataFrame:
         """
         Checks if 4 tokens before or after sentiws assigned a polarity score a negation word can be found. If this is the
         case, the polarity is inverted.

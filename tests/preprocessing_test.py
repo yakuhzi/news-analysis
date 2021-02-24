@@ -163,7 +163,7 @@ class NERTaggerTest(unittest.TestCase):
     def test_determine_polarity_sentiws(self):
         series = Series(["Heute ist ein schöner Tag", "Heute ist ein schlechter Tag"])
         tokens = self.preprocessing._tokenization(series)
-        polarity = self.preprocessing.determine_polarity_sentiws(tokens)
+        polarity = self.preprocessing._determine_polarity_sentiws(tokens)
 
         self.assertGreater(polarity[0][3], 0)
         self.assertLess(polarity[1][3], 0)
@@ -171,7 +171,7 @@ class NERTaggerTest(unittest.TestCase):
 
     def test_determine_polarity_textblob(self):
         series = Series(["Heute ist ein schöner Tag", "Heute ist ein schlechter Tag"])
-        polarity = self.preprocessing.determine_polarity_textblob(series)
+        polarity = self.preprocessing._determine_polarity_textblob(series)
 
         self.assertGreater(polarity[0], 0)
         self.assertLess(polarity[1], 0)
@@ -179,8 +179,8 @@ class NERTaggerTest(unittest.TestCase):
     def test_negation_handling(self):
         dataframe = DataFrame(data={"text": ["Heute ist kein schöner Tag"]})
         dataframe["text"] = self.preprocessing._tokenization(dataframe["text"])
-        dataframe["polarity"] = self.preprocessing.determine_polarity_sentiws(dataframe["text"])
-        dataframe = self.preprocessing.negation_handling(dataframe)
+        dataframe["polarity"] = self.preprocessing._determine_polarity_sentiws(dataframe["text"])
+        dataframe = self.preprocessing._negation_handling(dataframe)
         polarity = dataframe["polarity"][0]
         self.assertLess(polarity[3], 0)
         self.assertIsNone(polarity[0])
