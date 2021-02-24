@@ -69,14 +69,16 @@ class TimeCourse:
             if filter_criteria_word == "media":
                 df_term = df_paragraphs[df_paragraphs["media"] == filter_criteria]
             else:
+                df_paragraphs["parties"] = [','.join(map(str, line)) for line in df_paragraphs["parties"]]
                 df_term = df_paragraphs[df_paragraphs["parties"] == filter_criteria]
             start_date = initial_start_date
             next_end_date = initial_start_date + relativedelta(months=+1)
             weight_list = []
             dates = []
             while next_end_date < initial_end_date:
-                df_interval_paragraphs = self.configure_dataframe_for_time_course(start_date, next_end_date, filter_criteria_word,
-                                                                                  df_term)
+                df_interval_paragraphs = self.configure_dataframe_for_custom_time_course(start_date, next_end_date,
+                                                                                         filter_criteria_word, filter_criteria,
+                                                                                         df_term)
                 weight = get_term_count_overall(df_interval_paragraphs, word)
                 weight_list.append(weight)
                 dates.append(start_date)
@@ -87,14 +89,25 @@ class TimeCourse:
             )
         return df_image
 
-    def configure_dataframe_for_time_course(self, start_date, end_date, filter_criteria_word, df):
+    def configure_dataframe_for_custom_time_course(self, start_date, end_date, filter_criteria_word, filter_criteria, df):
         df_paragraphs_time_interval = df[df["date"].notna()]
-        if filter_criteria_word=="media":
+        if filter_criteria_word == "media":
             df_paragraphs_time_interval = df_paragraphs_time_interval[
-                df_paragraphs_time_interval["media"] == filter_criteria_word]
+                df_paragraphs_time_interval["media"] == filter_criteria]
         else:
             df_paragraphs_time_interval = df_paragraphs_time_interval[
-                df_paragraphs_time_interval["parties"] == filter_criteria_word]
+                df_paragraphs_time_interval["parties"] == filter_criteria]
+        if start_date and end_date:
+            start = start_date.strftime("%Y-%m-%d")
+            end = end_date.strftime("%Y-%m-%d")
+            df_paragraphs_time_interval = df_paragraphs_time_interval[
+                (df_paragraphs_time_interval["date"] > start) & (df_paragraphs_time_interval["date"] < end)
+                ]
+        return df_paragraphs_time_interval
+
+    def configure_dataframe_for_time_course(self, start_date, end_date, media, df):
+        df_paragraphs_time_interval = df[df["date"].notna()]
+        df_paragraphs_time_interval = df_paragraphs_time_interval[df_paragraphs_time_interval["media"] == media]
         if start_date and end_date:
             start = start_date.strftime("%Y-%m-%d")
             end = end_date.strftime("%Y-%m-%d")
