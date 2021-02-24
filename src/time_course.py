@@ -69,8 +69,7 @@ class TimeCourse:
             if filter_criteria_word == "media":
                 df_term = df_paragraphs[df_paragraphs["media"] == filter_criteria]
             else:
-                df_paragraphs["parties"] = [','.join(map(str, line)) for line in df_paragraphs["parties"]]
-                df_term = df_paragraphs[df_paragraphs["parties"] == filter_criteria]
+                df_term = df_paragraphs[df_paragraphs.apply(lambda row: filter_criteria in row["parties"], axis=1)]
             start_date = initial_start_date
             next_end_date = initial_start_date + relativedelta(months=+1)
             weight_list = []
@@ -95,8 +94,7 @@ class TimeCourse:
             df_paragraphs_time_interval = df_paragraphs_time_interval[
                 df_paragraphs_time_interval["media"] == filter_criteria]
         else:
-            df_paragraphs_time_interval = df_paragraphs_time_interval[
-                df_paragraphs_time_interval["parties"] == filter_criteria]
+            df_paragraphs_time_interval = df_paragraphs_time_interval[df_paragraphs_time_interval.apply(lambda row: filter_criteria in row["parties"], axis=1)]
         if start_date and end_date:
             start = start_date.strftime("%Y-%m-%d")
             end = end_date.strftime("%Y-%m-%d")
