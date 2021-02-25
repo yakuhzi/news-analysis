@@ -107,20 +107,7 @@ Just type in the console which Polarity (-1: Negative, 0: Neutral, 1: Positive) 
 After pressing enter type in if you think the paragraph is subjective or objective (0: Objective, 1: Subjective).
 After pressing enter again, the next paragraph appears.
 
-## Milestone
-
-### Feedback from the first meeting with mentor
-The key points from the first meeting with our mentor were that overall the project idea is good. However,
-in our initial report we did not consider the fact that also different topics of the articles might affect the sentiment,
-e.g. if a news paper writes a lot about renewable energies, car lobby, etc.
-
-This is why we also want to consider the topics for the sentiment analysis.
-
-Also, through the discussion we gained some information about which data to use. There is already an existing data set
-from the university which is provided for this project. Details about the data are described in the section 
-[Data Sources](#data-sources).
-
-### Planning State
+## Planning State
 
 | Description                                      | Milestone          | Deadline   | Started  | Achieved | 
 |--------------------------------------------------|--------------------|------------|----------|----------|
@@ -140,14 +127,14 @@ from the university which is provided for this project. Details about the data a
 | Incorporate SentiWS (Sentiment Lexicon)          | Final Report       | February   | X        | X        |
 | Sentiment Calculation                            | Final Report       | February   | X        | X        |
 | Sentiment Visualization                          | Final Report       | February   | X        | X        |
-| Sentiment Threshold                              | Final Report       | February   | X        | -        |
-| Filter Options                                   | Final Report       | February   | X        | -        |
-| Dimension Analysis                               | Final Report       | February   | X        | -        |
-| Final Codebase                                   | Final Report       | February   | -        | -        |
-| Final README                                     | Final Report       | February   | -        | -        |
-| Final Report                                     | Final Report       | 15.03.2021 | -        | -        |
+| Sentiment Threshold                              | Final Report       | February   | X        | X        |
+| Filter Options                                   | Final Report       | February   | X        | X        |
+| Dimension Analysis                               | Final Report       | February   | X        | X        |
+| Final Codebase                                   | Final Report       | February   | X        | -        |
+| Final README                                     | Final Report       | February   | X        | -        |
+| Final Report                                     | Final Report       | 15.03.2021 | X        | -        |
 |                                                  |                    |            |          |          |
-| Project Video                                    | Presentation       | 25.02.2021 | -        | -        |
+| Project Video                                    | Presentation       | 25.02.2021 | X        | -        |
 
 ### Data Sources 
 As data sources, around 100.000 german news articles from three different news agencies are used. those are namely:
@@ -227,7 +214,7 @@ The JSON object is then structured as follows:
 ]
 ```
 
-### NER Tagging 
+#### NER Tagging 
 As one of the first parts of the project, NER tagging was performed in order to find political parties and members of
 the parties to identify relevant articles in the data set. For NER tagging, spacy is used with the 
 [de_core_news_lg language model](https://spacy.io/models/de#de_core_news_lg), which has the best score for NER tagging
@@ -242,76 +229,8 @@ Here is one example of the Tagesschau data set (article at index 4):
 
 ![Screenshot](figures/ner_tagging.png)
 
-* Organizations
-    * Many correctly recognized → especially things like Union, Liberale very good (not “actual” name of party/ 
-    different naming as usual)
-    * Only one missed
-    * Some differences in classification with/ without article for the party, not directly false
-    * False classified: “Partei” occurs often, might be related to the German party 
-    “Die Partei” → difficult case, 
-    “Corona” might occur because it was most likely not in the training set of the German language model
-* Persons
-    * Almost everything correct → in “von Lucke” only “Lucke was recognized 
-    (hard case, because “von” is a regular German word, in most cases not associated with names)
-    * Again “Corona-Krise” was most likely not in training set of language model
-
-
-
-Other general findings after a first insight into the tagged data were:
-* In general, (most likely) not known words are often recognized as organizations → problems with longer 
-expressions and expressions with hyphens
-    * Examples Bild
-        * 90-Liter-Kompressorkühlschrank
-        * Drei Leasing-Schnäppchen
-        * Hybrid-PKW
-        * CO2-Grenzen
-        * 310-PS-Antrieb
-    * Examples Tagsschau
-        * Antarktis-Durchquerung
-        * Ex-Präsident
-        * Corona-Pandemie
-        * CSU-euphorische Bierzeltstimmung
-    * Examples TAZ
-        * Corona
-        * Schlusslicht
-        * Bund und Ländern
-        * Sechs-Monats-Frist
-        * +++ Corona News
-        * Sars-CoV-2
-* Seems like persons are more often recognized correctly, but also some outliers where not clear pattern is 
-recognizable why they are tagged as persons (assumption: most likely also words that are not known from 
-training the model)
-    * Examples Bild
-        * Luxus-Limo
-        * Preisschock
-        * Dranhalten
-        * Blitzmarathons
-    * Examples Tagesschau
-        * Verheerende Buschfeuer
-        * Gestrichene
-    * Examples TAZ
-        * Zopfstränge
-        * Backwettbewerbe
-        * Coronatests
-        * Selbstisolation
-* For persons, sometimes “role” is also tagged, sometimes not
-    * “FDP-Chef Lindner” → tagged “Lindner”
-    * „Bundeswirtschaftsminister Altmaier“ → tagged „Bundeswirtschaftsminister Altmaier“
-    * „Verkehrsminister Scheuer“ → „Verkehrsminister Scheuer“
-    * „FDP-Ausschussmitglied Luksic“ → tagged „FDP-Ausschussmitglied Luksic“
-* In very few cases, persons are tagged as organizations (when their name is associated with an organization, 
-e.g. as role: WikiLeaks-Gründer Assange) 
-* In general, tagesschau and tagging seems to work better than BILD tagging → might be topic related 
-(the first 100 articles of taz& tagesschau were mainly about politics, for BILD mainly cars)
-
 **SUMMARY:** NER tagging with spacy and german language model does not work perfectly, but quite good and good enough 
-for a first filtering of the text to recognize in which text political parties/ actors are mentioned at all
-
-**UPDATE:** First, NER tagging was treated as a seperate task and not as part of the preprocessing pipeline. After
-integrating it into the preprocessing pipeline, it turned out that it performed best when doing it right after removing
-all special characters and before lowercasing. From a first insight into the data, it seems like through integrating it
-into the preprocessing pipeline directly, some false positives were filtered out (has to be relatet to removal of special
-characters) but also more false negatives occured. But overall, the results still look decent.
+for a first filtering of the text to recognize in which text political parties/ actors are mentioned at all.
 
 ### Topic Detection
 As discussed in the first alignment meeting with our advisor, we want to apply topic detection on our preprocessed articles to be able to compare the sentiment not only across parties, but also across different topics the journalists are talking about. This should give us the oppurtunity to filter out some bias if e.g. a news publisher is focused on specific topics like e.g. the natural environment and therefore is generally more critically against parties that have a different point of view about this topic.
