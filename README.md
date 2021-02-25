@@ -41,11 +41,10 @@ Here are typical use cases how you might want to run the program. Make sure you 
    pipenv run main -g -n 1000
    ```
    In this example, only 1000 articles are read in and processed
-2. I want to force the processing again and store the results of the new processing (because I want to use a different number of articles/ a different dataset)
+2. I want to force the processing again (because I want to use a different number of articles/ a different dataset)
     ```
-   pipenv run main -f -w
+   pipenv run main -f
     ```
-   If you don't use -w, the changes of the processing are only persistent for the current program run and do not overwrite your existing processed datasets
    
 3. I want to label data
     ```
@@ -133,7 +132,7 @@ The result of the labeling is stored in a file named "labeled_paragraphs.json".
 | Final README                                     | Final Report       | February   | X        | -        |
 | Final Report                                     | Final Report       | 15.03.2021 | X        | -        |
 |                                                  |                    |            |          |          |
-| Project Video                                    | Presentation       | 25.02.2021 | X        | -        |
+| Project Video                                    | Presentation       | 25.02.2021 | X        | X        |
 
 ### Data Sources 
 As data sources, around 100.000 german news articles from three different news agencies are used. those are namely:
