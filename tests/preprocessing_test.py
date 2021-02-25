@@ -105,16 +105,6 @@ class NERTaggerTest(unittest.TestCase):
             ],
         )  #
 
-    def test_remove_entities(self):
-        text = "Angela Merkel ist die deutsche Bundeskanzlerin und sie ist Mitglied der CDU."
-        series = Series([text])
-        tokens = self.preprocessing._tokenization(series)
-        text_without_entities = self.preprocessing._remove_entities(tokens)[0]
-        text_without_entities = [token.text for token in text_without_entities]
-        self.assertEqual(
-            text_without_entities, ["ist", "die", "Bundeskanzlerin", "und", "sie", "ist", "Mitglied", "der", "."]
-        )
-
     def test_ner_tagging(self):
         text_to_tag = "Angela Merkel ist die deutsche Bundeskanzlerin und sie ist Mitglied der CDU."
         series = Series([self.nlp(text_to_tag)])

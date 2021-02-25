@@ -231,12 +231,28 @@ class Preprocessing:
         return self._apply_preprocessing(dataframe, DocumentType.PARAGRAPH, FilterType.PARTIES)
 
     def _remove_direct_quotations(self, text_series: Series) -> Series:
+        """
+        removes direct quotations from the text in the series
+        :param text_series: series that contains the text which needs to be preprocessed
+        :return: series without direct quotations
+        """
         return text_series.str.replace(r'"(.*?)"', "", regex=True).str.strip()
 
     def _remove_quotations_rows(self, dataframe: DataFrame) -> DataFrame:
+        """
+        removes dataframe entries that contain direct quotes
+        :param dataframe: dataframe that contains the text which needs to be preprocessed
+        :return: dataframe without entries containing direct quotation
+        """
         return dataframe.loc[dataframe["text"].str.contains(r'["„“]') == 0]
 
     def _remove_special_characters(self, text_series: Series) -> Series:
+        """
+        removes special characters, e.g.: punctuation marks. Special characters which are essential
+        for the german language are kept
+        :param text_series: series, where removing special characters is performed on
+        :return: series, without special characters
+        """
         return (
             text_series.str.replace(r"[^A-Za-z0-9äöüÄÖÜß\-]", " ", regex=True)
             .str.replace(r" - ", " ", regex=False)
@@ -245,44 +261,80 @@ class Preprocessing:
         )
 
     def _remove_stopwords(self, text_series: Series) -> Series:
+        """
+        removes stopwords
+        :param text_series: series, where stopword removal is performed on
+        :return: series, without stopwords
+        """
         tqdm.pandas(desc="Remove stopwords")
         return text_series.progress_apply(
             lambda row: " ".join(word for word in row.split() if word not in self.stopwords)
         )
 
     def _tokenization(self, text_series: Series) -> Series:
+        """
+        tokenization is performed on the incoming series
+        :param text_series:  series, containing the text where the tokenization is performed on
+        :return: series, having the text transformed into tokens
+        """
         tqdm.pandas(desc="Tokenization")
         return text_series.progress_apply(lambda row: self.nlp(row))
 
     def _pos_tagging(self, token_series: Series) -> Series:
+        """
+        POS-Tagging is performed on the incoming series
+        :param token_series: series, containing text for pos-tagging
+        :return: series, containing pos tags for each word in row
+        """
         tqdm.pandas(desc="POS Tagging")
         return token_series.progress_apply(lambda doc: [token.tag_ for token in doc])
 
     def _lemmatizing(self, token_series: Series) -> Series:
+        """
+        Performs lemmatizing on incoming series
+        :param token_series: series, containing the tokens where lemmatizing should be performed on
+        :return: series, containing lammatized tags for each word in row
+        """
         tqdm.pandas(desc="Lemmatization")
         return token_series.progress_apply(lambda doc: [token.lemma_.lower() for token in doc])
 
     def _get_nouns(self, token_series: Series) -> Series:
+        """
+        filters nouns based in pos_tagging
+        :param token_series: series, containing pos tags
+        :return: series, containing only nouns
+        """
         tqdm.pandas(desc="Get nouns")
         return token_series.progress_apply(lambda doc: [token.lemma_.lower() for token in doc if token.tag_ == "NN"])
 
     def _tag_persons(self, token_series: Series) -> Series:
+        """
+        filters persons out of token series
+        :param token_series: series, containing text where persons should be filtered
+        :return: series, containing persons for each row
+        """
         tqdm.pandas(desc="Tag persons")
         return token_series.progress_apply(
             lambda doc: list(set([entity.text for entity in doc.ents if entity.label_ == "PER"]))
         )
 
     def _tag_organizations(self, token_series: Series) -> Series:
+        """
+        filters organizations out of token series
+        :param token_series: series, containing text where organizations should be filtered
+        :return: series, containing organizations for each row
+        """
         tqdm.pandas(desc="Tag organizations")
         return token_series.progress_apply(
             lambda doc: list(set([entity.text for entity in doc.ents if entity.label_ == "ORG"]))
         )
 
-    def _remove_entities(self, token_series: Series) -> Series:
-        tqdm.pandas(desc="Remove entities")
-        return token_series.progress_apply(lambda doc: [token for token in doc if not token.ent_type_])
-
     def _get_parties(self, organization_series: Series) -> Series:
+        """
+        extract parties, defined in dictionary above, from tests
+        :param organization_series: series, containing the previously found organizations
+        :return: series, containing parties extracted from organizations
+        """
         tqdm.pandas(desc="Get parties")
         organization_series = organization_series.apply(lambda row: [x.lower() for x in row])
         return organization_series.progress_apply(
@@ -290,18 +342,38 @@ class Preprocessing:
         )
 
     def _remove_rows_without_parties(self, dataframe: DataFrame) -> DataFrame:
+        """
+        all rows, that do not contain parties are removed
+        :param dataframe: dataframe, containing previously preprocessed data
+        :return: dataframe, containing previously preprocessed data without data not containing parties
+        """
         return dataframe.loc[np.array(list(map(len, dataframe.parties.values))) > 0]
 
     def _keep_rows_with_one_party(self, dataframe: DataFrame) -> DataFrame:
+        """
+        removes data that contain more or less than one party.
+        :param dataframe: dataframe, containing previously preprocessed data
+        :return: dataframe, containing previously preprocessed data without data not containing parties
+        """
         return dataframe.loc[np.array(list(map(len, dataframe.parties.values))) == 1]
 
     def _determine_polarity_sentiws(self, token_series: Series) -> Series:
+        """
+        for each word in a row of the series, the polarity is calculated with sentiws.
+        :param token_series: series, containing the tokens which need to be calculated
+        :return: series, containing rows with the polarities for each token
+        """
         tqdm.pandas(desc="Determine sentiment polarity with SentiWS")
         return token_series.progress_apply(lambda doc: [token._.sentiws for token in doc])
 
-    def _determine_polarity_textblob(self, token_series: Series) -> Series:
+    def _determine_polarity_textblob(self, text_series: Series) -> Series:
+        """
+        for each paragraph (row in a series) the polarity is calculated with textblob
+        :param text_series: series, containing the text where the polarity needs to be determined
+        :return: series, containing rows with the polarity for the corresponding text
+        """
         tqdm.pandas(desc="Determine sentiment polarity with TextBlob")
-        return token_series.progress_apply(lambda doc: TextBlobDE(doc).sentiment[0])
+        return text_series.progress_apply(lambda doc: TextBlobDE(doc).sentiment[0])
 
     def _negation_handling(self, df_preprocessed: DataFrame) -> DataFrame:
         """
