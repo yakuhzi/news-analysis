@@ -8,11 +8,12 @@ from sklearn import metrics
 
 from tfidf_sentiment import TfidfSentiment
 from utils.reader import Reader
+from utils.writer import Writer
 
 
 class Comparison:
-    def __init__(self, filename: str):
-        self.dataframe = Reader.read_json_to_df_default("src/output/" + filename + ".json")
+    def __init__(self, path: str):
+        self.dataframe = Reader.read_json_to_df_default(path)
 
     def train_threshold(self) -> float:
         """
@@ -27,21 +28,23 @@ class Comparison:
         f1_positive = []
         f1_negative = []
         f1_neutral = []
+        f1_overall_arr = []
         # iterate over different thresholds, increase with every loop
         while t <= 0.005:
             tfidf_sentiment.map_sentiment(threshold=t, overwrite=True)
             self.dataframe = tfidf_sentiment.df_paragraphs
             # optimize over the sum of all f1 scores for sentiws
             f1_sentiws, _ = self.f1_score(training=True)
-            f1_postive_negative = f1_sentiws[0] + f1_sentiws[1] + f1_sentiws[2]
-
+            f1_overall = f1_sentiws[0] + f1_sentiws[1] + f1_sentiws[2]
+            # print(f1_overall)
             thresholds.append(t)
             f1_positive.append(f1_sentiws[0])
             f1_negative.append(f1_sentiws[1])
             f1_neutral.append(f1_sentiws[2])
+            f1_overall_arr.append(f1_overall)
             # replace best threshold if current one is better
-            if f1_postive_negative > best_score:
-                best_score = f1_postive_negative
+            if f1_overall > best_score:
+                best_score = f1_overall
                 best_threshold = t
 
             t += 0.0000001
@@ -50,6 +53,8 @@ class Comparison:
         self.visualize_threshold(thresholds, f1_positive, f1_negative, f1_neutral, best_threshold)
         # adjust the sentiment
         tfidf_sentiment.map_sentiment(threshold=best_threshold, overwrite=True)
+        print("best score {}".format(best_score))
+        Writer.write_dataframe(self.dataframe, "labeled_paragraphs")
         return best_threshold
 
     def visualize_threshold(

@@ -1,3 +1,6 @@
+import sys
+from pathlib import Path
+
 import pandas as pd
 
 from preprocessing import Preprocessing
@@ -22,7 +25,26 @@ if __name__ == "__main__":
     # Calculate sentiment of paragraphs
     tfidf_sentiment = TfidfSentiment(df_paragraphs)
     tfidf_sentiment.calculate_sentiment_score()
-    tfidf_sentiment.map_sentiment(overwrite=True)
+    tfidf_sentiment.map_sentiment()
+
+    # Label data
+    if args.labeling is not None:
+        labeling = Labeling(df_paragraphs)
+        start = args.labeling.split("-")[0]
+        start = int(start) if start.isdigit() else 0
+        end = args.labeling.split("-")[1]
+        end = int(end) if end.isdigit() else 50
+        labeling.label(start=start, end=end)
+
+    # Train threshold for sentiment mapping
+    if args.train:
+        labeled_file = Path("src/output/labeled_paragraphs.json")
+        if not labeled_file.exists():
+            print('You have to provide a labeled file "labeled_paragraphs.json" for training in the output folder')
+            sys.exit()
+        comparison = Comparison(labeled_file)
+        optimal_threshold = comparison.train_threshold()
+        print("Optimal threshold: {}\n".format(optimal_threshold))
 
     # Save paragraphs to disk
     if args.write:
@@ -33,15 +55,13 @@ if __name__ == "__main__":
         gui = SentimentGUI(df_paragraphs)
         gui.show_gui()
 
-    # Label data
-    if args.labeling:
-        labeling = Labeling(df_paragraphs)
-        labeling.label(start=0, end=50)
-
     # Compare labeled data with results
     if args.compare:
-        comparison = Comparison("labeled_paragraphs")
-        print("Optimal threshold: " + str(comparison.train_threshold()) + "\n")
+        labeled_file = Path("src/output/labeled_paragraphs.json")
+        if not labeled_file.exists():
+            print('You have to provide a labeled file "labeled_paragraphs.json" for comparison in the output folder')
+            sys.exit()
+        comparison = Comparison(labeled_file)
         comparison.precision()
         comparison.recall()
         comparison.f1_score()
