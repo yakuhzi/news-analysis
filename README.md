@@ -18,13 +18,11 @@ cq270@stud.uni-heidelberg.de
 
 3. Install packages: `cd news-analysis && pipenv install --dev`  
 
-4. Init ```.env``` file. Use this file to store all your environment variables, such as credentials or encryption phrases. This file should never be added to your public repository but should always stay local.
+4. Activate virtual environment: `pipenv shell`  
 
-5. Activate virtual environment: `pipenv shell`  
+5. Test setup: `pipenv run main`  (more about typical ways to run the program are shown in the section [below](#run-the-program-in-different-modes))
 
-6. Test setup: `pipenv run main`  (more about typical ways to run the program are shown in the section [below](#run-the-program-in-different-modes))
-
-7. Install Git hooks: `pre-commit install`
+6. Install Git hooks: `pre-commit install` (developer setup)
 
 
 ## Testing
@@ -33,7 +31,7 @@ A script to automatically execute tests is already defined in the project's `Pip
 To generate a report on code coverage alongside run: `pipenv run test && pipenv run report`
 
 ## Run the program in different modes
-Here are typical use cases how you might want to run the program:
+Here are typical use cases how you might want to run the program. Make sure you are in the project directory when executing the code.
 1. I want to see the results for sentiment and topics in the GUI
     ```
    pipenv run main -g
@@ -99,13 +97,14 @@ For each article you can see the following output in the console.\
 ================================================\
 \<Title of the article\>\
 ++++++++++++++++++++++++++++++++++++++++++++++++\
-\<one paragraph of the article\>
+\<One paragraph of the article\>
 
 Note that for all articles the tagged persons and parties are anonymized by "\<Person\>" or "\<Partei\>" to not influence your rating based on what party/ person the article is about.
 
 Just type in the console which Polarity (-1: Negative, 0: Neutral, 1: Positive) you think is stated towards the party. 
 After pressing enter type in if you think the paragraph is subjective or objective (0: Objective, 1: Subjective).
-After pressing enter again, the next paragraph appears.
+After pressing enter again, the next paragraph appears.\
+The result of the labeling is stored in a file named "labeled_paragraphs.json".
 
 ## Planning State
 
@@ -164,31 +163,27 @@ Overall, we found 14355 articles of interest.
 Although "Bild" hs the lowest ratio of articles of interest / articles, the Bild articles make up nearly 60% when only looking only at the 
 articles of interest. This is of cause caused by the significantly higher amount of "Bild" articles overall. 
 
+## Pipeline
+![Pipeline](figures/pipeline.png)
 ### Preprocessing
 Before the data can be processed any further, it needs to be preprocessed. The challenge hereby was to choose preprocessing methods that keep enough information to determine the objectivity (sentiment analysis) later on.
 For this reason the pipeline, which is described in the following, was created.
-* lowercasing the text
-    The first step is to lowercase the text. This ensures that the text is more uniform, which might be beneficial following processing steps. As of now there is a hunch that the later described NER Tagging potentially performs better without lowercasing. This has to be evaluated further and is decided to a later point in time.
-* removing special characters
+* Remove quotations: paragraphs with direct speech should be removed as the sentiment of a speaker is not representative for the sentiment of the paragraph.
+* Removing special characters:
     Secondly some characters that are unimportant for further processing need to be removed. 
-    The original JSON files containing the articles have the characters "\n" to indicate a linebreak. This is unneccessary for processing the data and needs to be removed. 
-    Additionally with the help of regex, letters from "a-z", numbers from "0-9", the hyphen as well as the - in German commonly used - umlauts ("ä", "ö", "ü") are kept. Everything else is removed from the text. In further steps of the projects this might need to be reconsidered, maybe the use of punctuation marks (e.g.: exclamation marks) provide information about the objectivity.
-* remove stopwords
-    For the time beeing the stop words are removed from the text. Nontheless it has to be evaluated in the future, whether the these frequently used words are helping on determining the objectivity of the text. For example the phrase "opel fährt auf transporter auf" is transformed into "opel fährt transporter", which has a totally different meaning. The impact of this still needs to be figured out.
+    Additionally with the help of regex, letters from "a-z", numbers from "0-9", the hyphen as well as the - in German commonly used - umlauts ("ä", "ö", "ü") are kept. Everything else is removed from the text.
+* Tokenization:
+    This segments the specified text into tokens 
+* NER Tagging (tag persons and tag organizations): This is explained in more detail later on.
+* Extract parties: The parties which are present in an article are extracted and stored as list.
+* Determine sentiment polarity: With the sentiment lexicon SentiWS, a polarity score is stored for each token.
+* POS tagging: 
+    Here, part-of-speech tags are assigned to the tokens.
+* Lemmatization:
+    The tokens of the text are saved in their respective base form. This was preferred before stemming, since the sentiment analysis is done by using a sentiment lexicon that weights words by their positive or negative indication. 
+* Negation Handling: The sentiment polarity is inverted for the surrounding words around a negation word (window size of 4 words before and 4 words after negation word).
 
-The following steps are done by using the library spaCy. It provides a preprocessing pipeline wich is run when npl is called on a defined text.
-* tokenization
-    This is the first step of the processing pipeline. It segments the specified text into tokens 
-* POS tagging
-    This is the second part of the processing pipeline of spaCy. It assigns part-of-speech tags to the aforementioned tokens.
-* NET Tagging
-    Since parts of the processing pipeline are deactivated, this is the next step. It is explained in more detail later on.
-* lemmatization
-    Lastly lemmatization is done. The words (tokens) of the text are saved in their respective base form. This was preferred before stemming, since the sentiment analysis could be done by using a sentiment lexicon that weights words by their positive or negative indication. 
-
-![Pipeline](figures/preprocessing_pipeline.png)
-
-For each data source the end result of the preprocessing is then stored in a seperate JSON-file called "source_preprocessed.json". Additionally to the original columns it now also has a column for the NER tagging (see following chapter), POS tagging and lemmatization.
+The processed dataframe is stored in a JSON-file called "paragraphs.json".
 The JSON object is then structured as follows:
 
 ```json
