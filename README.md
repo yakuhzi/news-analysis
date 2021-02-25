@@ -76,6 +76,21 @@ pipenv run main -h
 ```
 
 ## Using the GUI
+This section describes how you can use the GUI (command line argument -g).\
+For explanation, some parts in the GUI are overlayed with a colored box in the screenshot below.
+![GUIdescription](figures/GUIdescription.png)
+In the colored boxes you can see the following:
+* Red: these are the different types of graphs you can show. 
+  By pressing one of the buttons, the respective graph is shown in the center of the screen. 
+  In this example, the graph for "Show Topics of Parties and Media" is shown. 
+  To display the "Show Time Course for Word", you have to specify the word of which you want to see the frequency in the text box on the left hand side (here: "corona-krise")
+* Green: These are different filter criteria to select certain data of interest for you. 
+  For specifying a time range, you need to enable the "Filter dates" checkbox and type in a date in the format "YYYY-MM-DD". 
+  Note that the option "How many topics per party& media to show (Max 10)" is only available for "Show Topics per Party", "Show Topics per Media" and "Show Topics per Party and Media"
+* Orange: If you changed one of the filter criteria and want to update the graph in the middle, you need to click "Update filter criteria".
+* Purple: For some types of graphs, there are multiple graphs which can be viewed one after the other in the GUI ("Sentiment by Party", "Sentiment by Outlet", "Show Time Course").
+  You can navigate through them with "Show previous" or "Show next".
+* Blue: if you click on this button, additional information what can be seen on this graph is shown as a text in a pop up window.
 
 ## Labeling Data
 This section describes how you can label data if you run the program in labeling mode (command line argument -l \<start\>-\<end\>).
