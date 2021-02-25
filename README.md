@@ -183,32 +183,6 @@ For this reason the pipeline, which is described in the following, was created.
     The tokens of the text are saved in their respective base form. This was preferred before stemming, since the sentiment analysis is done by using a sentiment lexicon that weights words by their positive or negative indication. 
 * Negation Handling: The sentiment polarity is inverted for the surrounding words around a negation word (window size of 4 words before and 4 words after negation word).
 
-The processed dataframe is stored in a JSON-file called "paragraphs.json".
-The JSON object is then structured as follows:
-
-```json
-[
-  {
-    "title": "text",
-    "text": "text",
-    "summary": "text",
-    "date": "date as text",
-    "authors": null,
-    "references": [],
-    "persons": [
-      "Person 1 in text",
-      "Person 2 in text"
-    ],
-    "organizations": [
-      "Organization 1 in text",
-      "Organization 2 in text"
-    ],
-    "pos_tags": ["token", "POS-Tag"], 
-    "lemma":["text"]
-  }  
-]
-```
-
 #### NER Tagging 
 As one of the first parts of the project, NER tagging was performed in order to find political parties and members of
 the parties to identify relevant articles in the data set. For NER tagging, spacy is used with the 
@@ -226,6 +200,54 @@ Here is one example of the Tagesschau data set (article at index 4):
 
 **SUMMARY:** NER tagging with spacy and german language model does not work perfectly, but quite good and good enough 
 for a first filtering of the text to recognize in which text political parties/ actors are mentioned at all.
+
+
+### Sentiment Analysis
+For the sentiment analysis, each word of a paragraph was weighted by a sentiment score from SentiWS. Also the TF-IDF score of each word was calculated. By performing the dot product of the sentiment score, and the TF-IDF scores, the overall sentiment of a sentence was calculated. 
+This was done by using a threshold. If the dot product is above this threshold for greater 0 the sentiment is mapped as positive, 
+if it smaller for below 0 it is mapped negative and otherwise neutral.
+
+#### Sentiment Clustering
+Instead of using SentiWS to calculate the sentiment scores of each word, we tried also to perform a clustering of the sentiment to get more accurate results. But as you can see in the following image, the clusters are not towards a sentiment and thus cannot be used for our task.
+
+![Coherence Score](figures/sentiment_clustering.png)  
+
+
+## Storing the Results
+The paragraphs of the processed dataframe is stored in a JSON-file called "paragraphs.json".
+The JSON object is then structured as follows:
+
+```json
+[
+  {
+    "article_index": "index of article (int)",
+    "text": ["text", "as", "list", "of", "tokens"],
+    "media": "Bild|Tagesschau|TAZ",
+    "date": "date in format yyy-mm-dd",
+    "original_text": "original text as string",
+    "persons": [
+      "Person 1 in text",
+      "Person 2 in text"
+    ],
+    "organizations": [
+      "Organization 1 in text",
+      "Organization 2 in text"
+    ],
+    "pos_tags":["pos_token1", "pos_token2"],
+    "nouns":["noun1", "noun2"],
+    "authors": null,
+    "references": [],
+    "polarity": ["polarity_sentiws_token1", "polarity_sentiws_token2"],
+    "sentiment_score": "sentiment score (dot product as float)",
+    "sentiment": "Positive|Negative|Neutral (with SentiWS)",
+    "polarity_textblob": "float of polarity",
+    "sentiment_textblob": "Positive|Negative|Neutral",
+    "polarity_context": ["0 (not in context of party)", "polarity_sentiws (in context of party)"],
+    "sentiment_score_context": "sentiment score (dot product as float)",
+    "sentiment_context": "Positive|Negative|Neutral (with SentiWS, only considering words in the context of a party -> fixed window size)"
+  }  
+]
+```
 
 ### Topic Detection
 As discussed in the first alignment meeting with our advisor, we want to apply topic detection on our preprocessed articles to be able to compare the sentiment not only across parties, but also across different topics the journalists are talking about. This should give us the oppurtunity to filter out some bias if e.g. a news publisher is focused on specific topics like e.g. the natural environment and therefore is generally more critically against parties that have a different point of view about this topic.
@@ -254,18 +276,7 @@ To overcome this issues, we need to further investigate why our documents can't 
 ### Keyword Extraction
 As the results of the topic detections are not as good as expected, a basic keyword extraction was done using TF-IDF scores. For each party the top three words are taken, and the count of each word occurrence in the paragraphs is counted. The results are shown in the following bipartite graph:  
 
-![Keyword extraction](figures/keyword_extraction.png)  
-
-### Sentiment Analysis
-For the sentiment analysis, each word of a paragraph was weighted by a sentiment score from SentiWS. Also the TF-IDF score of each word was calculated. By performing the dot product of the sentiment score, and the TF-IDF scores, the overall sentiment of a sentence was calculated. 
-
-#### Visualization
-The following image shows the sentiment towards the parties in the articles of the news agency TAZ.
-
-![Sentiment TAZ](figures/sentiment_taz.png)  
+![Keyword extraction](figures/keyword_extraction.png)   
 
 
-#### Sentiment Clustering
-Instead of using SentiWS to calculate the sentiment scores of each word, we tried also to perform a clustering of the sentiment to get more accurate results. But as you can see in the following image, the clusters are not towards a sentiment and thus cannot be used for our task.
 
-![Coherence Score](figures/sentiment_clustering.png)  
