@@ -356,6 +356,8 @@ class SentimentGUI:
     def show_time_course(self):
         self.clear_plots(clear_plot_array=True)
         self.current_plot_type = PlotType.TIME_COURSE
+        self.configure_dataframe()
+        self.current_plot_index = 0
         if self.date_check.get() == 0:
             self.check_filter_date.toggle()
             self.enable_date_setting()
