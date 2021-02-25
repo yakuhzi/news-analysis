@@ -20,9 +20,11 @@ cq270@stud.uni-heidelberg.de
 
 4. Activate virtual environment: `pipenv shell`  
 
-5. Test setup: `pipenv run main`  (more about typical ways to run the program are shown in the section [below](#run-the-program-in-different-modes))
+5. Download spacy corpus `python -m spacy download de_core_news_lg`
 
-6. Install Git hooks: `pre-commit install` (developer setup)
+6. Test setup: `pipenv run main`  (more about typical ways to run the program are shown in the section [below](#run-the-program-in-different-modes))
+
+7. Install Git hooks: `pre-commit install` (developer setup)
 
 
 ## Testing
