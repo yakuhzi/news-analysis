@@ -59,10 +59,10 @@ class TfidfSentiment:
             lambda row: np.dot(row["polarity"], row["tfidf"]), axis=1
         )
 
-    def map_sentiment(self, overwrite: bool = False) -> None:
+    def map_sentiment(self, threshold: float = 8.27e-05, overwrite: bool = False) -> None:
         """
         Maps the polarity of SentiWs and TextBlob to "Positive", "Negative" or "Neutral" for all paragraphs.
-
+        :param threshold: the threshold to decide when to map positive/negative or neutral
         :param overwrite: If True, overwrites the current sentiment.
         """
 
@@ -70,27 +70,27 @@ class TfidfSentiment:
         if "sentiment" not in self.df_paragraphs or overwrite:
             # Map sentiment score to "Positive", "Negative" or "Neutral"
             self.df_paragraphs["sentiment"] = self.df_paragraphs["sentiment_score"].apply(
-                lambda score: self._map_sentiment(score)
+                lambda score: self._map_sentiment(score, threshold)
             )
 
         if "sentiment_textblob" not in self.df_paragraphs or overwrite:
             # Map sentiment score to "Positive", "Negative" or "Neutral"
             self.df_paragraphs["sentiment_textblob"] = self.df_paragraphs["polarity_textblob"].apply(
-                lambda score: self._map_sentiment(score)
+                lambda score: self._map_sentiment(score, threshold)
             )
 
-    def _map_sentiment(self, score: str) -> str:
+    def _map_sentiment(self, score: str, threshold: float = 8.27e-05) -> str:
         """
         Helper function that maps the sentiment_score to "Positive", "Negative" or "Neutral".
-
-        :param score: The calculated sentiment_score of a paragraph.
+        :param score: The calculated sentiment_score of a paragraph
+        :param threshold: the threshold to decide when to map positive/negative or neutral.
         :return: "Positive", "Negative" or "Neutral" dependent of the score input.
         """
         score = float(score)
 
-        if score > 0.001:
+        if score > threshold:
             return "Positive"
-        elif score < -0.001:
+        elif score < -threshold:
             return "Negative"
         else:
             return "Neutral"

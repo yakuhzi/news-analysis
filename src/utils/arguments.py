@@ -26,8 +26,15 @@ def parse_arguments():
         default=True,
     )
 
+    parser.add_argument("-l", "--lableling", dest="labeling", help="Label preprocessed data", default=None)
+
     parser.add_argument(
-        "-l", "--lableling", dest="labeling", action="store_true", help="Label preprocessed data", default=False
+        "-t",
+        "--train",
+        dest="train",
+        action="store_true",
+        help="train the threshold for sentiment mapping",
+        default=False,
     )
 
     parser.add_argument(
