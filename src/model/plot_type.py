@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class PlotType(Enum):
+    STATISTICS = 0
     SENTIMENT_PARTY = 1
     SENTIMENT_OUTLET = 2
     TOPICS_PARTY = 3

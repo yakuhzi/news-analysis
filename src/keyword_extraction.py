@@ -23,15 +23,15 @@ class KeywordExtraction:
 
     def set_data(self, df_paragraphs: DataFrame) -> None:
         """
-        Sets the dataframe where to determine the topics from
-        :param df_paragraphs: the dataframe to analyze
+        Sets the dataframe where to determine the topics from.
+        :param df_paragraphs: the dataframe to analyze.
         """
         self.df_paragraphs = df_paragraphs
 
     def set_active_media(self, media_list: List[str]) -> None:
         """
-        Filters the media where to extract the keywords from (TAZ, Tagesschau or BILD)
-        :param media_list: media to analyze
+        Filters the media where to extract the keywords from (TAZ, Tagesschau or BILD).
+        :param media_list: media to analyze.
         """
         self.df_paragraphs = self.df_paragraphs[self.df_paragraphs["media"].isin(media_list)]
 
@@ -44,13 +44,15 @@ class KeywordExtraction:
         topn: int = 3,
     ) -> DataFrame:
         """
-        Get most important keywords by TF-IDF weights and count their appearance
-        :param by_party: If True, group data by party, otherwise group by media
-        :param all_terms: If True, returns top terms of both media and party
-        :param parties: The parties of which the topic should be analyzed
-        :param media: The media of which the topic should be analyzed
-        :param topn: How many top words should be chosen for each party
-        :return: A data frame with the most important term-weight-tuples for the respective parties or media
+        Get most important keywords by TF-IDF weights and count their appearance.
+
+        :param by_party: If True, group data by party, otherwise group by media.
+        :param all_terms: If True, returns top terms of both media and party.
+        :param parties: The parties of which the topic should be analyzed.
+        :param media: The media of which the topic should be analyzed.
+        :param topn: How many top words should be chosen for each party.
+
+        :return: A data frame with the most important term-weight-tuples for the respective parties or media.
         """
         # Get nouns from dataframe
         nouns = self.df_paragraphs["nouns"].apply(lambda row: " ".join(row))
@@ -129,12 +131,14 @@ class KeywordExtraction:
         topn: int = 3,
     ) -> List[str]:
         """
-        Get the most important words for a party by TF-IDF score
-        :param by_party: If True, group data by party, otherwise group by media
-        :param party_or_media: Party or media to get keywords from
-        :param vectorizer: The TF-IDF Count vectorizer to use for calculating TF-IDF scores
-        :param transformer: The TF-IDF transformer to use for calculating TF-IDF scores
-        :return: The top 3 terms for the party as list
+        Get the most important words for a party by TF-IDF score.
+
+        :param by_party: If True, group data by party, otherwise group by media.
+        :param party_or_media: Party or media to get keywords from.
+        :param vectorizer: The TF-IDF Count vectorizer to use for calculating TF-IDF scores.
+        :param transformer: The TF-IDF transformer to use for calculating TF-IDF scores.
+
+        :return: The top 3 terms for the party as list.
         """
         if by_party:
             paragraphs = self._get_party_paragraphs(self.df_paragraphs, party_or_media)
@@ -161,12 +165,14 @@ class KeywordExtraction:
 
     def get_term_count(self, dataframe: DataFrame, by_party: bool, party_or_media: str, term: str) -> int:
         """
-        Counts the appearance of a term in a data frame
-        :param dataframe: The dataframe where the appearance should be counted
-        :param by_party: If True, group data by party, otherwise group by media
-        :param party_or_media: The party or media where the term frequency should be determined
-        :param term: The term which should be counted
-        :return: Number of appearances of the specified term as integer
+        Counts the appearance of a term in a data frame.
+
+        :param dataframe: The dataframe where the appearance should be counted.
+        :param by_party: If True, group data by party, otherwise group by media.
+        :param party_or_media: The party or media where the term frequency should be determined.
+        :param term: The term which should be counted.
+
+        :return: Number of appearances of the specified term as integer.
         """
         if by_party:
             paragraphs = self._get_party_paragraphs(dataframe, party_or_media)
@@ -177,9 +183,10 @@ class KeywordExtraction:
 
     def get_bipartite_graph(self, df_term_weights: DataFrame) -> Figure:
         """
-        Creates a bipartite graph fom the term-weight-tuples which were previously calculated
-        :param df_term_weights: The term-weight-tuples dataframe
-        :return: The bipartite graph as figure
+        Creates a bipartite graph fom the term-weight-tuples which were previously calculated.
+
+        :param df_term_weights: The term-weight-tuples dataframe.
+        :return: The bipartite graph as figure.
         """
         graph = nx.Graph()
         graph.add_nodes_from(df_term_weights["term"], bipartite=1)
@@ -211,10 +218,12 @@ class KeywordExtraction:
 
     def get_tripartite_graph(self, df_party_weights: DataFrame, df_media_weights: DataFrame):
         """
-        Creates a tripartite graph fom the term-weight-tuples which were previously calculated
-        :param df_party_weights: The term-weight-tuples dataframe of the parties
-        :param df_media_weights: The term-weight-tuples dataframe of the media
-        :return: The tripartite graph as figure
+        Creates a tripartite graph fom the term-weight-tuples which were previously calculated.
+
+        :param df_party_weights: The term-weight-tuples dataframe of the parties.
+        :param df_media_weights: The term-weight-tuples dataframe of the media.
+
+        :return: The tripartite graph as figure.
         """
         graph = nx.Graph()
         graph.add_nodes_from(df_party_weights["party"], bipartite=0)
@@ -253,19 +262,23 @@ class KeywordExtraction:
 
     def _get_party_paragraphs(self, dataframe: DataFrame, party: str) -> DataFrame:
         """
-        Filter paragraphs to only contain rows with a certain party
-        :param dataframe: The dataframe to filter
-        :param party: The party to keep in dataframe
-        :return: The filtered dataframe containing only rows about the specified party
+        Filter paragraphs to only contain rows with a certain party.
+
+        :param dataframe: The dataframe to filter.
+        :param party: The party to keep in dataframe.
+
+        :return: The filtered dataframe containing only rows about the specified party.
         """
         return dataframe[dataframe.apply(lambda row: len(row["parties"]) == 1 and party in row["parties"], axis=1)]
 
     def _get_media_paragraphs(self, dataframe: DataFrame, media: str) -> DataFrame:
         """
-        Filter paragraphs to only contain rows with a certain party
-        :param dataframe: The dataframe to filter
-        :param media: The media to keep in dataframe
-        :return: The filtered dataframe containing only rows about the specified party
+        Filter paragraphs to only contain rows with a certain party.
+
+        :param dataframe: The dataframe to filter.
+        :param media: The media to keep in dataframe.
+
+        :return: The filtered dataframe containing only rows about the specified party.
         """
         return dataframe[dataframe.apply(lambda row: media == row["media"], axis=1)]
 
@@ -273,16 +286,18 @@ class KeywordExtraction:
         """
         Remove words which are not meaningful as keywords / topics e.g. ministry positions that are held by a certain
         party, weekdays etc.
-        :param dataframe: The dataframe to filter the nouns
-        :return: The filtered data frame without blacklisted words
+
+        :param dataframe: The dataframe to filter the nouns.
+        :return: The filtered data frame without blacklisted words.
         """
         return dataframe["nouns"].apply(self._filter_words)
 
     def _filter_words(self, words: List[str]) -> List[str]:
         """
-        Filter words (remove words contained in blacklist
+        Filter words (remove words contained in blacklist.
+
         :param words: Words to filter
-        :return: Filtered word list
+        :return: Filtered word list.
         """
         blacklist_words = [
             "minister",

@@ -1,13 +1,12 @@
-import datetime
 import math
-from typing import Dict, List, Tuple
+from typing import List, Optional
 
-import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
-import matplotlib.ticker as mticker
 from pandas import DataFrame
+
+from utils.statistics import Statistics
 
 
 class Visualization:
@@ -15,8 +14,115 @@ class Visualization:
     Helper class for sentiment visualization
     """
 
+    color_dict = {
+        "Tagesschau": "#2ca02c",
+        "TAZ": "#ff7f0e",
+        "Bild": "#1f77b4",
+        "CDU": "black",
+        "CSU": "darkgrey",
+        "SPD": "orangered",
+        "Grüne": "green",
+        "FDP": "yellow",
+        "AfD": "blue",
+        "Linke": "red",
+    }
+
     @staticmethod
-    def get_pie_charts(
+    def get_basic_statistic_bar_plot(dataframe: DataFrame, parties: List[str], media: List[str]) -> Figure:
+        """
+        Get the basic statistic (document distribution) figures.
+
+        :param dataframe: Dataframe to extract the statistics from.
+        :param parties: Parties to consider for the statistics.
+        :param media: Media to consider for the statistics.
+        :return: Figures containing the bar charts for each party.
+        """
+        x, y = Statistics.get_basic_statistics(dataframe, media, parties)
+        return Visualization._get_document_distribution_figure(x, y)
+
+    @staticmethod
+    def get_media_statistics_bar_plots(dataframe: DataFrame, parties: List[str], media: List[str]) -> List[Figure]:
+        """
+        Get the basic statistic (document distribution) figures of each media.
+
+        :param dataframe: Dataframe to extract the statistics from.
+        :param parties: Parties to consider for the statistics.
+        :param media: Media to consider for the statistics.
+        :return: Figures containing the bar charts for each party.
+        """
+        figures = []
+
+        for outlet in media:
+            x, y = Statistics.get_media_statistics(dataframe, outlet, parties)
+            fig = Visualization._get_document_distribution_figure(x, y, outlet)
+            figures.append(fig)
+
+        return figures
+
+    @staticmethod
+    def get_party_statistics_bar_plots(dataframe: DataFrame, parties: List[str], media: List[str]) -> List[Figure]:
+        """
+        Get the basic statistic (document distribution) figures of each party.
+
+        :param dataframe: Dataframe to extract the statistics from.
+        :param parties: Parties to consider for the statistics.
+        :param media: Media to consider for the statistics.
+        :return: Figures containing the bar charts for each party.
+        """
+        figures = []
+
+        for party in parties:
+            x, y = Statistics.get_party_statistics(dataframe, party, media)
+            fig = Visualization._get_document_distribution_figure(x, y, party)
+            figures.append(fig)
+
+        return figures
+
+    @staticmethod
+    def _get_document_distribution_figure(x: List[str], y: List[int], party_or_media: Optional[str] = None) -> Figure:
+        """
+        Get a bar chart figure for the document distribution.
+
+        :param x: X values of the plot.
+        :param y: Y values of the plot.
+        :param party_or_media: Name of the party or media used for the plot title.
+        :return: Bar chart figure representing the document distribution.
+        """
+        color_dict = Visualization.color_dict
+        color_dict["Tagesschau"] = "grey"
+        color_dict["TAZ"] = "grey"
+        color_dict["Bild"] = "grey"
+
+        colors = []
+
+        # Map colors of each bar
+        for item in x:
+            colors.append(color_dict[item])
+
+        # Construct bar plot
+        fig, ax = plt.subplots(1, 1)
+        bar_plot = ax.bar(x, y, color=colors)
+        ax.set_frame_on(False)
+        ax.tick_params("x", labelrotation=90, length=0)
+        ax.axes.yaxis.set_ticks([])
+        ax.set_ylabel("Number of documents")
+
+        # Add values (number of documents) on top of each bar
+        for idx, rect in enumerate(bar_plot):
+            height = rect.get_height()
+            ax.text(rect.get_x() + rect.get_width() / 2.0, 1.05 * height, y[idx], ha="center", va="bottom", rotation=0)
+
+        # Set figure title
+        if party_or_media is None:
+            fig.suptitle("Document Distribution")
+        else:
+            fig.suptitle("Document Distribution for {}".format(party_or_media))
+
+        fig.tight_layout()
+        return fig
+
+    @staticmethod
+    def get_sentiment_pie_charts(
         df_paragraphs: DataFrame, by_party: bool = True, parties: List[str] = None, media: List[str] = None
     ) -> List[Figure]:
         """
@@ -31,7 +137,7 @@ class Visualization:
         """
 
         # Get sentiment statistics
-        statistics = Visualization.get_statistics(df_paragraphs, by_party, parties, media)
+        statistics = Statistics.get_sentiment_statistics(df_paragraphs, by_party, parties, media)
 
         # Define label and colors for pie charts
         labels = ["Positive", "Negative", "Neutral"]
@@ -78,13 +184,12 @@ class Visualization:
         return figures
 
     @staticmethod
-    def get_plots(df_time_course: DataFrame):
+    def get_time_course_plots(df_time_course: DataFrame):
         figures = []
         colors = {"Tagesschau": "#2ca02c", "TAZ": "#ff7f0e", "Bild": "#1f77b4"}
 
         # Define terms for grouping
         different_terms = df_time_course.term.unique()
-        different_parties = df_time_course.party.unique()
         different_media = df_time_course.media.unique()
 
         for term in different_terms:
@@ -112,10 +217,8 @@ class Visualization:
         return figures
 
     @staticmethod
-    def get_plots_custom_word(df_time_course: DataFrame, filter_name: str):
+    def get_time_course_plots_custom_word(df_time_course: DataFrame):
         figures = []
-        colors = {"Tagesschau": "#2ca02c", "TAZ": "#ff7f0e", "Bild": "#1f77b4", "Linke": "#c70039", "Grüne": "#0ad741",
-                  "SPD": "#a517f0", "CDU": "#f3be0c", "CSU": "#0caff3", "FDP": "#f30cd0", "AfD": "#0c15f3"}
 
         # Define terms for grouping
         different_filter = df_time_course.filter_criteria.unique()
@@ -130,7 +233,7 @@ class Visualization:
                 weights = df_plot["weight"]
                 weights_array = np.asarray(weights)[0]
                 # get right color for media
-                line_color = colors[filter_criteria]
+                line_color = Visualization.color_dict[filter_criteria]
                 dates = df_plot["dates"]
                 dates_array = np.asarray(dates)[0]
                 axs.plot(dates_array, weights_array, color=line_color, label=filter_criteria)
@@ -141,58 +244,3 @@ class Visualization:
         plt.setp(axs.xaxis.get_majorticklabels(), rotation=25)
         figures.append(fig)
         return figures
-
-    @staticmethod
-    def get_statistics(
-        df_paragraphs: DataFrame, by_party: bool, parties: List[str], media: List[str]
-    ) -> Dict[str, Dict[str, Tuple[int, int, int]]]:
-        """
-        Get statistics for the sentiment either grouped by party or by media outlet.
-
-        :param df_paragraphs: the dataframe of the paragraphs
-        :param by_party: If True, group data by party, otherwise group by media
-        :param parties: List of parties to consider. Defaults to all parties.
-        :param media: List of media outlets to consider. Defaults to all media outlets.
-
-        :return: Dictionary containing the statistics
-        """
-        statistics: Dict[str, Dict[str, Tuple[int, int, int]]] = {}
-
-        # Define parties for grouping
-        if parties is None:
-            parties = ["CDU", "CSU", "SPD", "AfD", "Grüne", "Linke"]
-
-        # Define media for grouping
-        if media is None:
-            media = ["Tagesschau", "TAZ", "Bild"]
-
-        # Iterate over parties or media
-        for item_1 in parties if by_party else media:
-            party_statistics: Dict[str, Tuple[int, int, int]] = {}
-
-            # Iterate over media or parties
-            for item_2 in media if by_party else parties:
-                # Get paragraphs filtered by party and media
-                df_paragraphs_filtered = df_paragraphs[
-                    (df_paragraphs["media"] == (item_2 if by_party else item_1))
-                    & (df_paragraphs["parties"].apply(lambda row: (item_1 if by_party else item_2) in row))
-                ]
-
-                # Get number of paragraphs filtered by party and media
-                total_number = len(df_paragraphs_filtered)
-
-                if total_number == 0:
-                    party_statistics[item_2] = (0, 0, 0)
-                    continue
-
-                # Get number of positive, negative and neutral sentences
-                positive = len(df_paragraphs_filtered.loc[(df_paragraphs_filtered["sentiment"] == "Positive")])
-                negative = len(df_paragraphs_filtered.loc[(df_paragraphs_filtered["sentiment"] == "Negative")])
-                neutral = len(df_paragraphs_filtered.loc[(df_paragraphs_filtered["sentiment"] == "Neutral")])
-
-                party_statistics[item_2] = (positive, negative, neutral)
-
-            statistics[item_1] = party_statistics
-
-        print(statistics)
-        return statistics

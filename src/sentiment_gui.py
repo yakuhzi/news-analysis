@@ -2,15 +2,14 @@ import datetime
 import tkinter
 import webbrowser
 from typing import List
-import datetime
 
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from pandas import DataFrame
+from time_course import TimeCourse
 
 from keyword_extraction import KeywordExtraction
-from time_course import TimeCourse
 from model.plot_type import PlotType
 from utils.visualization import Visualization
 
@@ -32,6 +31,7 @@ class SentimentGUI:
         self.current_plot = None
         self.current_plot_index = 0
         self.help_messages = {
+            PlotType.STATISTICS: "",
             PlotType.SENTIMENT_PARTY: "These are piecharts showing the sentiment towards a certain party\n of the "
             "selected media. This can be either positive, negative or neutral\n "
             '(see legend). With a click on "Show next" or "Show previous"\n you can '
@@ -57,7 +57,7 @@ class SentimentGUI:
             'media.\n With a click on "Show next" or "Show previous"\n'
             "you can see the importance of another term.",
             PlotType.TIME_COURSE_CUSTOM: "This is a line graph showing the importance of a certain term in the selected "
-            'media.',
+            "media.",
         }
         self.current_plot_type = None
         self.gui = None
@@ -198,9 +198,42 @@ class SentimentGUI:
             media_list.append("Bild")
         return media_list
 
+    def show_statistics(self) -> None:
+        """
+        Shows the bar charts of the document distributions (overall, for each media and for each party.
+        """
+        plt.close("all")
+        self.clear_plots(clear_plot_array=True)
+        self.current_plot_type = PlotType.STATISTICS
+        self.current_plot_index = 0
+
+        # get currently enabled parties and media
+        party_list = self.get_parties()
+        media_list = self.get_media()
+
+        # filter time
+        self.configure_dataframe()
+
+        basic_figure = Visualization.get_basic_statistic_bar_plot(self.df_paragraphs_configured, party_list, media_list)
+        media_figures = Visualization.get_media_statistics_bar_plots(
+            self.df_paragraphs_configured, party_list, media_list
+        )
+        party_figures = Visualization.get_party_statistics_bar_plots(
+            self.df_paragraphs_configured, party_list, media_list
+        )
+
+        figures = [basic_figure] + media_figures + party_figures
+
+        for fig in figures:
+            bar1 = FigureCanvasTkAgg(fig, self.gui)
+            self.plots.append(bar1)
+
+        self.show_diagram(first_image=True)
+        self.next_button["state"] = "normal"
+
     def show_sentiment(self, by_party: bool) -> None:
         """
-        shows the pie chart with the sentiment either by party or by media
+        Shows the pie chart with the sentiment either by party or by media
         :param by_party: if True, shows the sentiment sorted by party, that is a party and then 3 plots with the
                          sentiment of the media toward this party. Otherwise sorted by media, that is a media with the
                          6 plots of the sentiment towards different parties
@@ -218,7 +251,7 @@ class SentimentGUI:
         # filter time
         self.configure_dataframe()
         # get the pie charts from visualization class
-        figures = Visualization.get_pie_charts(
+        figures = Visualization.get_sentiment_pie_charts(
             self.df_paragraphs_configured, by_party=by_party, parties=party_list, media=media_list
         )
         # get canvas to show in gui from each of the figures and store it in plots array
@@ -323,6 +356,8 @@ class SentimentGUI:
     def show_time_course(self):
         self.clear_plots(clear_plot_array=True)
         self.current_plot_type = PlotType.TIME_COURSE
+        self.configure_dataframe()
+        self.current_plot_index = 0
         if self.date_check.get() == 0:
             self.check_filter_date.toggle()
             self.enable_date_setting()
@@ -330,10 +365,11 @@ class SentimentGUI:
         df_top_terms = self.keyword_extraction.get_top_terms_for_party(parties=party_list)
         initial_start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
         initial_end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
-        df_image = self.time_course.get_time_course(party_list, media_list, df_top_terms, initial_start_date,
-                                                    initial_end_date, self.df_paragraphs_configured)
+        df_image = self.time_course.get_time_course(
+            party_list, media_list, df_top_terms, initial_start_date, initial_end_date, self.df_paragraphs_configured
+        )
         # draw plot for time window
-        figures = Visualization.get_plots(df_image)
+        figures = Visualization.get_time_course_plots(df_image)
         for fig in figures:
             bar1 = FigureCanvasTkAgg(fig, self.gui)
             self.plots.append(bar1)
@@ -343,16 +379,23 @@ class SentimentGUI:
         self.clear_plots(clear_plot_array=True)
         self.current_plot_type = PlotType.TIME_COURSE_CUSTOM
         self.configure_dataframe()
+        self.current_plot_index = 0
         if self.filter_criteria.get() == "media":
             filter_list = self.get_media()
         else:
             filter_list = self.get_parties()
         initial_start_date = datetime.datetime.strptime(self.entry_date_from.get(), "%Y-%m-%d")
         initial_end_date = datetime.datetime.strptime(self.entry_date_to.get(), "%Y-%m-%d")
-        df_image = self.time_course.get_time_course_custom_word(filter_list, self.word.get(), self.filter_criteria.get(),
-                                                                initial_start_date,initial_end_date, self.df_paragraphs_configured)
+        df_image = self.time_course.get_time_course_custom_word(
+            filter_list,
+            self.word.get(),
+            self.filter_criteria.get(),
+            initial_start_date,
+            initial_end_date,
+            self.df_paragraphs_configured,
+        )
 
-        figures = Visualization.get_plots_custom_word(df_image, self.filter_criteria.get())
+        figures = Visualization.get_time_course_plots_custom_word(df_image)
         for fig in figures:
             bar1 = FigureCanvasTkAgg(fig, self.gui)
             self.plots.append(bar1)
@@ -401,7 +444,9 @@ class SentimentGUI:
         """
         updates the gui in case a filter criteria has been changed
         """
-        if self.current_plot_type == PlotType.SENTIMENT_PARTY:
+        if self.current_plot_type == PlotType.STATISTICS:
+            self.show_statistics()
+        elif self.current_plot_type == PlotType.SENTIMENT_PARTY:
             self.show_sentiment(by_party=True)
         elif self.current_plot_type == PlotType.SENTIMENT_OUTLET:
             self.show_sentiment(by_party=False)
@@ -414,7 +459,7 @@ class SentimentGUI:
         elif self.current_plot_type == PlotType.TIME_COURSE:
             self.show_time_course()
         elif self.current_plot_type == PlotType.TIME_COURSE_CUSTOM:
-            self.show_time_course()
+            self.show_time_course_for_custom_word()
 
     def show_gui(self) -> None:
         """
@@ -439,49 +484,54 @@ class SentimentGUI:
         self.taz_check = tkinter.IntVar(value=1)
         self.bild_check = tkinter.IntVar(value=1)
 
+        # button to show basic statistics about the data
+        button_statistics = tkinter.Button(self.gui, text="Basic Statistics", command=lambda: self.show_statistics())
+        button_statistics.grid(row=0, column=0)
+
         # button to show sentiment filtered by party
         button_by_party = tkinter.Button(
             self.gui, text="Sentiment by Party", command=lambda: self.show_sentiment(by_party=True)
         )
-        button_by_party.grid(row=0, column=0)
+        button_by_party.grid(row=0, column=1)
 
         # button to show sentiment filtered by media/outlet
         button_by_outlet = tkinter.Button(
             self.gui, text="Sentiment by Outlet", command=lambda: self.show_sentiment(by_party=False)
         )
-        button_by_outlet.grid(row=0, column=1)
+        button_by_outlet.grid(row=0, column=2)
 
         # button to show topics of parties
         button_topic_party = tkinter.Button(
-            self.gui, text="Show Topics of Parties", command=lambda: self.show_topics(by_party=True)
+            self.gui, text="Topics of Parties", command=lambda: self.show_topics(by_party=True)
         )
-        button_topic_party.grid(row=0, column=2)
+        button_topic_party.grid(row=0, column=3)
 
         # button to show topics of media
         button_topic_media = tkinter.Button(
-            self.gui, text="Show Topics of Media", command=lambda: self.show_topics(by_party=False)
-        )
-        button_topic_media.grid(row=0, column=3)
-
-        # button to show topics of parties and media
-        button_topic_media = tkinter.Button(
-            self.gui, text="Show Topics of Parties and Media", command=lambda: self.show_topics_party_media()
+            self.gui, text="Topics of Media", command=lambda: self.show_topics(by_party=False)
         )
         button_topic_media.grid(row=0, column=4)
 
+        # button to show topics of parties and media
+        button_topic_media = tkinter.Button(
+            self.gui, text="Topics of Parties and Media", command=lambda: self.show_topics_party_media()
+        )
+        button_topic_media.grid(row=0, column=5)
+
         # button to show time course
-        button_time_course = tkinter.Button(self.gui, text="Show Time Course", command=self.show_time_course)
-        button_time_course.grid(row=0, column=5)
+        button_time_course = tkinter.Button(self.gui, text="Time Course", command=self.show_time_course)
+        button_time_course.grid(row=0, column=6)
 
         # textbox for custom word
         self.word = tkinter.StringVar()
         textbox_custom_word = tkinter.Entry(self.gui, width=15, textvariable=self.word)
-        textbox_custom_word.grid(row=0, column=6)
+        textbox_custom_word.grid(row=0, column=7)
 
         # button for custom word
-        button_custom_word = tkinter.Button(self.gui, text="Show Time Course for Word",
-                                            command=self.show_time_course_for_custom_word)
-        button_custom_word.grid(row=0, column=7)
+        button_custom_word = tkinter.Button(
+            self.gui, text="Time Course for Word", command=self.show_time_course_for_custom_word
+        )
+        button_custom_word.grid(row=0, column=8)
 
         # radio buttons to choose filter critera
         self.filter_criteria = tkinter.StringVar()
