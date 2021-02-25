@@ -56,10 +56,11 @@ class SentimentGUI:
             "The thickness of the connecting lines are the term "
             "counts\n how often the term appears for each party or media.",
             PlotType.TIME_COURSE: "This is a line graph showing the importance of a certain term in the selected "
-            'media.\n With a click on "Show next" or "Show previous"\n'
+            "media.\n The frequency scale shows the number of occurrence divided by the amount of paragraphs."
+            '\n With a click on "Show next" or "Show previous"\n'
             "you can see the importance of another term.",
-            PlotType.TIME_COURSE_CUSTOM: "This is a line graph showing the importance of a certain term in the selected "
-            "media.",
+            PlotType.TIME_COURSE_CUSTOM: "This is a line graph showing the importance of the entered term in the selected "
+            "media.\n The frequency scale shows the number of occurrence divided by the amount of paragraphs.",
         }
         self.current_plot_type = None
         self.gui = None
