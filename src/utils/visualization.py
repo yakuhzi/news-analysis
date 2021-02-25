@@ -89,7 +89,7 @@ class Visualization:
         :param party_or_media: Name of the party or media used for the plot title.
         :return: Bar chart figure representing the document distribution.
         """
-        color_dict = Visualization.color_dict
+        color_dict = Visualization.color_dict.copy()
         color_dict["Tagesschau"] = "grey"
         color_dict["TAZ"] = "grey"
         color_dict["Bild"] = "grey"
