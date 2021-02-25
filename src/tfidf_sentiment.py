@@ -57,7 +57,7 @@ class TfidfSentiment:
         )
 
         # Replace nan polarity values with 0
-        self.df_paragraphs["polarity"] = self.df_paragraphs["polarity_context"].apply(
+        self.df_paragraphs["polarity_context"] = self.df_paragraphs["polarity_context"].apply(
             lambda row: [0 if x is None else x for x in row]
         )
 
