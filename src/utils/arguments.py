@@ -12,18 +12,9 @@ def parse_arguments():
         "-n",
         "--number-of-articles",
         dest="number_of_articles",
-        action="store_true",
         help="number of articles to process",
+        type=int,
         default=None,
-    )
-
-    parser.add_argument(
-        "-w",
-        "--write",
-        dest="write",
-        action="store_true",
-        help="write processed dataframe to json (overwrite existing dataframe)",
-        default=True,
     )
 
     parser.add_argument("-l", "--lableling", dest="labeling", help="Label preprocessed data", default=None)

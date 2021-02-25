@@ -58,8 +58,7 @@ if __name__ == "__main__":
         )
 
     # Save paragraphs to disk
-    if args.write:
-        Writer.write_dataframe(df_paragraphs, "paragraphs")
+    Writer.write_dataframe(df_paragraphs, "paragraphs")
 
     # Show GUI
     if args.show_gui:
