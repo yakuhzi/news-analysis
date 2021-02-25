@@ -13,6 +13,8 @@ class TfidfSentiment:
     def calculate_sentiment_score(self, overwrite: bool = False) -> None:
         """
         Calculate sentiment score for each row in the dataframe and add it into the column "sentiment_score".
+        If the dataframe also contains context polarity, the context sentiment is also calculated and added into the
+        column "sentiment_score_context".
 
         :param overwrite: If True, overwrites the current sentiment.
         """
@@ -59,27 +61,73 @@ class TfidfSentiment:
             lambda row: np.dot(row["polarity"], row["tfidf"]), axis=1
         )
 
-    def map_sentiment(self, overwrite: bool = False) -> None:
+        # Calculate context sentiment score from dot product of polarity and tfidf
+        if "polarity_context" in self.df_paragraphs:
+            self.df_paragraphs["sentiment_score_context"] = self.df_paragraphs.apply(
+                lambda row: np.dot(row["polarity_context"], row["tfidf"]), axis=1
+            )
+
+    def get_context_polarity(self, threshold: int) -> None:
+        """
+        Sets the polarity values to 0, if the distance of the word to a party is greater than the specified threshold.
+        Result is added to the "polarity_context" column of the dataframe.
+
+        :param threshold: Max distance between current word and party index.
+        """
+        parties = ["cdu", "union", "csu", "spd", "sozialdemokrat", "grün", "fdp", "liberale", "afd", "linke"]
+
+        self.df_paragraphs["party_indices"] = self.df_paragraphs["text"].apply(
+            lambda row: [i for i, x in enumerate(row) if x in parties]
+        )
+
+        self.df_paragraphs["polarity_context"] = self.df_paragraphs.apply(
+            lambda row: [self._map_context_polarity(row, i, threshold) for i, x in enumerate(row["polarity"])], axis=1
+        )
+
+    def _map_context_polarity(self, row, index: int, threshold: int) -> float:
+        """
+        Sets the polarity values to 0, if the distance between a party index and the current index is greater than
+        the specified threshold.
+
+        :param row: Current row of the dataframe.
+        :param index: Current index of the polarity.
+        :param threshold: Max distance between current word and party index.
+
+        :return: Returns the original polarity if the index is in range of a party index, 0 otherwise.
+        """
+        for party_index in row["party_indices"]:
+            if abs(party_index - index) <= threshold:
+                return row["polarity"][index]
+
+        return 0
+
+    def map_sentiment(self, threshold: float = 9e-05, overwrite: bool = False) -> None:
         """
         Maps the polarity of SentiWs and TextBlob to "Positive", "Negative" or "Neutral" for all paragraphs.
+        If the context sentiment score is present in the dataframe, it is also mapped.
 
         :param overwrite: If True, overwrites the current sentiment.
         """
 
-        # Sentiment already mapped
         if "sentiment" not in self.df_paragraphs or overwrite:
             # Map sentiment score to "Positive", "Negative" or "Neutral"
             self.df_paragraphs["sentiment"] = self.df_paragraphs["sentiment_score"].apply(
-                lambda score: self._map_sentiment(score)
+                lambda score: self._map_sentiment(score, threshold)
             )
 
         if "sentiment_textblob" not in self.df_paragraphs or overwrite:
             # Map sentiment score to "Positive", "Negative" or "Neutral"
             self.df_paragraphs["sentiment_textblob"] = self.df_paragraphs["polarity_textblob"].apply(
-                lambda score: self._map_sentiment(score)
+                lambda score: self._map_sentiment(score, threshold)
             )
 
-    def _map_sentiment(self, score: str) -> str:
+        if ("sentiment_context" not in self.df_paragraphs or overwrite) and "polarity_context" in self.df_paragraphs:
+            # Map sentiment score to "Positive", "Negative" or "Neutral"
+            self.df_paragraphs["sentiment_context"] = self.df_paragraphs["sentiment_score_context"].apply(
+                lambda score: self._map_sentiment(score, threshold)
+            )
+
+    def _map_sentiment(self, score: str, threshold: float = 9e-05) -> str:
         """
         Helper function that maps the sentiment_score to "Positive", "Negative" or "Neutral".
 
@@ -88,9 +136,9 @@ class TfidfSentiment:
         """
         score = float(score)
 
-        if score > 0.001:
+        if score > threshold:
             return "Positive"
-        elif score < -0.001:
+        elif score < -threshold:
             return "Negative"
         else:
             return "Neutral"
