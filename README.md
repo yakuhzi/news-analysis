@@ -75,7 +75,7 @@ pipenv run main -h
 ## Using the GUI
 This section describes how you can use the GUI (command line argument -g).\
 For explanation, some parts in the GUI are overlayed with a colored box in the screenshot below.
-![GUIdescription](figures/GUIdescription.png)
+![GUIdescription](figures/gui_description.png)
 In the colored boxes you can see the following:
 * Red: these are the different types of graphs you can show. 
   By pressing one of the buttons, the respective graph is shown in the center of the screen. 
@@ -205,6 +205,21 @@ for a first filtering of the text to recognize in which text political parties/ 
 For the sentiment analysis, each word of a paragraph was weighted by a sentiment score from SentiWS. Also the TF-IDF score of each word was calculated. By performing the dot product of the sentiment score, and the TF-IDF scores, the overall sentiment of a sentence was calculated. 
 This was done by using a threshold. If the dot product is above this threshold for greater 0 the sentiment is mapped as positive, 
 if it smaller for below 0 it is mapped negative and otherwise neutral.
+
+#### Training the thresholds for mapping the sentiment
+As the threshold of mapping the sentiment score to a conrete label "Positive", "Negative" and "Neutral" requires some finetuning, we calculated the best threshold maximizing the sum of the f1-score of the positive, negative and neutral f1-scores. The visualization of the chosen threshold is shown in the image below.
+
+![Score Threshold Training](figures/score_threshold.png)
+
+#### Context Sentiment
+As we labeled our data as positive or negative only when the paragraph was against or for a party, and not if only the topic itself was negative, we introduce the context sentiment, that only keeps the polarity values of words, that are close to a party. Polarities of words that are far from a party, are set to 0. We hoped that using the context sentiment, we could capture only the context around a party. This introduces a new threshold for the window around a party to consider for the sentiment.
+
+#### Training the window threshold for mapping the sentiment
+The following image shows the same optimization as above, but this time for the window size. For each window size, the already best score threshold is considered.
+As the f1 sum does not increase much after a window of 8, this threshold is chosen as 31 would be almost the whole paragraph.
+
+![Score Threshold Training](figures/window_threshold.png)
+
 
 #### Sentiment Clustering
 Instead of using SentiWS to calculate the sentiment scores of each word, we tried also to perform a clustering of the sentiment to get more accurate results. But as you can see in the following image, the clusters are not towards a sentiment and thus cannot be used for our task.
