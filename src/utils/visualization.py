@@ -15,6 +15,7 @@ class Visualization:
     """
 
     color_dict = {
+        "Total": "#1f77b4",
         "Tagesschau": "#2ca02c",
         "TAZ": "#ff7f0e",
         "Bild": "#1f77b4",

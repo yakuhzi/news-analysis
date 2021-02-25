@@ -121,7 +121,9 @@ class TfidfSentiment:
                 lambda score: self._map_sentiment(score, threshold)
             )
 
-        if ("sentiment_context" not in self.df_paragraphs or overwrite) and "polarity_context" in self.df_paragraphs:
+        if (
+            "sentiment_context" not in self.df_paragraphs or overwrite
+        ) and "sentiment_score_context" in self.df_paragraphs:
             # Map sentiment score to "Positive", "Negative" or "Neutral"
             self.df_paragraphs["sentiment_context"] = self.df_paragraphs["sentiment_score_context"].apply(
                 lambda score: self._map_sentiment(score, threshold)

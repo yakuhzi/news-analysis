@@ -31,7 +31,9 @@ class SentimentGUI:
         self.current_plot = None
         self.current_plot_index = 0
         self.help_messages = {
-            PlotType.STATISTICS: "",
+            PlotType.STATISTICS: "These are bar charts showing the total document distribution\n(number of "
+            'documents per media / party).\nWith a click on "Show next" or "Show previous"\n you can see the '
+            "distributions per media and per party.",
             PlotType.SENTIMENT_PARTY: "These are piecharts showing the sentiment towards a certain party\n of the "
             "selected media. This can be either positive, negative or neutral\n "
             '(see legend). With a click on "Show next" or "Show previous"\n you can '
@@ -380,6 +382,9 @@ class SentimentGUI:
         self.current_plot_type = PlotType.TIME_COURSE_CUSTOM
         self.configure_dataframe()
         self.current_plot_index = 0
+        if self.date_check.get() == 0:
+            self.check_filter_date.toggle()
+            self.enable_date_setting()
         if self.filter_criteria.get() == "media":
             filter_list = self.get_media()
         else:
@@ -535,7 +540,7 @@ class SentimentGUI:
 
         # radio buttons to choose filter critera
         self.filter_criteria = tkinter.StringVar()
-        self.filter_criteria.set("party")
+        self.filter_criteria.set("media")
         label_filter_criteria = tkinter.Label(self.gui, text="Select filter criteria for time course: ")
         label_filter_criteria.grid(row=1, column=5)
 

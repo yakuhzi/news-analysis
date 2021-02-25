@@ -22,6 +22,7 @@ if __name__ == "__main__":
 
     # Calculate sentiment of paragraphs
     tfidf_sentiment = TfidfSentiment(df_paragraphs)
+    tfidf_sentiment.get_context_polarity(8)
     tfidf_sentiment.calculate_sentiment_score()
     tfidf_sentiment.map_sentiment()
 

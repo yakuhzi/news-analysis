@@ -159,9 +159,6 @@ class Preprocessing:
         # Remove special characters
         df_preprocessed["text"] = self._remove_special_characters(df_preprocessed["text"])
 
-        # Stop word removal
-        # df_preprocessed["text"] = self._remove_stopwords(df_preprocessed["text"])
-
         # Tokenization
         df_preprocessed["text"] = self._tokenization(df_preprocessed["text"])
 

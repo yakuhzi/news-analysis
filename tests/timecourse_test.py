@@ -63,7 +63,5 @@ class TimeCourseTest(unittest.TestCase):
         time_course.set_paragraph(df_paragraph)
 
         df_interval = time_course.configure_dataframe_for_time_course(start_date, end_date, "Tagesschau", df_paragraph)
-        print(df_interval)
-        print(df_paragraph_test)
         self.assertNotEqual(sorted(df_paragraph_test["nouns"].tolist()), sorted(df_interval["nouns"].tolist()))
         self.assertNotEqual(sorted(df_paragraph_test["media"].tolist()), sorted(df_interval["media"].tolist()))
