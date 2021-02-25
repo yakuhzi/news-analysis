@@ -1,3 +1,5 @@
+import pandas as pd
+
 from preprocessing import Preprocessing
 from sentiment_gui import SentimentGUI
 from tfidf_sentiment import TfidfSentiment
@@ -39,10 +41,8 @@ if __name__ == "__main__":
     # Compare labeled data with results
     if args.compare:
         comparison = Comparison("labeled_paragraphs")
-        # comparison.polarity()
-        # comparison.polarity_to_subjectivity()
-        print(comparison.train_threshold())
-        print("Precision: " + str(comparison.precision()))
-        print("Recall: " + str(comparison.recall()))
-        print("Accuracy: " + str(comparison.accuracy()))
-        print("F1 score: " + str(comparison.f1_score()))
+        print("Optimal threshold: " + str(comparison.train_threshold()) + "\n")
+        comparison.precision()
+        comparison.recall()
+        comparison.f1_score()
+        comparison.accuracy()

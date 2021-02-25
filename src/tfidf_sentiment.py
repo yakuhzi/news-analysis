@@ -59,10 +59,10 @@ class TfidfSentiment:
             lambda row: np.dot(row["polarity"], row["tfidf"]), axis=1
         )
 
-    def map_sentiment(self, threshold: float = 9e-05, overwrite: bool = False) -> None:
+    def map_sentiment(self, threshold: float = 8.27e-05, overwrite: bool = False) -> None:
         """
         Maps the polarity of SentiWs and TextBlob to "Positive", "Negative" or "Neutral" for all paragraphs.
-
+        :param threshold: the threshold to decide when to map positive/negative or neutral
         :param overwrite: If True, overwrites the current sentiment.
         """
 
@@ -79,11 +79,11 @@ class TfidfSentiment:
                 lambda score: self._map_sentiment(score, threshold)
             )
 
-    def _map_sentiment(self, score: str, threshold: float) -> str:
+    def _map_sentiment(self, score: str, threshold: float = 8.27e-05) -> str:
         """
         Helper function that maps the sentiment_score to "Positive", "Negative" or "Neutral".
-
-        :param score: The calculated sentiment_score of a paragraph.
+        :param score: The calculated sentiment_score of a paragraph
+        :param threshold: the threshold to decide when to map positive/negative or neutral.
         :return: "Positive", "Negative" or "Neutral" dependent of the score input.
         """
         score = float(score)
