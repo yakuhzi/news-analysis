@@ -14,6 +14,19 @@ class Visualization:
     Helper class for sentiment visualization
     """
 
+    color_dict = {
+        "Tagesschau": "#2ca02c",
+        "TAZ": "#ff7f0e",
+        "Bild": "#1f77b4",
+        "CDU": "black",
+        "CSU": "darkgrey",
+        "SPD": "orangered",
+        "Grüne": "green",
+        "FDP": "yellow",
+        "AfD": "blue",
+        "Linke": "red",
+    }
+
     @staticmethod
     def get_basic_statistic_bar_plot(dataframe: DataFrame, parties: List[str], media: List[str]) -> Figure:
         """
@@ -75,21 +88,12 @@ class Visualization:
         :param party_or_media: Name of the party or media used for the plot title.
         :return: Bar chart figure representing the document distribution.
         """
+        color_dict = Visualization.color_dict
+        color_dict["Tagesschau"] = "grey"
+        color_dict["TAZ"] = "grey"
+        color_dict["Bild"] = "grey"
 
         colors = []
-        color_dict = {
-            "Total": "#1f77b4",
-            "Bild": "grey",
-            "Tagesschau": "grey",
-            "TAZ": "grey",
-            "CDU": "black",
-            "CSU": "black",
-            "SPD": "orangered",
-            "Grüne": "green",
-            "FDP": "yellow",
-            "AfD": "blue",
-            "Linke": "red",
-        }
 
         # Map colors of each bar
         for item in x:
@@ -215,18 +219,6 @@ class Visualization:
     @staticmethod
     def get_time_course_plots_custom_word(df_time_course: DataFrame):
         figures = []
-        colors = {
-            "Tagesschau": "#2ca02c",
-            "TAZ": "#ff7f0e",
-            "Bild": "#1f77b4",
-            "Linke": "#c70039",
-            "Grüne": "#0ad741",
-            "SPD": "#a517f0",
-            "CDU": "#f3be0c",
-            "CSU": "#0caff3",
-            "FDP": "#f30cd0",
-            "AfD": "#0c15f3",
-        }
 
         # Define terms for grouping
         different_filter = df_time_course.filter_criteria.unique()
@@ -241,7 +233,7 @@ class Visualization:
                 weights = df_plot["weight"]
                 weights_array = np.asarray(weights)[0]
                 # get right color for media
-                line_color = colors[filter_criteria]
+                line_color = Visualization.color_dict[filter_criteria]
                 dates = df_plot["dates"]
                 dates_array = np.asarray(dates)[0]
                 axs.plot(dates_array, weights_array, color=line_color, label=filter_criteria)

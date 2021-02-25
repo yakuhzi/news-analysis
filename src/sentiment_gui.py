@@ -377,6 +377,7 @@ class SentimentGUI:
         self.clear_plots(clear_plot_array=True)
         self.current_plot_type = PlotType.TIME_COURSE_CUSTOM
         self.configure_dataframe()
+        self.current_plot_index = 0
         if self.filter_criteria.get() == "media":
             filter_list = self.get_media()
         else:
@@ -456,7 +457,7 @@ class SentimentGUI:
         elif self.current_plot_type == PlotType.TIME_COURSE:
             self.show_time_course()
         elif self.current_plot_type == PlotType.TIME_COURSE_CUSTOM:
-            self.show_time_course()
+            self.show_time_course_for_custom_word()
 
     def show_gui(self) -> None:
         """
