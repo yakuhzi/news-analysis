@@ -48,7 +48,7 @@ class Comparison:
                 best_score = f1_sum
                 best_threshold = threshold
 
-            threshold += 0.000001
+            threshold += 0.0000001
 
         # Visualize the training
         self.visualize_threshold(thresholds, f1_scores, best_threshold, 0.005)
@@ -73,7 +73,7 @@ class Comparison:
         f1_scores: List[Tuple] = []
 
         # Iterate over different window thresholds, increase with every loop
-        while window_threshold <= 50:
+        while window_threshold <= 35:
             self.tfidf_sentiment.get_context_polarity(window_threshold)
             self.tfidf_sentiment.calculate_sentiment_score(overwrite=True)
 
