@@ -96,6 +96,11 @@ class KeywordExtraction:
         return DataFrame(tuples, columns=["party" if by_party else "media", "term", "weight"])
 
     def get_top_terms_for_party(self, parties: Optional[List[str]] = None) -> DataFrame:
+        """
+        Get the most important words for a party by TF-IDF score.
+        :param parties: parties that are selected in the gui
+        :return: dataframe containing tuples with parties and top words
+        """
         # Get nouns from dataframe
         nouns = self.df_paragraphs["nouns"].apply(lambda row: " ".join(row))
 
