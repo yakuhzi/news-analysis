@@ -22,7 +22,7 @@ cq270@stud.uni-heidelberg.de
 
 5. Activate virtual environment: `pipenv shell`  
 
-6. Test setup: `pipenv run main`  
+6. Test setup: `pipenv run main`  (more about typical ways to run the program are shown in the section [below](#run-the-program-in-different-modes))
 
 7. Install Git hooks: `pre-commit install`
 
@@ -31,6 +31,66 @@ cq270@stud.uni-heidelberg.de
 
 A script to automatically execute tests is already defined in the project's `Pipfile`. Therefore you can simply run: `pipenv run test`
 To generate a report on code coverage alongside run: `pipenv run test && pipenv run report`
+
+## Run the program in different modes
+Here are typical use cases how you might want to run the program:
+1. I want to see the results for sentiment and topics in the GUI
+    ```
+   pipenv run main -g
+    ```
+   __WARNING:__ If you have not started the program before, the processing of the whole dataframe is performed, which takes ~2-3 hours. If you want to see the results of a smaller subset of the data you can limit the amount by
+   ```
+   pipenv run main -g -n 1000
+   ```
+   In this example, only 1000 articles are read in and processed
+2. I want to force the processing again and store the results of the new processing (because I want to use a different number of articles/ a different dataset)
+    ```
+   pipenv run main -f -w
+    ```
+   If you don't use -w, the changes of the processing are only persistent for the current program run and do not overwrite your existing processed datasets
+   
+3. I want to label data
+    ```
+   pipenv run main -l 0-100
+    ```
+   In this example, the first 100 articles are outputted to the console for labeling. You can change the range of articles by specifying different \<start\>-\<end\>.\
+   The result of the labeling is stored in a file named "labeled_paragraphs.json".\
+   For more information about how to label paragraphs, see [Labeling Data](#labeling-data)
+  
+4. I want to train the sentiment threshold
+    ```
+   pipenv run main -t
+    ```
+   Note that you need a labeled dataset to train the threshold. After training, the "labeled_paragraphs.json" and "paragraphs.json" are overwritten with the new sentiment labels determined with the optimized threshold.
+   
+4. I want to evaluate the results
+    ```
+   pipenv run main -c
+    ```
+   Note that you need a labeled dataset to evaluate the results.
+
+
+Of course the command line arguments can also be used in different combinations than the use cases explained above. For an overview of possible command line arguments with description enter
+```
+pipenv run main -h
+```
+
+## Using the GUI
+
+## Labeling Data
+This section describes how you can label data if you run the program in labeling mode (command line argument -l \<start\>-\<end\>).
+
+For each article you can see the following output in the console.\
+================================================\
+\<Title of the article\>\
+++++++++++++++++++++++++++++++++++++++++++++++++\
+\<one paragraph of the article\>
+
+Note that for all articles the tagged persons and parties are anonymized by "\<Person\>" or "\<Partei\>" to not influence your rating based on what party/ person the article is about.
+
+Just type in the console which Polarity (-1: Negative, 0: Neutral, 1: Positive) you think is stated towards the party. 
+After pressing enter type in if you think the paragraph is subjective or objective (0: Objective, 1: Subjective).
+After pressing enter again, the next paragraph appears.
 
 ## Milestone
 
