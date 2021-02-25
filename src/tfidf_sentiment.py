@@ -56,6 +56,11 @@ class TfidfSentiment:
             lambda row: [0 if x is None else x for x in row]
         )
 
+        # Replace nan polarity values with 0
+        self.df_paragraphs["polarity"] = self.df_paragraphs["polarity_context"].apply(
+            lambda row: [0 if x is None else x for x in row]
+        )
+
         # Calculate sentiment score from dot product of polarity and tfidf
         self.df_paragraphs["sentiment_score"] = self.df_paragraphs.apply(
             lambda row: np.dot(row["polarity"], row["tfidf"]), axis=1
