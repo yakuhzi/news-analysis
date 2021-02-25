@@ -1,8 +1,6 @@
 import sys
 from pathlib import Path
 
-import pandas as pd
-
 from preprocessing import Preprocessing
 from sentiment_gui import SentimentGUI
 from tfidf_sentiment import TfidfSentiment
@@ -39,12 +37,24 @@ if __name__ == "__main__":
     # Train threshold for sentiment mapping
     if args.train:
         labeled_file = Path("src/output/labeled_paragraphs.json")
+
         if not labeled_file.exists():
             print('You have to provide a labeled file "labeled_paragraphs.json" for training in the output folder')
             sys.exit()
+
         comparison = Comparison(labeled_file)
+
+        # Train the score threshold
         optimal_threshold = comparison.train_threshold()
         print("Optimal threshold: {}\n".format(optimal_threshold))
+
+        # Train the window and the score threshold
+        optimal_context_thresholds = comparison.train_context_thresholds()
+        print(
+            "Optimal context thresholds: {} (window), {} (score)\n".format(
+                optimal_context_thresholds[0], optimal_context_thresholds[1]
+            )
+        )
 
     # Save paragraphs to disk
     if args.write:
@@ -58,9 +68,11 @@ if __name__ == "__main__":
     # Compare labeled data with results
     if args.compare:
         labeled_file = Path("src/output/labeled_paragraphs.json")
+
         if not labeled_file.exists():
             print('You have to provide a labeled file "labeled_paragraphs.json" for comparison in the output folder')
             sys.exit()
+
         comparison = Comparison(labeled_file)
         comparison.precision()
         comparison.recall()
