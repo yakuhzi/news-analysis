@@ -132,7 +132,7 @@ The result of the labeling is stored in a file named "labeled_paragraphs.json".
 | Dimension Analysis                               | Final Report       | February   | X        | X        |
 | Final Codebase                                   | Final Report       | February   | X        | X        |
 | Final README                                     | Final Report       | February   | X        | X        |
-| Final Report                                     | Final Report       | 15.03.2021 | X        | -        |
+| Final Report                                     | Final Report       | 15.03.2021 | X        | X        |
 |                                                  |                    |            |          |          |
 | Project Video                                    | Presentation       | 25.02.2021 | X        | X        |
 
